@@ -1,0 +1,15 @@
+# Bỏ qua môi trường ảo (Cực kỳ quan trọng)
+venv/
+env/
+.env
+
+# Bỏ qua các file cache của Python
+__pycache__/
+*.pyc
+
+# Bỏ qua các file Data nặng (Người khác tải code về sẽ tự sinh ra data sau)
+data/*.npy
+data/*.json
+
+# Bỏ qua file báo cáo (nếu ngài không muốn push lên)
+# comparison_report.txt

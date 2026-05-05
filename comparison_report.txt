@@ -1,0 +1,79 @@
+================================================================================
+BẢN BÁO CÁO ĐỐI CHIẾU KẾT QUẢ: V-ENGRAM P2P vs. FAISS BASELINE
+================================================================================
+
+QUERY #1: 'def get_logger(name):'
+  - FAISS (Truth) : [1272, 6624, 8352, 8264, 16581]
+  - V-Engram (P2P): [1272, 6624, 16581, 8264, 680]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6624, 1272, 8264, 16581])
+----------------------------------------
+QUERY #2: 'def _merge_dicts(self, dict1, dict2, path=[]):         "merges dict2 into dict1"'
+  - FAISS (Truth) : [3626, 12005, 10876, 6725, 1849]
+  - V-Engram (P2P): [3626, 1851, 1882, 13048, 1884]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [3626])
+----------------------------------------
+QUERY #3: 'def max(self):         """ -> #float :func:numpy.max of the timing intervals """'
+  - FAISS (Truth) : [5242, 5243, 5241, 5240, 5244]
+  - V-Engram (P2P): [5242, 5241, 9603, 18666, 19423]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [5241, 5242])
+----------------------------------------
+QUERY #4: 'def _strip_text(text):         """Returns text with spaces and inserts removed."'
+  - FAISS (Truth) : [8767, 8766, 4122, 10315, 12767]
+  - V-Engram (P2P): [8767, 8766, 4122, 10315, 12120]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [4122, 10315, 8766, 8767])
+----------------------------------------
+QUERY #5: 'def unique_list(seq):     """ Removes duplicate elements from given @seq'
+  - FAISS (Truth) : [5316, 8546, 11268, 16867, 15156]
+  - V-Engram (P2P): [5316, 8546, 16867, 11268, 11047]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [8546, 16867, 5316, 11268])
+----------------------------------------
+QUERY #6: 'def _radixPass(a, b, r, n, K):     """     Stable sort of the sequence a accordi'
+  - FAISS (Truth) : [1569, 1570, 10543, 1571, 16859]
+  - V-Engram (P2P): [1569, 1571, 6557, 8703, 15173]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1569, 1571])
+----------------------------------------
+QUERY #7: 'def is_email():     """     Validates that a fields value is a valid email addre'
+  - FAISS (Truth) : [1606, 2832, 1607, 2834, 10220]
+  - V-Engram (P2P): [1606, 2832, 2833, 12944, 1619]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2832, 1606])
+----------------------------------------
+QUERY #8: 'def flatten_list(nested_list):'
+  - FAISS (Truth) : [1716, 18397, 17093, 13115, 11250]
+  - V-Engram (P2P): [1716, 12234, 5317, 8089, 1840]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [1716])
+----------------------------------------
+QUERY #9: 'def parse_yaml_config(file_path):'
+  - FAISS (Truth) : [5886, 4161, 5282, 1694, 15490]
+  - V-Engram (P2P): [5282, 5886, 1694, 18760, 12237]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5282, 1694, 5886])
+----------------------------------------
+QUERY #10: 'def get_manifest_from_meta(metaurl, name):'
+  - FAISS (Truth) : [202, 18015, 18019, 201, 17924]
+  - V-Engram (P2P): [201, 306, 2969, 5200, 17297]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [201])
+----------------------------------------
+QUERY #11: 'def get_value_at_percentile(self, percentile):'
+  - FAISS (Truth) : [15834, 15835, 13414, 18203, 4821]
+  - V-Engram (P2P): [15834, 18666, 10546, 18903, 19765]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [15834])
+----------------------------------------
+QUERY #12: 'def delete_async(blob_key, **options):'
+  - FAISS (Truth) : [13218, 13219, 13229, 13303, 13226]
+  - V-Engram (P2P): [13218, 13219, 13229, 13226, 1243]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13226, 13218, 13219, 13229])
+----------------------------------------
+QUERY #13: 'def _insert_missing_rows(self, indexes):'
+  - FAISS (Truth) : [4658, 4657, 4656, 4660, 4663]
+  - V-Engram (P2P): [4658, 4654, 15910, 15909, 4704]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [4658])
+----------------------------------------
+QUERY #14: 'def set_log_level_format(level, format):'
+  - FAISS (Truth) : [12646, 681, 6824, 7351, 5219]
+  - V-Engram (P2P): [12646, 6824, 6860, 7737, 15591]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6824, 12646])
+----------------------------------------
+QUERY #15: 'def pack_pointer(self, name):'
+  - FAISS (Truth) : [15936, 7360, 11590, 11725, 7772]
+  - V-Engram (P2P): [15936, 19161, 19014, 12199, 19551]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [15936])
+----------------------------------------

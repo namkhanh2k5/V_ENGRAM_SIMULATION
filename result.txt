@@ -1,0 +1,262 @@
+(venv) khanh@khanh-Inspiron-14-5420:~/Desktop/Code_C/.vscode/V_Engram_Simulation$ python main_simulation.py
+[*] Đang nạp PQ Codebook (chuẩn Web3)...
+[*] Đang sinh ra 10,000 Nodes...
+✓ Mạng lưới sẵn sàng (1.63s)
+
+============================================================
+GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU (8-BIT + LOAD BALANCING + ANTI-AFFINITY)
+============================================================
+  ... Đã phân bổ 5,000/20,000 files.
+  ... Đã phân bổ 10,000/20,000 files.
+  ... Đã phân bổ 15,000/20,000 files.
+  ... Đã phân bổ 20,000/20,000 files.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights: 100%|█████████████████████████████████████████████████████████████████████████████████████████████| 391/391 [00:00<00:00, 10840.57it/s]
+
+>>> TRUY VẤN #1: 'def get_logger(name):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_1272): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_6624): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_16581): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_8264): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_680): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #2: 'def _merge_dicts(self, dict1, dict2, path=[]):         "merges dict2 into dict1"'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_3626): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_1851): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_1882): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_13048): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_1884): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #3: 'def max(self):         """ -> #float :func:numpy.max of the timing intervals """'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_5242): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_5241): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_9603): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_18666): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_19423): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #4: 'def _strip_text(text):         """Returns text with spaces and inserts removed."'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_8767): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_8766): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_4122): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_10315): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_12120): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #5: 'def unique_list(seq):     """ Removes duplicate elements from given @seq'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_5316): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_8546): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_16867): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_11268): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_11047): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #6: 'def _radixPass(a, b, r, n, K):     """     Stable sort of the sequence a accordi'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_1569): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_1571): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_6557): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_8703): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_15173): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #7: 'def is_email():     """     Validates that a fields value is a valid email addre'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_1606): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_2832): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_2833): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_12944): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_1619): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #8: 'def flatten_list(nested_list):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_1716): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_12234): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_5317): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_8089): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_1840): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #9: 'def parse_yaml_config(file_path):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_5282): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_5886): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_1694): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_18760): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_12237): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #10: 'def get_manifest_from_meta(metaurl, name):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_201): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_306): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_2969): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_5200): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_17297): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #11: 'def get_value_at_percentile(self, percentile):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_15834): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_18666): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_10546): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_18903): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_19765): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #12: 'def delete_async(blob_key, **options):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_13218): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_13219): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_13229): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_13226): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_1243): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #13: 'def _insert_missing_rows(self, indexes):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_4658): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_4654): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_15910): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_15909): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_4704): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #14: 'def set_log_level_format(level, format):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_12646): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_6824): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_6860): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_7737): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_15591): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+>>> TRUY VẤN #15: 'def pack_pointer(self, name):'
+
+============================================================
+GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
+============================================================
+
+============================================================
+GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
+============================================================
+  - Top 1 (doc_15936): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_19161): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_19014): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_12199): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_19551): Khôi phục THÀNH CÔNG! (20/30 Shards)
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+[1] BÁO CÁO PHÂN BỐ TẢI (Load Distribution):
+    - Trung bình (Mean): 179.7 Shards / Node
+    - Độ lệch chuẩn (Std): 292.4
+    - Node nặng nhất (Max Load): 2,288 Shards
+    -> Nhận xét: Độ lệch chuẩn cao chứng minh tính Semantic của LSH (Hotspot vùng code phổ biến).
+
+[2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:
+    - Hiệu quả định tuyến: Trung bình ~22.0 Hops (Chặng) mỗi truy vấn
+    - Recall / HitRate@5: 100.0% (So với Server FAISS tập trung)
+    -> Kết luận: Hệ thống phân tán đạt độ chính xác gần tương đương hệ thống tập trung.
+
+[3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):
+    - Tổng thời gian mô phỏng ảo: 537,264.47 ms
+    - Tỷ lệ tiết kiệm RAM: 16x (4096 bytes Vector -> 256 bytes PQ Code)
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+
+✓ Đã xuất bản báo cáo chi tiết tại: comparison_report.txt
