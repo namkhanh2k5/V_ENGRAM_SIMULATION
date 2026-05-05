@@ -1,6 +1,7 @@
 import heapq
 import numpy as np
 import hashlib
+import hmac
 
 # ============================================================================
 # CẤU HÌNH LSH ĐA VŨ TRỤ (MULTI-INDEX)
@@ -35,11 +36,14 @@ def generate_semantic_key(vector):
     """Hàm wrapper cho các logic cũ cần 1 key (mặc định lấy key đầu tiên)"""
     return generate_multi_semantic_keys(vector)[0]
 
+USER_SECRET_KEY = b"v_engram_dummy_secret_key"
+
 def generate_placement_key(semantic_key, object_tag, shard_id):
-    """Tạo địa chỉ cho mảnh vỡ dựa trên nhiễu XOR 8-bit"""
+    """Tạo địa chỉ cho mảnh vỡ dựa trên nhiễu HMAC 8-bit"""
     base_key = semantic_key & ((1 << 160) - (1 << 8))
     seed_str = f"{semantic_key}_{object_tag}_shard_{shard_id}".encode("utf-8")
-    noise_8bit = int(hashlib.sha1(seed_str).hexdigest(), 16) % 256
+    mac_hash = hmac.new(USER_SECRET_KEY, seed_str, hashlib.sha256).hexdigest()
+    noise_8bit = int(mac_hash, 16) % 256
     return base_key | noise_8bit
 
 def find_closest_node(placement_key, all_nodes):

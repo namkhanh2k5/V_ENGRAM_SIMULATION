@@ -33,7 +33,7 @@ python main_simulation.py
 **Mục đích:** Cài đặt dependencies và tạo cấu trúc thư mục dữ liệu.
 
 **Công việc:**
-- Cài đặt: `sentence-transformers`, `faiss-cpu`, `numpy`, `simpy`, `datasets`
+- Cài đặt: `sentence-transformers`, `faiss-cpu`, `datasets`
 - Tạo thư mục `./data/` (nếu chưa tồn tại)
 
 **Khi nào chạy:**
@@ -67,9 +67,9 @@ python main_simulation.py
 
 **Output:**
 - `embeddings_20k.npy` — 20k vector (20000 × 1024, float32, đã L2-normalize)
+- `v_engram_dataset_20k.json` — 20k doan code goc
 - `faiss_absolute_baseline.json` — 15 truy vấn + top-5 kết quả gốc
-- `pipeline_metadata.json` — Thông tin model, kích thước dataset, timestamp
-- `codes.json` — Backup embedding
+- `pipeline_metadata.json` — Thông tin model, kích thước dataset
 
 **Thời gian dự kiến:** ~10-15 phút (tải model + embedding)
 
@@ -131,8 +131,8 @@ python main_simulation.py
 **Công việc:**
 1. Tải embedding từ `embeddings_20k.npy`
 2. Huấn luyện PQ với:
-   - **m=256** sub-vector (4096-dim / 16 = 256-dim mỗi cái)
-   - **nbits=8** per centroid (256 giá trị mỗi sub)
+  - **m=256** sub-vector (1024-dim / 256 = 4-dim mỗi cái)
+  - **nbits=8** per centroid (256 giá trị mỗi sub)
 3. Trích codebook: hình dạng (256, 256, 4)
    - 256 sub-vector × 256 centroid × 4-dim mỗi cái
 4. Lượng tử hóa 20k embedding thành PQ code (uint8, 256 byte mỗi cái)
@@ -181,27 +181,23 @@ python main_simulation.py
 
 ## Định Dạng Baseline Truy Vấn
 
-Tất cả truy vấn được lưu trong `faiss_absolute_baseline.json`:
+Tất cả truy vấn được lưu trong `faiss_absolute_baseline.json` (danh sach object):
 
 ```json
-{
-  "queries": [
-    {
-      "query_id": 1,
-      "query_text": "def get_logger(name):",
-      "top_5_results": [
-        {
-          "rank": 1,
-          "document_id": 1272,
-          "cosine_similarity": 0.8453,
-          "code_snippet": "def get_logger(name): ..."
-        },
-        ...
-      ]
-    },
-    ...
-  ]
-}
+[
+  {
+    "query_id": 1,
+    "query_text": "def get_logger(name):",
+    "top_5_results": [
+      {
+        "rank": 1,
+        "index": 1272,
+        "cosine_similarity": 0.8453,
+        "code_snippet": "def get_logger(name): ..."
+      }
+    ]
+  }
+]
 ```
 
 **Điểm chính:**
@@ -222,7 +218,7 @@ data/
 ├── pq_codes.npy                    # Code lượng tử hóa (20000×256, uint8)
 ├── pq_codebook.npy                 # PQ centroid (256×256×4, float32)
 ├── pipeline_metadata.json          # Metadata dataset/model
-└── codes.json                      # Backup embedding
+└── v_engram_dataset_20k.json        # 20k doan code goc
 ```
 
 **Kích thước tổng:** ~100 MB
