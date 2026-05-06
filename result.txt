@@ -1,7 +1,6 @@
-(venv) khanh@khanh-Inspiron-14-5420:~/Desktop/Code_C/.vscode/V_Engram_Simulation$ python main_simulation.py
 [*] Đang nạp PQ Codebook (chuẩn Web3)...
 [*] Đang sinh ra 10,000 Nodes...
-✓ Mạng lưới sẵn sàng (1.63s)
+✓ Mạng lưới sẵn sàng (1.57s)
 
 ============================================================
 GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU (8-BIT + LOAD BALANCING + ANTI-AFFINITY)
@@ -11,7 +10,7 @@ GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU (8-BIT + LOAD BALANCING + ANTI-AFFINITY)
   ... Đã phân bổ 15,000/20,000 files.
   ... Đã phân bổ 20,000/20,000 files.
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights: 100%|█████████████████████████████████████████████████████████████████████████████████████████████| 391/391 [00:00<00:00, 10840.57it/s]
+Loading weights: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 391/391 [00:00<00:00, 2466.51it/s]
 
 >>> TRUY VẤN #1: 'def get_logger(name):'
 
@@ -101,7 +100,7 @@ GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
   - Top 2 (doc_1571): Khôi phục THÀNH CÔNG! (20/30 Shards)
   - Top 3 (doc_6557): Khôi phục THÀNH CÔNG! (20/30 Shards)
   - Top 4 (doc_8703): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 5 (doc_15173): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_15171): Khôi phục THÀNH CÔNG! (20/30 Shards)
 
 >>> TRUY VẤN #7: 'def is_email():     """     Validates that a fields value is a valid email addre'
 
@@ -116,7 +115,7 @@ GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
   - Top 2 (doc_2832): Khôi phục THÀNH CÔNG! (20/30 Shards)
   - Top 3 (doc_2833): Khôi phục THÀNH CÔNG! (20/30 Shards)
   - Top 4 (doc_12944): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 5 (doc_1619): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_15349): Khôi phục THÀNH CÔNG! (20/30 Shards)
 
 >>> TRUY VẤN #8: 'def flatten_list(nested_list):'
 
@@ -157,11 +156,11 @@ GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
 ============================================================
 GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
 ============================================================
-  - Top 1 (doc_201): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 2 (doc_306): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 3 (doc_2969): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 4 (doc_5200): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 5 (doc_17297): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 1 (doc_202): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_201): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_306): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_2969): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_5200): Khôi phục THÀNH CÔNG! (20/30 Shards)
 
 >>> TRUY VẤN #11: 'def get_value_at_percentile(self, percentile):'
 
@@ -188,10 +187,10 @@ GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)
 GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT
 ============================================================
   - Top 1 (doc_13218): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 2 (doc_13219): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 3 (doc_13229): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 4 (doc_13226): Khôi phục THÀNH CÔNG! (20/30 Shards)
-  - Top 5 (doc_1243): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 2 (doc_13226): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 3 (doc_1241): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 4 (doc_8800): Khôi phục THÀNH CÔNG! (20/30 Shards)
+  - Top 5 (doc_15013): Khôi phục THÀNH CÔNG! (20/30 Shards)
 
 >>> TRUY VẤN #13: 'def _insert_missing_rows(self, indexes):'
 
@@ -244,8 +243,8 @@ GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
 
 [1] BÁO CÁO PHÂN BỐ TẢI (Load Distribution):
     - Trung bình (Mean): 179.7 Shards / Node
-    - Độ lệch chuẩn (Std): 292.4
-    - Node nặng nhất (Max Load): 2,288 Shards
+    - Độ lệch chuẩn (Std): 299.8
+    - Node nặng nhất (Max Load): 2,404 Shards
     -> Nhận xét: Độ lệch chuẩn cao chứng minh tính Semantic của LSH (Hotspot vùng code phổ biến).
 
 [2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:
@@ -254,7 +253,7 @@ GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
     -> Kết luận: Hệ thống phân tán đạt độ chính xác gần tương đương hệ thống tập trung.
 
 [3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):
-    - Tổng thời gian mô phỏng ảo: 537,264.47 ms
+    - Tổng thời gian mô phỏng ảo: 536,340.94 ms
     - Tỷ lệ tiết kiệm RAM: 16x (4096 bytes Vector -> 256 bytes PQ Code)
 ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
