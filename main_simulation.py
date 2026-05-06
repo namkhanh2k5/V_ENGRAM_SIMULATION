@@ -3,7 +3,7 @@ import numpy as np
 import json
 from sentence_transformers import SentenceTransformer
 from src.network import bootstrap_network, data_ingestion_process, query_pipeline_process
-from src.evaluation import stage5_metrics_collection, export_comparison_report
+from src.evaluation import stage5_metrics_collection, export_comparison_report, test_data_integrity
 
 NUM_NODES = 10000
 NUM_FILES = 20000
@@ -24,6 +24,14 @@ def run_simulation(env):
     
     # Đẩy 20k files vào mạng
     yield env.process(data_ingestion_process(env, network_nodes, NUM_FILES, SHARDS_PER_FILE))
+
+    # Kiem thu toan ven nhanh (10 file mau)
+    sample_doc_ids = [
+        12, 99, 256, 512, 1024,
+        2048, 4096, 8192, 12345, 19999,
+    ]
+    for test_doc_id in sample_doc_ids:
+        test_data_integrity(network_nodes, test_doc_id=test_doc_id)
     
     # Truy vấn và khôi phục
     try:

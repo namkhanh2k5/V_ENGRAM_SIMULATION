@@ -85,24 +85,31 @@ def test_data_integrity(network_nodes, test_doc_id=99):
     print("=" * 50)
     
     target_tag = f"doc_{test_doc_id}"
+    shard_prefix = f"{target_tag}_shard_"
     found_shards = 0
+    unique_shard_ids = set()
     hosting_nodes = []
     
     for node in network_nodes:
         # Quét SSD của từng Node để tìm mảnh vỡ
-        shards_here = [k for k in node.SSD_Storage.keys() if target_tag in k]
+        shards_here = [k for k in node.SSD_Storage.keys() if k.startswith(shard_prefix)]
         if shards_here:
             found_shards += len(shards_here)
             hosting_nodes.append(str(node.node_id)[:8])
+            for shard_key in shards_here:
+                shard_id_str = shard_key[len(shard_prefix):]
+                if shard_id_str.isdigit():
+                    unique_shard_ids.add(int(shard_id_str))
             
     print(f"[*] Kết quả quét toàn mạng:")
     print(f"    - Tổng số mảnh vỡ tìm thấy: {found_shards}/30")
+    print(f"    - Số shard duy nhất: {len(unique_shard_ids)}/30")
     print(f"    - Số Node đang lưu trữ: {len(hosting_nodes)}")
     print(f"    - Danh sách các Node ID lân cận: {', '.join(hosting_nodes)}")
     
-    if found_shards == 30 and len(hosting_nodes) > 1:
+    if len(unique_shard_ids) == 30 and len(hosting_nodes) > 1:
         print("    -> ✓ TRẠNG THÁI: TOÀN VẸN & PHÂN TÁN AN TOÀN!")
-    elif found_shards == 30:
+    elif len(unique_shard_ids) == 30:
         print("    -> ⚠️ TRẠNG THÁI: TOÀN VẸN nhưng chưa phân tán (Cần xem lại logic rải Shard).")
     else:
         print("    -> ❌ TRẠNG THÁI: MẤT DỮ LIỆU!")

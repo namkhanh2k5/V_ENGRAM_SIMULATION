@@ -34,7 +34,7 @@ Semantic key được sử dụng để định vị đối tượng trong khôn
 
 Cụ thể, semantic key 160-bit được chia thành hai phần. Phần 152 bit đầu tiên được giữ nguyên và đóng vai trò như một semantic anchor, đảm bảo rằng tất cả các shard của cùng một object vẫn nằm trong cùng một semantic neighborhood. Phần 8 bit cuối cùng được sử dụng để tạo sự đa dạng trong phân bố thông qua phép XOR, đóng vai trò như một phép “nhiễu có kiểm soát” phụ thuộc vào `object_tag` và chỉ số shard:
 
-$$P_i = (B \land \text{Mask}_{152}) \lor (\text{HMAC}(\text{object\_tag}, i) \pmod{256})$$
+$$P_i = (B \land \text{Mask}_{152}) \lor (\text{HMAC}(\mathrm{object\_tag}, i) \bmod 256)$$
 
 Với 8 bit, hệ thống tạo ra tối đa 256 vị trí khả dĩ cho mỗi semantic region, đủ lớn để phân tán các shard (ví dụ 30 shard) lên các node khác nhau, nhưng vẫn đủ nhỏ để giữ tất cả shard trong cùng một vùng lân cận.
 

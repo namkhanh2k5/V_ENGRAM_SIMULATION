@@ -29,7 +29,7 @@ QUERY #5: 'def unique_list(seq):     """ Removes duplicate elements from given @
 ----------------------------------------
 QUERY #6: 'def _radixPass(a, b, r, n, K):     """     Stable sort of the sequence a accordi'
   - FAISS (Truth) : [1569, 1570, 10543, 1571, 16859]
-  - V-Engram (P2P): [1569, 1571, 6557, 8703, 15171]
+  - V-Engram (P2P): [1569, 1571, 6557, 8703, 15173]
   => TRẠNG THÁI: KHỚP (2 kết quả: [1569, 1571])
 ----------------------------------------
 QUERY #7: 'def is_email():     """     Validates that a fields value is a valid email addre'
@@ -49,8 +49,8 @@ QUERY #9: 'def parse_yaml_config(file_path):'
 ----------------------------------------
 QUERY #10: 'def get_manifest_from_meta(metaurl, name):'
   - FAISS (Truth) : [202, 18015, 18019, 201, 17924]
-  - V-Engram (P2P): [202, 201, 306, 2969, 5200]
-  => TRẠNG THÁI: KHỚP (2 kết quả: [201, 202])
+  - V-Engram (P2P): [201, 306, 2969, 5200, 17297]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [201])
 ----------------------------------------
 QUERY #11: 'def get_value_at_percentile(self, percentile):'
   - FAISS (Truth) : [15834, 15835, 13414, 18203, 4821]
