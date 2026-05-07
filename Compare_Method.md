@@ -1,46 +1,46 @@
-# Bao cao so sanh ky thuat: V-Engram va cac giai phap luu tru/tim kiem phi tap trung
+# Báo cáo so sánh kỹ thuật: V-Engram và các giải pháp lưu trữ/tìm kiếm phi tập trung
 
-## 1. So sanh voi cac giao thuc co so (Kademlia, IPFS, Filecoin)
+## 1. So sánh với các giao thức cơ sở (Kademlia, IPFS, Filecoin)
 
-| Tieu chi | Kademlia (nguyen ban) | IPFS / Filecoin | V-Engram (de xuat) |
+| Tiêu chí | Kademlia (nguyên bản) | IPFS / Filecoin | V-Engram (đề xuất) |
 | --- | --- | --- | --- |
-| Dinh vi du lieu | Dua tren ma bam ID tuyet doi (exact match). | Dua tren CID sinh tu SHA-256. | Dua tren semantic key sinh tu AI embedding qua LSH. |
-| Kha nang tim kiem | Chi tim duoc khi biet chinh xac ID. | "Mu ngu nghia", can CID chinh xac de truy xuat. | Ho tro tim kiem mo/ngu nghia tu nhien. |
-| Phan bo shard | Khong co co che phan manh mac dinh. | Sharding theo Merkle DAG, phan tan ngau nhien. | Placement key (152/8-bit): giu lan can ngu nghia va can bang tai. |
-| Cau truc node | Node trung lap (chi dinh tuyen). | Storage node (luu tru thuan tuy). | Compute-Storage node: RAM chay ADC, SSD luu payload. |
-| Hieu ung mang | Tham lam, dam thang 1 duong toi dich. | Dam thang toi CID. | Ripple search: loang rong dong, tim nhieu ung vien. |
+| Định vị dữ liệu | Dựa trên mã băm ID tuyệt đối (exact match). | Dựa trên CID sinh từ SHA-256. | Dựa trên semantic key sinh từ AI embedding qua LSH. |
+| Khả năng tìm kiếm | Chỉ tìm được khi biết chính xác ID. | "Mù ngữ nghĩa", cần CID chính xác để truy xuất. | Hỗ trợ tìm kiếm mờ/ngữ nghĩa tự nhiên. |
+| Phân bố shard | Không có cơ chế phân mảnh mặc định. | Sharding theo Merkle DAG, phân tán ngẫu nhiên. | Placement key (152/8-bit): giữ lân cận ngữ nghĩa và cân bằng tải. |
+| Cấu trúc node | Node trung lập (chỉ định tuyến). | Storage node (lưu trữ thuần túy). | Node tính toán - lưu trữ: RAM chạy ADC, SSD lưu payload. |
+| Hiệu ứng mạng | Tham lam, đâm thẳng 1 đường tới đích. | Đâm thẳng tới CID. | Ripple search: loang rộng động, tìm nhiều ứng viên. |
 
-## 2. So sanh voi cac nghien cuu tien nhiem (state-of-the-art)
+## 2. So sánh với các nghiên cứu tiền nhiệm (state-of-the-art)
 
 ### 2.1 pSearch (2003)
-- Diem giong: su dung LSH de anh xa du lieu vao khong gian mang.
-- Han che: su dung LSI cu voi vector thua, can semantic overlay cong kenh de len P2P.
-- Cai tien cua V-Engram: dung dense embedding 1024-dim tu LLM, tich hop truc tiep vao khoa Kademlia ban dia, giam do tre va tang tuong thich.
+- Điểm giống: sử dụng LSH để ánh xạ dữ liệu vào không gian mạng.
+- Hạn chế: sử dụng LSI cũ với vector thưa, cần semantic overlay cồng kềnh đè lên P2P.
+- Cải tiến của V-Engram: dùng dense embedding 1024-dim từ LLM, tích hợp trực tiếp vào khóa Kademlia bản địa, giảm độ trễ và tăng tương thích.
 
 ### 2.2 Graph Diffusion (2022)
-- Diem giong: su dung co che lan truyen de tim kiem ket qua tuong dong.
-- Han che: phu thuoc do thi, kho mo rong, khong co co che luu tru phan manh an toan.
-- Cai tien cua V-Engram: giu O(log N) cua Kademlia, bo sung AES va Reed-Solomon de bao toan du lieu.
+- Điểm giống: sử dụng cơ chế lan truyền để tìm kiếm kết quả tương đồng.
+- Hạn chế: phụ thuộc đồ thị, khó mở rộng, không có cơ chế lưu trữ phân mảnh an toàn.
+- Cải tiến của V-Engram: giữ O(log N) của Kademlia, bổ sung AES và Reed-Solomon để bảo toàn dữ liệu.
 
 ### 2.3 Semantica (2025)
-- Diem giong: su dung embedding hien dai de tim kiem tren mang phan tan.
-- Han che: luu vector goc dan den tran RAM node bien, thieu co che phan bo shard, gay nghen cuc bo.
-- Cai tien cua V-Engram:
-  - Toi uu RAM: nen vector 16 lan bang PQ.
-  - Can bang tai: placement key + nhieu HMAC de rai 30 manh ra 30 node lan can.
+- Điểm giống: sử dụng embedding hiện đại để tìm kiếm trên mạng phân tán.
+- Hạn chế: lưu vector gốc dẫn đến tràn RAM node biên, thiếu cơ chế phân bố shard, gây nghẽn cục bộ.
+- Cải tiến của V-Engram:
+  - Tối ưu RAM: nén vector 16 lần bằng PQ.
+  - Cân bằng tải: placement key + nhiễu HMAC để rải 30 mảnh ra 30 node lân cận.
 
-## 3. Phan tich uu va nhuoc diem cua V-Engram
+## 3. Phân tích ưu và nhược điểm của V-Engram
 
-### 3.1 Uu diem dot pha
-- AI-native routing: bien routing thanh tim kiem ngu nghia.
-- Hieu qua tai nguyen: PQ/ADC cho phep search tren RAM nho, phu hop edge/IoT.
-- Bao mat zero-knowledge: AES tai client, shard rai khap noi, node luu tru khong biet noi dung.
-- He sinh thai Web3: tich hop smart contract cho truy xuat du lieu, tao thi truong tim kiem AI phi tap trung.
+### 3.1 Ưu điểm đột phá
+- AI-native routing: biến routing thành tìm kiếm ngữ nghĩa.
+- Hiệu quả tài nguyên: PQ/ADC cho phép search trên RAM nhỏ, phù hợp edge/IoT.
+- Bảo mật zero-knowledge: AES tại client, shard rải khắp nơi, node lưu trữ không biết nội dung.
+- Hệ sinh thái Web3: tích hợp smart contract cho truy xuất dữ liệu, tạo thị trường tìm kiếm AI phi tập trung.
 
-### 3.2 Nhuoc diem va thach thuc
-- Cap nhat phuc tap: noi dung doi -> semantic key doi -> di doi 30 shard.
-- Sai so luong tu hoa: PQ giam 4KB -> 256B, sai so cosine ~0.02, can reranking.
-- Lexical gap: dense vector kho xu ly tim kiem exact keyword (ma phien ban, hang so).
+### 3.2 Nhược điểm và thách thức
+- Cập nhật phức tạp: nội dung đổi -> semantic key đổi -> di dời 30 shard.
+- Sai số lượng tử hóa: PQ giảm 4KB -> 256B, sai số cosine ~0.02, cần reranking.
+- Lexical gap: dense vector khó xử lý tìm kiếm exact keyword (mã phiên bản, hằng số).
 
-## 4. Ket luan
-V-Engram khong chi la mot giai phap luu tru moi. No la su giao thoa giua luu tru bat bien Web3 va truy van thong minh AI. So voi IPFS/Filecoin, V-Engram thong minh hon. So voi cac nghien cuu nhu Semantica hay pSearch, V-Engram thuc chien hon nho toi uu phan cung va can bang tai.
+## 4. Kết luận
+V-Engram không chỉ là một giải pháp lưu trữ mới. Nó là sự giao thoa giữa lưu trữ bất biến Web3 và truy vấn thông minh AI. So với IPFS/Filecoin, V-Engram "thông minh" hơn. So với các nghiên cứu như Semantica hay pSearch, V-Engram "thực chiến" hơn nhờ tối ưu phần cứng và cân bằng tải.
