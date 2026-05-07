@@ -101,30 +101,30 @@ Thực nghiệm được chạy trên 20.000 đoạn mã nguồn, embedding 1024
 *   **Routing + accuracy:** Trung bình ~22.0 hops mỗi truy vấn, Recall/HitRate@5 = 100.0% so với FAISS.
 *   **Resource:** Thời gian mô phỏng ảo 537,264.47 ms; tiết kiệm RAM 16x (4096 bytes -> 256 bytes).
 
-#### 1.10.1 Do phuc tap va uoc tinh thoi gian
+#### 1.10.1 Độ phức tạp và ước tính thời gian
 
-| Qua trinh | Tac vu | Do phuc tap toan hoc | Thoi gian uoc tinh (thuc te) | Ghi chu thiet ke |
+| Quá trình | Tác vụ | Độ phức tạp toán học | Thời gian ước tính (thực tế) | Ghi chú thiết kế |
 | --- | --- | --- | --- | --- |
-| Ghi (Ingest) | AI Embedding | $O(L^2 \cdot d)$ | 50ms (CPU) / 5ms (GPU) | Nut that co chai chinh, phu thuoc cau hinh client. |
-| Ghi (Ingest) | Reed-Solomon Encode | $O(S \cdot k \cdot (n-k))$ | 3ms | Xu ly CPU cuc bo, nhe. |
-| Ghi (Ingest) | Phan tan 30 Shards | $O(\max RTT_{1\rightarrow30})$ | 30ms-50ms | I/O song song. |
-| Ghi (Ingest) | Luu so do Kademlia | $O(\log N)$ | 15ms | Xu ly song song voi ghi shards. |
-| Doc (Query) | LSH + K-Search | $O(P \cdot K + P \cdot K \cdot C)$ | 20ms-40ms | P la so projection, K la so node quet, C la chi phi ADC/node. |
-| Doc (Query) | ADC Search (RAM) | $O(F)$ | <2ms | Duyet so vector luu tai node, LUT tao truc tiep. |
-| Doc (Query) | Tai 20 Shards | $O(\max RTT_{1\rightarrow20})$ | 20ms-40ms | Khong can cho 10 shard cham nhat. |
-| Doc (Query) | Reed-Solomon Decode | $O(S \cdot k^2)$ | 3ms | Thuc te co the toi uu voi thuat toan nhanh hon. |
+| Ghi (Ingest) | AI Embedding | $O(L^2 \cdot d)$ | 50ms (CPU) / 5ms (GPU) | Nút thắt cổ chai chính, phụ thuộc cấu hình client. |
+| Ghi (Ingest) | Reed-Solomon Encode | $O(S \cdot k \cdot (n-k))$ | 3ms | Xử lý CPU cục bộ, nhẹ. |
+| Ghi (Ingest) | Phân tán 30 Shards | $O(\max RTT_{1\rightarrow30})$ | 30ms-50ms | I/O song song. |
+| Ghi (Ingest) | Lưu sổ đỏ Kademlia | $O(\log N)$ | 15ms | Xử lý song song với ghi shards. |
+| Đọc (Query) | LSH + K-Search | $O(P \cdot K + P \cdot K \cdot C)$ | 20ms-40ms | $P$ là số projection, $K$ là số node quét, $C$ là chi phí ADC/node. |
+| Đọc (Query) | ADC Search (RAM) | $O(F)$ | <2ms | Duyệt số vector lưu tại node, LUT tạo trực tiếp. |
+| Đọc (Query) | Tải 20 Shards | $O(\max RTT_{1\rightarrow20})$ | 20ms-40ms | Không cần chờ 10 shard chậm nhất. |
+| Đọc (Query) | Reed-Solomon Decode | $O(S \cdot k^2)$ | 3ms | Thực tế có thể tối ưu với thuật toán nhanh hơn. |
 
-**Giai thich ky hieu:**
+**Giải thích ký hiệu:**
 
-*   $L$: do dai chuoi dau vao (token length)
-*   $d$: so chieu embedding
-*   $S$: kich thuoc du lieu can ma hoa (bytes)
-*   $k, n$: thong so Reed-Solomon (k shard can, n shard tong)
-*   $P$: so projection trong LSH
-*   $K$: so node duoc quet trong K-Search
-*   $C$: chi phi ADC tren mot node
-*   $F$: so vector duoc luu trong RAM cua node
-*   $RTT$: round-trip time giua cac node
+*   $L$: độ dài chuỗi đầu vào (token length)
+*   $d$: số chiều embedding
+*   $S$: kích thước dữ liệu cần mã hóa (bytes)
+*   $k, n$: thông số Reed-Solomon ($k$ shard cần, $n$ shard tổng)
+*   $P$: số projection trong LSH
+*   $K$: số node được quét trong K-Search
+*   $C$: chi phí ADC trên một node
+*   $F$: số vector được lưu trong RAM của node
+*   $RTT$: round-trip time giữa các node
 
 #### 1.11 Thảo luận và Giới hạn Mô phỏng (Discussion & Simulation Boundaries)
 Thiết kế của hệ thống kết hợp hiệu quả giữa semantic retrieval và hạ tầng phi tập trung. Multi-projection mở rộng không gian tìm kiếm theo chiều rộng, trong khi K-search mở rộng lân cận quanh từng key để giảm lỗi biên. Cơ chế placement key đảm bảo cân bằng giữa semantic locality và phân tán tải.
