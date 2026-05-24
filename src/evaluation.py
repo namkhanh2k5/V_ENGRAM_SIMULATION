@@ -1,37 +1,24 @@
 import json
 import numpy as np
 
-def stage5_metrics_collection(env, network_nodes, test_results):
-    """
-    GIAI ĐOẠN 5: Thu hoạch và phân tích số liệu cuối cùng.
-    Chứng minh các chỉ số Recall, Hops và Cân bằng tải.
-    """
-    print("\n" + "★" * 80)
-    print("GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)")
-    print("★" * 80)
-
+def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="./data/faiss_absolute_baseline.json"):
     # 1. PHÂN TÍCH TẢI TRỌNG (LOAD DISTRIBUTION)
     shard_counts = [len(node.SSD_Storage) for node in network_nodes]
     avg_shards = np.mean(shard_counts)
     std_shards = np.std(shard_counts)
     max_shards = np.max(shard_counts)
-    
-    print(f"\n[1] BÁO CÁO PHÂN BỐ TẢI (Load Distribution):")
-    print(f"    - Trung bình (Mean): {avg_shards:.1f} Shards / Node")
-    print(f"    - Độ lệch chuẩn (Std): {std_shards:.1f}")
-    print(f"    - Node nặng nhất (Max Load): {max_shards:,} Shards")
-    print(f"    -> Nhận xét: Độ lệch chuẩn cao chứng minh tính Semantic của LSH (Hotspot vùng code phổ biến).")
 
-    # 2. ĐỐI CHIẾU RECALL / HITRATE@5 VỚI FAISS
+    # 2. ĐỐI CHIẾU SUCCESS@5 VỚI FAISS
     try:
-        with open("./data/faiss_absolute_baseline.json", "r", encoding="utf-8") as f:
+        with open(ground_truth_path, "r", encoding="utf-8") as f:
             ground_truth = json.load(f)
     except FileNotFoundError:
         print("❌ LỖI: Không tìm thấy file faiss_absolute_baseline.json để đối chiếu.")
-        return
+        return None
 
     hit_count = 0
     total_hops = 0
+    mrr_total = 0.0
 
     for q_res in test_results:
         q_id = q_res['query_id']
@@ -57,21 +44,63 @@ def stage5_metrics_collection(env, network_nodes, test_results):
 
         # Tính toán giao thoa (Intersection) giữa kết quả P2P và FAISS
         # Nếu trúng ít nhất 1 kết quả trong Top 5 chuẩn -> Tính là 1 Hit
-        if set(retrieved_indices).intersection(set(gt_indices)):
+        gt_index_set = set(gt_indices)
+        if set(retrieved_indices).intersection(gt_index_set):
             hit_count += 1
 
-    recall_rate = (hit_count / len(test_results)) * 100 if test_results else 0
-    avg_hops = total_hops / len(test_results) if test_results else 0
+        # MRR: tìm vị trí đầu tiên trong Top-5 P2P khớp với Ground Truth
+        reciprocal_rank = 0.0
+        for rank, idx in enumerate(retrieved_indices, 1):
+            if idx in gt_index_set:
+                reciprocal_rank = 1.0 / rank
+                break
+        mrr_total += reciprocal_rank
+
+    total_queries = len(test_results) if test_results else 0
+    success_rate = (hit_count / total_queries) * 100 if total_queries else 0
+    avg_hops = total_hops / total_queries if total_queries else 0
+    mrr_score = mrr_total / total_queries if total_queries else 0
+
+    return {
+        "avg_shards": avg_shards,
+        "std_shards": std_shards,
+        "max_shards": max_shards,
+        "avg_hops": avg_hops,
+        "success_rate": success_rate,
+        "mrr_score": mrr_score,
+        "sim_time_ms": env.now,
+    }
+
+
+def stage5_metrics_collection(env, network_nodes, test_results):
+    """
+    GIAI ĐOẠN 5: Thu hoạch và phân tích số liệu cuối cùng.
+    Chứng minh các chỉ số Success@5, Hops và Cân bằng tải.
+    """
+    print("\n" + "★" * 80)
+    print("GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)")
+    print("★" * 80)
+
+    metrics = compute_stage5_metrics(env, network_nodes, test_results)
+    if metrics is None:
+        return
+
+    print(f"\n[1] BÁO CÁO PHÂN BỐ TẢI (Load Distribution):")
+    print(f"    - Trung bình (Mean): {metrics['avg_shards']:.1f} Shards / Node")
+    print(f"    - Độ lệch chuẩn (Std): {metrics['std_shards']:.1f}")
+    print(f"    - Node nặng nhất (Max Load): {metrics['max_shards']:,.0f} Shards")
+    print(f"    -> Nhận xét: Độ lệch chuẩn cao chứng minh tính Semantic của LSH (Hotspot vùng code phổ biến).")
 
     print(f"\n[2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:")
-    print(f"    - Hiệu quả định tuyến: Trung bình ~{avg_hops:.1f} Hops (Chặng) mỗi truy vấn")
-    print(f"    - Recall / HitRate@5: {recall_rate:.1f}% (So với Server FAISS tập trung)")
+    print(f"    - Hiệu quả định tuyến: Trung bình ~{metrics['avg_hops']:.1f} Hops (Chặng) mỗi truy vấn")
+    print(f"    - Success@5: {metrics['success_rate']:.1f}% (So với Server FAISS tập trung)")
+    print(f"    - MRR@5: {metrics['mrr_score']:.3f} (Mean Reciprocal Rank trong Top-5 P2P)")
     print(f"    -> Kết luận: Hệ thống phân tán đạt độ chính xác gần tương đương hệ thống tập trung.")
 
     # 3. CHI PHÍ TÀI NGUYÊN (RESOURCE COST)
     print(f"\n[3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):")
     # env.now là thời gian ảo của SimPy (mili-giây)
-    print(f"    - Tổng thời gian mô phỏng ảo: {env.now:,.2f} ms")
+    print(f"    - Tổng thời gian mô phỏng ảo: {metrics['sim_time_ms']:,.2f} ms")
     print(f"    - Tỷ lệ tiết kiệm RAM: 16x (4096 bytes Vector -> 256 bytes PQ Code)")
     print("★" * 80 + "\n")
 

@@ -7,11 +7,14 @@ class VEngramNode:
         self.node_id = node_id
         self.RAM_Index = {}   
         self.SSD_Storage = {} 
-        self.routing_table = set() 
+        self.routing_table = set()
 
     def ping(self, target_node):
         yield self.env.timeout(random.uniform(10, 100))
-        self.routing_table.add(target_node.node_id)
+        self.routing_table.add(target_node)
+
+    def get_neighbors(self):
+        return list(self.routing_table)
 
     def store_shard(self, object_tag, shard_id, pq_code, virtual_payload):
         if object_tag not in self.RAM_Index:

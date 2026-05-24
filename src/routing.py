@@ -1,4 +1,3 @@
-import heapq
 import numpy as np
 import hashlib
 import hmac
@@ -6,14 +5,14 @@ import hmac
 # ============================================================================
 # CẤU HÌNH LSH ĐA VŨ TRỤ (MULTI-INDEX)
 # ============================================================================
-VECTOR_DIM = 1024
-NUM_PROJECTIONS = 3  # Số lượng ma trận chiếu độc lập
-np.random.seed(2026)   # Đảm bảo tính nhất quán toàn mạng
+VECTOR_DIM = 1024   
+NUM_PROJECTIONS = 5  # Số lượng ma trận chiếu độc lập
+np.random.seed(20235956)   # Đảm bảo tính nhất quán toàn mạng
 
 # Khởi tạo 3 ma trận chiếu thưa {-1, 0, 1}
 # Giúp nén thông tin hiệu quả và giảm thiểu sai số ranh giới (Boundary problem)
 PROJECTION_MATRICES = []
-for i in range(NUM_PROJECTIONS):
+for _ in range(NUM_PROJECTIONS):
     # Achlioptas Distribution: P(1)=1/6, P(-1)=1/6, P(0)=2/3
     matrix = np.random.choice([0, 1, -1], size=(VECTOR_DIM, 160), p=[2/3, 1/6, 1/6])
     PROJECTION_MATRICES.append(matrix)
@@ -46,10 +45,32 @@ def generate_placement_key(semantic_key, object_tag, shard_id):
     noise_8bit = int(mac_hash, 16) % 256
     return base_key | noise_8bit
 
-def find_closest_node(placement_key, all_nodes):
-    """Tìm Node duy nhất có khoảng cách XOR nhỏ nhất"""
-    return min(all_nodes, key=lambda node: node.node_id ^ placement_key)
+def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=3, k=20, max_rounds=15):
+    """
+    Mô phỏng định tuyến Kademlia kiểu iterative, không dùng global view.
+    Trả về danh sách k node gần nhất và số vòng nhảy (overlay hops).
+    """
+    candidates = set([bootstrap_node])
+    candidates.update(bootstrap_node.get_neighbors())
+    queried = set()
+    prev_best = None
+    hops = 0
 
-def find_k_closest_nodes(key, all_nodes, k=30):
-    """Tìm cụm K Node lân cận trong không gian XOR"""
-    return heapq.nsmallest(k, all_nodes, key=lambda node: node.node_id ^ key)
+    for _ in range(max_rounds):
+        ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
+        to_query = [node for node in ordered if node not in queried][:alpha]
+        if not to_query:
+            break
+
+        hops += 1
+        for node in to_query:
+            queried.add(node)
+            candidates.update(node.get_neighbors())
+
+        best_ids = tuple(node.node_id for node in ordered[:k])
+        if best_ids == prev_best:
+            break
+        prev_best = best_ids
+
+    ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
+    return ordered[:k], hops

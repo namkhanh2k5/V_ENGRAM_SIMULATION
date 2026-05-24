@@ -4,76 +4,2501 @@ BẢN BÁO CÁO ĐỐI CHIẾU KẾT QUẢ: V-ENGRAM P2P vs. FAISS BASELINE
 
 QUERY #1: 'def get_logger(name):'
   - FAISS (Truth) : [1272, 6624, 8352, 8264, 16581]
-  - V-Engram (P2P): [1272, 6624, 16581, 8264, 680]
-  => TRẠNG THÁI: KHỚP (4 kết quả: [6624, 1272, 8264, 16581])
+  - V-Engram (P2P): [1272, 8352, 16581, 12255, 9370]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [8352, 1272, 16581])
 ----------------------------------------
 QUERY #2: 'def _merge_dicts(self, dict1, dict2, path=[]):         "merges dict2 into dict1"'
   - FAISS (Truth) : [3626, 12005, 10876, 6725, 1849]
-  - V-Engram (P2P): [3626, 1851, 1882, 13048, 1884]
-  => TRẠNG THÁI: KHỚP (1 kết quả: [3626])
+  - V-Engram (P2P): [3626, 12005, 10876, 6725, 5033]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [12005, 3626, 10876, 6725])
 ----------------------------------------
 QUERY #3: 'def max(self):         """ -> #float :func:numpy.max of the timing intervals """'
   - FAISS (Truth) : [5242, 5243, 5241, 5240, 5244]
-  - V-Engram (P2P): [5242, 5241, 9603, 18666, 19423]
-  => TRẠNG THÁI: KHỚP (2 kết quả: [5241, 5242])
+  - V-Engram (P2P): [5242, 5241, 5243, 5240, 5244]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [5240, 5241, 5242, 5243, 5244])
 ----------------------------------------
 QUERY #4: 'def _strip_text(text):         """Returns text with spaces and inserts removed."'
   - FAISS (Truth) : [8767, 8766, 4122, 10315, 12767]
-  - V-Engram (P2P): [8767, 8766, 4122, 10315, 12120]
-  => TRẠNG THÁI: KHỚP (4 kết quả: [4122, 10315, 8766, 8767])
+  - V-Engram (P2P): [8766, 4122, 10315, 853, 12120]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4122, 10315, 8766])
 ----------------------------------------
 QUERY #5: 'def unique_list(seq):     """ Removes duplicate elements from given @seq'
   - FAISS (Truth) : [5316, 8546, 11268, 16867, 15156]
-  - V-Engram (P2P): [5316, 8546, 16867, 11268, 11047]
-  => TRẠNG THÁI: KHỚP (4 kết quả: [8546, 16867, 5316, 11268])
+  - V-Engram (P2P): [5316, 8546, 16867, 11268, 15156]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [8546, 16867, 5316, 11268, 15156])
 ----------------------------------------
 QUERY #6: 'def _radixPass(a, b, r, n, K):     """     Stable sort of the sequence a accordi'
   - FAISS (Truth) : [1569, 1570, 10543, 1571, 16859]
-  - V-Engram (P2P): [1569, 1571, 6557, 8703, 15173]
-  => TRẠNG THÁI: KHỚP (2 kết quả: [1569, 1571])
+  - V-Engram (P2P): [1569, 1570, 10543, 13517, 16859]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [1569, 1570, 16859, 10543])
 ----------------------------------------
 QUERY #7: 'def is_email():     """     Validates that a fields value is a valid email addre'
   - FAISS (Truth) : [1606, 2832, 1607, 2834, 10220]
-  - V-Engram (P2P): [1606, 2832, 2833, 12944, 15349]
-  => TRẠNG THÁI: KHỚP (2 kết quả: [2832, 1606])
+  - V-Engram (P2P): [1606, 2832, 10220, 8878, 2834]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [2832, 2834, 10220, 1606])
 ----------------------------------------
 QUERY #8: 'def flatten_list(nested_list):'
   - FAISS (Truth) : [1716, 18397, 17093, 13115, 11250]
-  - V-Engram (P2P): [1716, 12234, 5317, 8089, 1840]
-  => TRẠNG THÁI: KHỚP (1 kết quả: [1716])
+  - V-Engram (P2P): [1716, 13115, 11250, 14419, 15018]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [11250, 13115, 1716])
 ----------------------------------------
 QUERY #9: 'def parse_yaml_config(file_path):'
   - FAISS (Truth) : [5886, 4161, 5282, 1694, 15490]
-  - V-Engram (P2P): [5282, 5886, 1694, 18760, 12237]
-  => TRẠNG THÁI: KHỚP (3 kết quả: [5282, 1694, 5886])
+  - V-Engram (P2P): [5886, 15490, 1694, 1883, 18760]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15490, 1694, 5886])
 ----------------------------------------
 QUERY #10: 'def get_manifest_from_meta(metaurl, name):'
   - FAISS (Truth) : [202, 18015, 18019, 201, 17924]
-  - V-Engram (P2P): [201, 306, 2969, 5200, 17297]
-  => TRẠNG THÁI: KHỚP (1 kết quả: [201])
+  - V-Engram (P2P): [202, 201, 18019, 306, 7529]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [201, 202, 18019])
 ----------------------------------------
 QUERY #11: 'def get_value_at_percentile(self, percentile):'
   - FAISS (Truth) : [15834, 15835, 13414, 18203, 4821]
-  - V-Engram (P2P): [15834, 18666, 10546, 18903, 19765]
+  - V-Engram (P2P): [15834, 9971, 12308, 8557, 16888]
   => TRẠNG THÁI: KHỚP (1 kết quả: [15834])
 ----------------------------------------
 QUERY #12: 'def delete_async(blob_key, **options):'
   - FAISS (Truth) : [13218, 13219, 13229, 13303, 13226]
-  - V-Engram (P2P): [13218, 13226, 1241, 8800, 15013]
-  => TRẠNG THÁI: KHỚP (2 kết quả: [13226, 13218])
+  - V-Engram (P2P): [13218, 13219, 13229, 13226, 14142]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13226, 13218, 13219, 13229])
 ----------------------------------------
 QUERY #13: 'def _insert_missing_rows(self, indexes):'
   - FAISS (Truth) : [4658, 4657, 4656, 4660, 4663]
-  - V-Engram (P2P): [4658, 4654, 15910, 15909, 4704]
-  => TRẠNG THÁI: KHỚP (1 kết quả: [4658])
+  - V-Engram (P2P): [4658, 4657, 4656, 4663, 4660]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [4656, 4657, 4658, 4660, 4663])
 ----------------------------------------
 QUERY #14: 'def set_log_level_format(level, format):'
   - FAISS (Truth) : [12646, 681, 6824, 7351, 5219]
-  - V-Engram (P2P): [12646, 6824, 6860, 7737, 15591]
-  => TRẠNG THÁI: KHỚP (2 kết quả: [6824, 12646])
+  - V-Engram (P2P): [12646, 681, 6824, 6860, 7737]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [6824, 681, 12646])
 ----------------------------------------
 QUERY #15: 'def pack_pointer(self, name):'
   - FAISS (Truth) : [15936, 7360, 11590, 11725, 7772]
-  - V-Engram (P2P): [15936, 19161, 19014, 12199, 19551]
-  => TRẠNG THÁI: KHỚP (1 kết quả: [15936])
+  - V-Engram (P2P): [15936, 7360, 11725, 19016, 11589]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15936, 11725, 7360])
+----------------------------------------
+QUERY #16: 'def addpackage(sys_sitedir, pthfile, known_dirs):'
+  - FAISS (Truth) : [15640, 15642, 15681, 15638, 7544]
+  - V-Engram (P2P): [15640, 7544, 7535, 6628, 19113]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [7544, 15640])
+----------------------------------------
+QUERY #17: 'def set_terminate_listeners(stream):'
+  - FAISS (Truth) : [11151, 10240, 19897, 3269, 6404]
+  - V-Engram (P2P): [11151, 19897, 6404, 11154, 19036]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19897, 6404, 11151])
+----------------------------------------
+QUERY #18: 'def discover_upnp_devices('
+  - FAISS (Truth) : [12426, 12427, 9955, 11967, 421]
+  - V-Engram (P2P): [12426, 11967, 19236, 4600, 4320]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [12426, 11967])
+----------------------------------------
+QUERY #19: 'def send_sci(self, operation, target, payload, reply=None, synchronous=None, sync_timeout=None,'
+  - FAISS (Truth) : [10470, 10469, 16669, 16675, 16666]
+  - V-Engram (P2P): [10469, 16669, 10168, 10007, 10428]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [16669, 10469])
+----------------------------------------
+QUERY #20: 'def _extract_schema_if_given(table_name):'
+  - FAISS (Truth) : [5831, 1257, 976, 1256, 974]
+  - V-Engram (P2P): [5831, 1257, 1256, 642, 6599]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1256, 1257, 5831])
+----------------------------------------
+QUERY #21: 'def getLogs(self, CorpNum, MgtKeyType, MgtKey):'
+  - FAISS (Truth) : [2918, 3031, 2961, 3023, 3032]
+  - V-Engram (P2P): [2918, 3031, 2961, 3023, 13400]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [2961, 3031, 2918, 3023])
+----------------------------------------
+QUERY #22: 'def global_add(self, key: str, value: Any) -> None:'
+  - FAISS (Truth) : [19068, 11395, 18932, 15768, 15686]
+  - V-Engram (P2P): [19068, 6080, 15976, 2859, 1852]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [19068])
+----------------------------------------
+QUERY #23: 'def binding_from_item(inventory, item):'
+  - FAISS (Truth) : [11419, 11413, 15053, 7226, 790]
+  - V-Engram (P2P): [11419, 790, 11417, 17047, 16182]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [11419, 790])
+----------------------------------------
+QUERY #24: 'def create_network_profile(projectArn=None, name=None, description=None, type=None, uplinkBandwidthBits=None, downlinkBandwidthBits=None, uplinkDelayM'
+  - FAISS (Truth) : [13901, 13902, 5612, 4544, 4609]
+  - V-Engram (P2P): [13902, 4544, 4609, 4571, 4179]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4544, 4609, 13902])
+----------------------------------------
+QUERY #25: 'def _build_repeat_suffix(iteration, count):'
+  - FAISS (Truth) : [11468, 11466, 15165, 144, 1571]
+  - V-Engram (P2P): [11468, 11466, 11460, 7115, 15169]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [11466, 11468])
+----------------------------------------
+QUERY #26: 'def find(self, space_id, query=None, **kwargs):'
+  - FAISS (Truth) : [14577, 14624, 14579, 14576, 14574]
+  - V-Engram (P2P): [14579, 14576, 14574, 14597, 14573]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14576, 14579, 14574])
+----------------------------------------
+QUERY #27: 'def name_suggest(q=None, datasetKey=None, rank=None, limit=100, offset=None, **kwargs):'
+  - FAISS (Truth) : [4830, 16031, 4833, 15975, 4854]
+  - V-Engram (P2P): [4830, 15975, 4840, 8644, 15955]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [4830, 15975])
+----------------------------------------
+QUERY #28: 'def versioning_model_classname(manager, model):'
+  - FAISS (Truth) : [17513, 17514, 13320, 11769, 17498]
+  - V-Engram (P2P): [17513, 17514, 17498, 754, 11768]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [17513, 17514, 17498])
+----------------------------------------
+QUERY #29: 'def addModlist(entry: dict, ignore_attr_types: Optional[List[str]] = None) -> Dict[str, List[bytes]]:'
+  - FAISS (Truth) : [364, 365, 14377, 11395, 4758]
+  - V-Engram (P2P): [364, 365, 11395, 7856, 314]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [11395, 364, 365])
+----------------------------------------
+QUERY #30: 'def _run_web_container(self, port, command, address, log_syslog=False,'
+  - FAISS (Truth) : [18091, 18141, 18139, 18098, 18096]
+  - V-Engram (P2P): [18141, 18096, 11579, 18092, 18070]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [18096, 18141])
+----------------------------------------
+QUERY #31: 'def get_api_endpoints(self, apiname):'
+  - FAISS (Truth) : [12185, 12392, 9286, 12184, 7286]
+  - V-Engram (P2P): [12392, 1163, 12115, 8098, 2849]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [12392])
+----------------------------------------
+QUERY #32: 'def _GetDateValuesWithEpoch(self, number_of_days, date_time_epoch):'
+  - FAISS (Truth) : [18559, 18558, 18567, 18564, 17665]
+  - V-Engram (P2P): [18559, 18558, 18567, 18564, 18606]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [18564, 18559, 18558, 18567])
+----------------------------------------
+QUERY #33: 'def string_id(self):'
+  - FAISS (Truth) : [13297, 13298, 15211, 6436, 7114]
+  - V-Engram (P2P): [13297, 13298, 6436, 3613, 7114]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13297, 7114, 6436, 13298])
+----------------------------------------
+QUERY #34: 'def format_installed_dap(name, full=False):'
+  - FAISS (Truth) : [15432, 15433, 15428, 15430, 15441]
+  - V-Engram (P2P): [15432, 15433, 15428, 15430, 15441]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [15428, 15430, 15432, 15433, 15441])
+----------------------------------------
+QUERY #35: 'def _walk_decorator_stack(func: CallableT) -> Iterable['CallableT']:'
+  - FAISS (Truth) : [1495, 1504, 1496, 7511, 1503]
+  - V-Engram (P2P): [1495, 1504, 1496, 16387, 1771]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1504, 1496, 1495])
+----------------------------------------
+QUERY #36: 'def get_merge_direction(cell1, cell2):'
+  - FAISS (Truth) : [17578, 17738, 17547, 17710, 3775]
+  - V-Engram (P2P): [17578, 3775, 3796, 9676, 10546]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [17578, 3775])
+----------------------------------------
+QUERY #37: 'def vignettingFromDifferentObjects(imgs, bg):'
+  - FAISS (Truth) : [9592, 9645, 9784, 9727, 9753]
+  - V-Engram (P2P): [9765, 9727, 9648, 9785, 9778]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [9727])
+----------------------------------------
+QUERY #38: 'def is_edge(obj, shape):'
+  - FAISS (Truth) : [9117, 9694, 15096, 6336, 12160]
+  - V-Engram (P2P): [9117, 9694, 15096, 6336, 7984]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6336, 9117, 9694, 15096])
+----------------------------------------
+QUERY #39: 'def _get_relation(self, related_model: type, relations: List[str]) -> Tuple[Optional[List[type]], Optional[type]]:'
+  - FAISS (Truth) : [5358, 2463, 2487, 15264, 2480]
+  - V-Engram (P2P): [5358, 2487, 2480, 2421, 2462]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2480, 5358, 2487])
+----------------------------------------
+QUERY #40: 'def func_call_as_str(name, *args, **kwds):'
+  - FAISS (Truth) : [3528, 11488, 1523, 1497, 5931]
+  - V-Engram (P2P): [3528, 1497, 5931, 1690, 18265]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3528, 1497, 5931])
+----------------------------------------
+QUERY #41: 'def buscar(self, id_vlan):'
+  - FAISS (Truth) : [4192, 4193, 4186, 4387, 4202]
+  - V-Engram (P2P): [4186, 4193, 4387, 4185, 4216]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4193, 4186, 4387])
+----------------------------------------
+QUERY #42: 'def update(self, CorpNum, MgtKey, cashbill, UserID=None):'
+  - FAISS (Truth) : [2910, 3022, 2953, 3070, 2912]
+  - V-Engram (P2P): [2910, 3022, 2953, 3070, 2917]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [2910, 2953, 3022, 3070])
+----------------------------------------
+QUERY #43: 'def position(self, account, contract, position, avgCost):'
+  - FAISS (Truth) : [15824, 15815, 15785, 15795, 3036]
+  - V-Engram (P2P): [15824, 15815, 15785, 17020, 15825]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15824, 15785, 15815])
+----------------------------------------
+QUERY #44: 'def delete_email_addresses(self, addresses=[]):'
+  - FAISS (Truth) : [17319, 4623, 17318, 16506, 4290]
+  - V-Engram (P2P): [17319, 4623, 7295, 4290, 95]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4290, 4623, 17319])
+----------------------------------------
+QUERY #45: 'def configure_security_group_ingress(self, security_group_id, port, desired_cidr_blocks):'
+  - FAISS (Truth) : [5126, 13927, 5127, 13926, 13937]
+  - V-Engram (P2P): [5126, 13927, 13936, 13937, 5121]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [13937, 5126, 13927])
+----------------------------------------
+QUERY #46: 'def get_group_for_activity(self, module=None, project=None, **kwargs):'
+  - FAISS (Truth) : [13396, 13395, 16355, 16356, 9850]
+  - V-Engram (P2P): [16356, 9850, 10437, 4329, 13114]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [9850, 16356])
+----------------------------------------
+QUERY #47: 'def upload_metadata(directory, create_csv='', review='','
+  - FAISS (Truth) : [7743, 7742, 7732, 7734, 7733]
+  - V-Engram (P2P): [7745, 7741, 7744, 9271, 7760]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #48: 'def getEPrintURL(self, CorpNum, MgtKey, UserID=None):'
+  - FAISS (Truth) : [2919, 2965, 3034, 2670, 3066]
+  - V-Engram (P2P): [2919, 2965, 3066, 3037, 2912]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3066, 2965, 2919])
+----------------------------------------
+QUERY #49: 'def deactivate_version(self, service_id, version_number):'
+  - FAISS (Truth) : [7204, 7203, 7206, 7202, 7205]
+  - V-Engram (P2P): [7204, 7203, 7698, 7179, 7176]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [7203, 7204])
+----------------------------------------
+QUERY #50: 'def create_virtualenv(srcdir, datadir, preload_image, get_container_name):'
+  - FAISS (Truth) : [18081, 18068, 18067, 7542, 18065]
+  - V-Engram (P2P): [18081, 18067, 7542, 5763, 14117]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [18081, 18067, 7542])
+----------------------------------------
+QUERY #51: 'def angledependentairtransmission(twotheta, mu_air, sampletodetectordistance):'
+  - FAISS (Truth) : [4984, 4985, 4982, 4983, 4980]
+  - V-Engram (P2P): [4984, 4985, 4982, 4983, 4979]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [4984, 4985, 4982, 4983])
+----------------------------------------
+QUERY #52: 'def restore_from_cluster_snapshot(ClusterIdentifier=None, SnapshotIdentifier=None, SnapshotClusterIdentifier=None, Port=None, AvailabilityZone=None, A'
+  - FAISS (Truth) : [13949, 13972, 13974, 14059, 13947]
+  - V-Engram (P2P): [13972, 13947, 13971, 18986, 13884]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13947, 13972])
+----------------------------------------
+QUERY #53: 'def lookup_zone_exception(self, callsign, timestamp=datetime.utcnow().replace(tzinfo=UTC)):'
+  - FAISS (Truth) : [10856, 10855, 10761, 10849, 10760]
+  - V-Engram (P2P): [10855, 10761, 10760, 10757, 10759]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [10760, 10761, 10855])
+----------------------------------------
+QUERY #54: 'def titletable(html_doc, tofloat=True):'
+  - FAISS (Truth) : [13005, 13007, 13017, 17493, 3002]
+  - V-Engram (P2P): [13005, 13017, 13007, 3002, 13018]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13017, 3002, 13005, 13007])
+----------------------------------------
+QUERY #55: 'def transfer_attributes_to_instrument(self, inst, strict_names=False):'
+  - FAISS (Truth) : [14234, 14092, 14235, 14093, 12319]
+  - V-Engram (P2P): [14234, 14092, 14096, 14164, 13989]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [14234, 14092])
+----------------------------------------
+QUERY #56: 'def isready(self, obj) -> bool:'
+  - FAISS (Truth) : [19093, 19092, 9846, 5807, 1039]
+  - V-Engram (P2P): [19093, 19092, 9846, 9843, 12160]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19092, 19093, 9846])
+----------------------------------------
+QUERY #57: 'def set_param(self, key, value):'
+  - FAISS (Truth) : [12787, 18932, 10624, 16644, 13262]
+  - V-Engram (P2P): [12787, 18932, 10624, 13262, 16644]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [10624, 16644, 13262, 12787, 18932])
+----------------------------------------
+QUERY #58: 'def run_gerrit_command(self, command):'
+  - FAISS (Truth) : [6412, 6401, 6400, 6402, 9293]
+  - V-Engram (P2P): [6401, 6396, 18843, 4132, 13839]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [6401])
+----------------------------------------
+QUERY #59: 'def linear_rref(A, b, Matrix=None, S=None):'
+  - FAISS (Truth) : [8703, 8704, 5319, 2848, 19598]
+  - V-Engram (P2P): [8703, 8704, 18355, 19598, 18358]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [8704, 19598, 8703])
+----------------------------------------
+QUERY #60: 'def set_atom_info(self, atom_name, serial_number, alternative_location_id,'
+  - FAISS (Truth) : [11049, 11054, 3942, 11036, 11057]
+  - V-Engram (P2P): [11049, 11054, 11050, 11058, 11055]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [11049, 11054])
+----------------------------------------
+QUERY #61: 'def create_api_option_vip(self):'
+  - FAISS (Truth) : [4513, 4546, 4517, 4459, 4560]
+  - V-Engram (P2P): [4513, 4459, 4499, 4336, 4339]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [4513, 4459])
+----------------------------------------
+QUERY #62: 'def lookup_name_slow(self, name):'
+  - FAISS (Truth) : [15955, 15954, 15956, 15975, 19029]
+  - V-Engram (P2P): [15955, 15954, 15956, 15975, 4854]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [15954, 15955, 15956, 15975])
+----------------------------------------
+QUERY #63: 'def decode_header(auth_header, client_id, client_secret):'
+  - FAISS (Truth) : [13792, 13797, 5347, 9452, 12497]
+  - V-Engram (P2P): [13792, 13797, 5347, 12497, 11082]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13792, 12497, 5347, 13797])
+----------------------------------------
+QUERY #64: 'def insertReadGroupSet(self, readGroupSet):'
+  - FAISS (Truth) : [13565, 13560, 13731, 13711, 13750]
+  - V-Engram (P2P): [13565, 13725, 13065, 13575, 13730]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [13565])
+----------------------------------------
+QUERY #65: 'def vector_distance(v1, v2):'
+  - FAISS (Truth) : [386, 706, 13140, 12367, 9431]
+  - V-Engram (P2P): [386, 706, 13140, 12367, 9431]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [706, 386, 12367, 13140, 9431])
+----------------------------------------
+QUERY #66: 'def container_similarity(container1=None,container2=None,image_package1=None,'
+  - FAISS (Truth) : [9234, 9217, 9221, 9219, 9233]
+  - V-Engram (P2P): [9221, 9219, 12366, 9237, 18403]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [9219, 9221])
+----------------------------------------
+QUERY #67: 'def find_lexeme(self, verb):'
+  - FAISS (Truth) : [8634, 8528, 8633, 8636, 8527]
+  - V-Engram (P2P): [8634, 8528, 8633, 8527, 8636]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [8527, 8528, 8633, 8634, 8636])
+----------------------------------------
+QUERY #68: 'def _sort_and_trim(data, reverse=False):'
+  - FAISS (Truth) : [15285, 6997, 16942, 4702, 4653]
+  - V-Engram (P2P): [15285, 4702, 8794, 2074, 7332]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [15285, 4702])
+----------------------------------------
+QUERY #69: 'def get_authorize_callback(endpoint, provider_id):'
+  - FAISS (Truth) : [712, 715, 13794, 11806, 9915]
+  - V-Engram (P2P): [712, 13794, 11806, 7286, 7650]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [712, 13794, 11806])
+----------------------------------------
+QUERY #70: 'def list_all_after(self, message_id, limit=None):'
+  - FAISS (Truth) : [9832, 9830, 9829, 9831, 9835]
+  - V-Engram (P2P): [9832, 9830, 9829, 9835, 9828]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [9832, 9835, 9829, 9830])
+----------------------------------------
+QUERY #71: 'def read_message_type(file):'
+  - FAISS (Truth) : [3580, 3593, 14355, 16741, 10513]
+  - V-Engram (P2P): [3580, 3593, 9225, 2215, 12977]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [3593, 3580])
+----------------------------------------
+QUERY #72: 'def alarm_set(self, time, wake_with_radio=False):'
+  - FAISS (Truth) : [12412, 12413, 427, 5973, 5974]
+  - V-Engram (P2P): [12413, 427, 5973, 5974, 5972]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [427, 5973, 5974, 12413])
+----------------------------------------
+QUERY #73: 'def _pairwise_imp(function, x, y=None, pool=None, is_symmetric=None, **kwargs):'
+  - FAISS (Truth) : [9436, 9435, 15192, 9417, 9446]
+  - V-Engram (P2P): [9436, 9435, 9417, 9443, 9442]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9417, 9435, 9436])
+----------------------------------------
+QUERY #74: 'def _new_render(response):'
+  - FAISS (Truth) : [2334, 11001, 11013, 3495, 14472]
+  - V-Engram (P2P): [2334, 18722, 2279, 3495, 18721]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2334, 3495])
+----------------------------------------
+QUERY #75: 'def makedoetree(ddict, bdict):'
+  - FAISS (Truth) : [12984, 12985, 3419, 12692, 12983]
+  - V-Engram (P2P): [12984, 12985, 3419, 12692, 12983]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [12692, 12983, 12984, 12985, 3419])
+----------------------------------------
+QUERY #76: 'def describe_events(SourceIdentifier=None, SourceType=None, StartTime=None, EndTime=None, Duration=None, EventCategories=None, Filters=None, MaxRecord'
+  - FAISS (Truth) : [13851, 13941, 122, 18991, 5083]
+  - V-Engram (P2P): [13851, 13941, 5081, 13912, 12505]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13851, 13941])
+----------------------------------------
+QUERY #77: 'def _update_expression(self):'
+  - FAISS (Truth) : [7380, 13775, 15557, 1518, 10511]
+  - V-Engram (P2P): [7380, 15557, 10512, 10511, 19637]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [7380, 15557, 10511])
+----------------------------------------
+QUERY #78: 'def update_buffer_with_value( self, value, buffer, parent=None ):'
+  - FAISS (Truth) : [7040, 11606, 10696, 6945, 13240]
+  - V-Engram (P2P): [10696, 7867, 13588, 6300, 19262]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [10696])
+----------------------------------------
+QUERY #79: 'def shorten_type(typ):'
+  - FAISS (Truth) : [18878, 12655, 17733, 11352, 7263]
+  - V-Engram (P2P): [18878, 17733, 6086, 3096, 19012]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [17733, 18878])
+----------------------------------------
+QUERY #80: 'def image_post_delete_handler(sender, instance, **kwargs):'
+  - FAISS (Truth) : [16957, 17761, 16954, 16544, 16010]
+  - V-Engram (P2P): [16957, 17761, 16954, 16544, 16010]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [16544, 17761, 16010, 16954, 16957])
+----------------------------------------
+QUERY #81: 'def write(self, group_id, handle):'
+  - FAISS (Truth) : [8718, 8711, 8725, 8708, 4278]
+  - V-Engram (P2P): [8718, 8725, 14763, 8724, 7491]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [8725, 8718])
+----------------------------------------
+QUERY #82: 'def featuresGenerator(self, request):'
+  - FAISS (Truth) : [13658, 13653, 13699, 13656, 13539]
+  - V-Engram (P2P): [13658, 13539, 13698, 13448, 13657]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13658, 13539])
+----------------------------------------
+QUERY #83: 'def printhtml(csvdiffs):'
+  - FAISS (Truth) : [13019, 13016, 16556, 13014, 14883]
+  - V-Engram (P2P): [1325, 1426, 17680, 4019, 14938]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #84: 'def shuffled_indices_batch_iterator(self, batch_size, shuffle_rng):'
+  - FAISS (Truth) : [18046, 18048, 18045, 18123, 18130]
+  - V-Engram (P2P): [18046, 18048, 18123, 18044, 11095]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [18048, 18123, 18046])
+----------------------------------------
+QUERY #85: 'def save(ctx, dest="docs.html", format="html"):'
+  - FAISS (Truth) : [9094, 486, 1401, 2731, 12975]
+  - V-Engram (P2P): [9094, 486, 9092, 14333, 6259]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [9094, 486])
+----------------------------------------
+QUERY #86: 'def _escape_path(key):'
+  - FAISS (Truth) : [3242, 5796, 1650, 12738, 15324]
+  - V-Engram (P2P): [1650, 13334, 7658, 9129, 16079]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [1650])
+----------------------------------------
+QUERY #87: 'def getFiles(self, CorpNum, ItemCode, MgtKey):'
+  - FAISS (Truth) : [2963, 3032, 2961, 2962, 2964]
+  - V-Engram (P2P): [2918, 3031, 12790, 2959, 9177]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #88: 'def GET_save_modifiedconditionitemvalues(self) -> None:'
+  - FAISS (Truth) : [19136, 19137, 19135, 19130, 19134]
+  - V-Engram (P2P): [19136, 19137, 19130, 19135, 19134]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [19136, 19137, 19130, 19134, 19135])
+----------------------------------------
+QUERY #89: 'def offsetMeshgrid(offset, grid, shape):'
+  - FAISS (Truth) : [9654, 1452, 24, 10557, 9766]
+  - V-Engram (P2P): [1453, 24, 4775, 9944, 19679]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [24])
+----------------------------------------
+QUERY #90: 'def validate(self, model_name, object):'
+  - FAISS (Truth) : [7285, 596, 5807, 16540, 272]
+  - V-Engram (P2P): [7285, 596, 5807, 18184, 272]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [272, 596, 7285, 5807])
+----------------------------------------
+QUERY #91: 'def stress(syllabified_simplex_word):'
+  - FAISS (Truth) : [6899, 6744, 6782, 6773, 7211]
+  - V-Engram (P2P): [6899, 6744, 6782, 6774, 6780]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [6744, 6899, 6782])
+----------------------------------------
+QUERY #92: 'def calc_secondary_parameters(self):'
+  - FAISS (Truth) : [19427, 19428, 19153, 19401, 19422]
+  - V-Engram (P2P): [12613, 10405, 19378, 11879, 12611]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #93: 'def move_mouse_relative(self, x, y):'
+  - FAISS (Truth) : [810, 809, 808, 816, 817]
+  - V-Engram (P2P): [810, 809, 816, 827, 7831]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [816, 809, 810])
+----------------------------------------
+QUERY #94: 'def _match_one_or_many(self, models, results, relation, type):'
+  - FAISS (Truth) : [2462, 2460, 2461, 2453, 2421]
+  - V-Engram (P2P): [2462, 2460, 2461, 2453, 2421]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [2421, 2453, 2460, 2461, 2462])
+----------------------------------------
+QUERY #95: 'def createElementsFromHTML(cls, html, encoding='utf-8'):'
+  - FAISS (Truth) : [14891, 14890, 4081, 14892, 14915]
+  - V-Engram (P2P): [14891, 14915, 3625, 2893, 3488]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [14891, 14915])
+----------------------------------------
+QUERY #96: 'def parse_tr_strs(trs):'
+  - FAISS (Truth) : [3684, 5113, 11327, 14889, 15178]
+  - V-Engram (P2P): [3684, 5113, 14889, 11300, 15178]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [14889, 15178, 3684, 5113])
+----------------------------------------
+QUERY #97: 'def eigenvectors_left_samples(self):'
+  - FAISS (Truth) : [8219, 8220, 8218, 8217, 8283]
+  - V-Engram (P2P): [8219, 8220, 8216, 8270, 18316]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [8219, 8220])
+----------------------------------------
+QUERY #98: 'def _normalize(self, string):'
+  - FAISS (Truth) : [6272, 6262, 6245, 6278, 6247]
+  - V-Engram (P2P): [15741, 16859, 9451, 12899, 18217]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #99: 'def fan_watts(fan_tot_eff, pascal, m3s):'
+  - FAISS (Truth) : [12921, 12919, 12922, 12924, 12920]
+  - V-Engram (P2P): [12921, 12919, 12922, 12920, 12924]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [12919, 12920, 12921, 12922, 12924])
+----------------------------------------
+QUERY #100: 'def disconnect_pools(self):'
+  - FAISS (Truth) : [6291, 9148, 4228, 14831, 1909]
+  - V-Engram (P2P): [6291, 9148, 2517, 9147, 1249]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6291, 9148])
+----------------------------------------
+QUERY #101: 'def search_course(self, xqdm, kcdm=None, kcmc=None):'
+  - FAISS (Truth) : [3690, 3694, 3697, 3695, 3691]
+  - V-Engram (P2P): [3690, 3694, 3697, 3695, 3696]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3697, 3690, 3694, 3695])
+----------------------------------------
+QUERY #102: 'def readsGenerator(self, request):'
+  - FAISS (Truth) : [13650, 13644, 13645, 13638, 13647]
+  - V-Engram (P2P): [13650, 13644, 13645, 13638, 13425]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13650, 13644, 13645, 13638])
+----------------------------------------
+QUERY #103: 'def api(func, container = None, criteria = None):'
+  - FAISS (Truth) : [3393, 3395, 3398, 3335, 3396]
+  - V-Engram (P2P): [3393, 3398, 3335, 3336, 3397]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3393, 3398, 3335])
+----------------------------------------
+QUERY #104: 'def tr(self, subdomain: str, string_to_translate: str = "") -> str:'
+  - FAISS (Truth) : [5113, 3684, 10078, 10540, 10100]
+  - V-Engram (P2P): [5113, 10101, 1133, 10156, 10134]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [5113])
+----------------------------------------
+QUERY #105: 'def _get_links(self, response):'
+  - FAISS (Truth) : [6351, 3487, 16446, 10306, 15424]
+  - V-Engram (P2P): [6351, 16446, 16445, 16444, 12759]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [16446, 6351])
+----------------------------------------
+QUERY #106: 'def _pickUpIteration(self, searchAnchor, objectsToSkip):'
+  - FAISS (Truth) : [13617, 13616, 13618, 19234, 1275]
+  - V-Engram (P2P): [13618, 13638, 6255, 12945, 13613]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [13618])
+----------------------------------------
+QUERY #107: 'def get_arp_table(self):'
+  - FAISS (Truth) : [14314, 13376, 14326, 7251, 14327]
+  - V-Engram (P2P): [14314, 13376, 14318, 1253, 14309]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13376, 14314])
+----------------------------------------
+QUERY #108: 'def get_long_description():'
+  - FAISS (Truth) : [1715, 12432, 12561, 1726, 1059]
+  - V-Engram (P2P): [1715, 12432, 12561, 1726, 1059]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [1059, 12432, 12561, 1715, 1726])
+----------------------------------------
+QUERY #109: 'def _screen(self, s, newline=False):'
+  - FAISS (Truth) : [3980, 18648, 18712, 11409, 7562]
+  - V-Engram (P2P): [3980, 18648, 18712, 18722, 11409]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [18712, 11409, 3980, 18648])
+----------------------------------------
+QUERY #110: 'def get_recurring_payments_profile_details(self, profileid):'
+  - FAISS (Truth) : [15357, 15359, 15358, 7798, 3004]
+  - V-Engram (P2P): [15357, 15359, 15358, 7798, 2959]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [15358, 15357, 7798, 15359])
+----------------------------------------
+QUERY #111: 'def find_kernel_specs_for_envs(self):'
+  - FAISS (Truth) : [13344, 13346, 13345, 13347, 13348]
+  - V-Engram (P2P): [13344, 13346, 13345, 13347, 13348]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [13344, 13345, 13346, 13347, 13348])
+----------------------------------------
+QUERY #112: 'def graphql_mutation_from_summary(summary):'
+  - FAISS (Truth) : [12493, 12484, 12505, 12489, 12442]
+  - V-Engram (P2P): [12493, 12505, 12489, 12514, 6674]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12489, 12505, 12493])
+----------------------------------------
+QUERY #113: 'def traffichistory(self, domain, response_group=TRAFFICINFO_RESPONSE_GROUPS, myrange=31, start=20070801):'
+  - FAISS (Truth) : [17809, 17808, 17810, 2259, 18159]
+  - V-Engram (P2P): [17809, 17810, 2259, 18706, 18699]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [17809, 17810, 2259])
+----------------------------------------
+QUERY #114: 'def run(filename: 'python file generated by `rbnf` command, or rbnf sour file','
+  - FAISS (Truth) : [4613, 4612, 261, 2810, 19933]
+  - V-Engram (P2P): [4613, 2810, 19933, 19923, 12157]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19933, 2810, 4613])
+----------------------------------------
+QUERY #115: 'def CopyFromDateTimeString(self, time_string):'
+  - FAISS (Truth) : [18602, 18544, 18572, 18553, 18612]
+  - V-Engram (P2P): [18602, 18572, 18544, 18553, 18612]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [18602, 18572, 18544, 18612, 18553])
+----------------------------------------
+QUERY #116: 'def _print_exception_list(exceptions, message, output_file=None):'
+  - FAISS (Truth) : [18490, 2650, 7007, 16323, 1705]
+  - V-Engram (P2P): [18490, 2650, 7007, 6837, 16317]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2650, 18490, 7007])
+----------------------------------------
+QUERY #117: 'def to_python(self, value):'
+  - FAISS (Truth) : [15069, 271, 18245, 15068, 275]
+  - V-Engram (P2P): [15069, 18245, 275, 285, 592]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15069, 275, 18245])
+----------------------------------------
+QUERY #118: 'def delete(self, session, lookup_keys, *args, **kwargs):'
+  - FAISS (Truth) : [15293, 16480, 7680, 695, 638]
+  - V-Engram (P2P): [15293, 16480, 638, 3354, 13229]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [16480, 15293, 638])
+----------------------------------------
+QUERY #119: 'def validateFilepath(value, blank=False, strip=None, allowlistRegexes=None, blocklistRegexes=None, excMsg=None, mustExist=False):'
+  - FAISS (Truth) : [2827, 2826, 2830, 2814, 2831]
+  - V-Engram (P2P): [2827, 2826, 8109, 2814, 2815]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2826, 2827, 2814])
+----------------------------------------
+QUERY #120: 'def process_delimiter(self, char):'
+  - FAISS (Truth) : [18510, 18511, 18513, 12268, 18512]
+  - V-Engram (P2P): [18510, 18511, 18513, 12268, 18512]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [12268, 18510, 18511, 18512, 18513])
+----------------------------------------
+QUERY #121: 'def sensorupdate(self, data):'
+  - FAISS (Truth) : [15335, 428, 3279, 7334, 9958]
+  - V-Engram (P2P): [15335, 428, 9958, 3279, 15328]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3279, 428, 9958, 15335])
+----------------------------------------
+QUERY #122: 'def start_console(local_vars={}):'
+  - FAISS (Truth) : [74, 1736, 11643, 10346, 6841]
+  - V-Engram (P2P): [74, 11643, 6841, 11149, 12331]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [6841, 74, 11643])
+----------------------------------------
+QUERY #123: 'def query_subdevices(self, ncfile) -> List[str]:'
+  - FAISS (Truth) : [19667, 19668, 19683, 19666, 19671]
+  - V-Engram (P2P): [19667, 19668, 19654, 19182, 15216]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [19667, 19668])
+----------------------------------------
+QUERY #124: 'def _handle_parentof(self, node, scope, ctxt, stream):'
+  - FAISS (Truth) : [11681, 11659, 11696, 11661, 11660]
+  - V-Engram (P2P): [11681, 11682, 11696, 11701, 11698]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [11696, 11681])
+----------------------------------------
+QUERY #125: 'def insertAfter(self, child, afterChild):'
+  - FAISS (Truth) : [14920, 14919, 15910, 18908, 12453]
+  - V-Engram (P2P): [14920, 14919, 15910, 12453, 15917]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [14920, 12453, 15910, 14919])
+----------------------------------------
+QUERY #126: 'def solve_and_plot_series(self, x0, params, varied_data, varied_idx, solver=None, plot_kwargs=None,'
+  - FAISS (Truth) : [8693, 8690, 8689, 8701, 8691]
+  - V-Engram (P2P): [8693, 8690, 8689, 8701, 8691]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [8689, 8690, 8691, 8693, 8701])
+----------------------------------------
+QUERY #127: 'def missingkeys_nonstandard(block, commdct, dtls, objectlist, afield='afiled %s'):'
+  - FAISS (Truth) : [13146, 13145, 18260, 18898, 3333]
+  - V-Engram (P2P): [13145, 18260, 12180, 14023, 13090]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13145, 18260])
+----------------------------------------
+QUERY #128: 'def cross_phenotype_jsd(data, groupby, bins, n_iter=100):'
+  - FAISS (Truth) : [2543, 2544, 2540, 2542, 13656]
+  - V-Engram (P2P): [2544, 13655, 18250, 2627, 7813]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [2544])
+----------------------------------------
+QUERY #129: 'def upload_part_copy(Bucket=None, CopySource=None, CopySourceIfMatch=None, CopySourceIfModifiedSince=None, CopySourceIfNoneMatch=None, CopySourceIfUnm'
+  - FAISS (Truth) : [13925, 13924, 13918, 14804, 13917]
+  - V-Engram (P2P): [13924, 14804, 14805, 13221, 14803]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [14804, 13924])
+----------------------------------------
+QUERY #130: 'def issue_add(lancet, assign, add_to_sprint, summary):'
+  - FAISS (Truth) : [1819, 17381, 17351, 1674, 1675]
+  - V-Engram (P2P): [1819, 17381, 17351, 17266, 17429]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1819, 17381, 17351])
+----------------------------------------
+QUERY #131: 'def set_heat_pump_mode(self, device_label, mode):'
+  - FAISS (Truth) : [2269, 2270, 9988, 2258, 9989]
+  - V-Engram (P2P): [2269, 2270, 2258, 11954, 11958]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2258, 2269, 2270])
+----------------------------------------
+QUERY #132: 'def author_notes(soup):'
+  - FAISS (Truth) : [936, 937, 966, 935, 967]
+  - V-Engram (P2P): [936, 935, 967, 939, 905]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [936, 935, 967])
+----------------------------------------
+QUERY #133: 'def pairwise_dists_on_cols(df_in, earth_mover_dist=True, energy_dist=True):'
+  - FAISS (Truth) : [12627, 12556, 12557, 5860, 9031]
+  - V-Engram (P2P): [12627, 5860, 9031, 9445, 9442]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12627, 5860, 9031])
+----------------------------------------
+QUERY #134: 'def mixerfields(data, commdct):'
+  - FAISS (Truth) : [13077, 13075, 13076, 13093, 13078]
+  - V-Engram (P2P): [13077, 14172, 16850, 13089, 16852]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [13077])
+----------------------------------------
+QUERY #135: 'def aggregate_per_as(self, start_time, end_time):'
+  - FAISS (Truth) : [8729, 8728, 5756, 5757, 18988]
+  - V-Engram (P2P): [8729, 5756, 5757, 10545, 10963]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [8729, 5756, 5757])
+----------------------------------------
+QUERY #136: 'def bootstrap_resample_run(ns_run, threads=None, ninit_sep=False,'
+  - FAISS (Truth) : [12549, 12551, 12552, 12550, 12599]
+  - V-Engram (P2P): [12549, 12551, 12552, 12550, 16850]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [12552, 12549, 12550, 12551])
+----------------------------------------
+QUERY #137: 'def runSearchReferences(self, request):'
+  - FAISS (Truth) : [13691, 13690, 13699, 13689, 13687]
+  - V-Engram (P2P): [13691, 13690, 13699, 13687, 13689]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [13699, 13687, 13689, 13690, 13691])
+----------------------------------------
+QUERY #138: 'def source_range(start, end, nr_var_dict):'
+  - FAISS (Truth) : [17175, 17174, 17176, 17173, 1846]
+  - V-Engram (P2P): [17175, 17174, 17176, 1846, 13191]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [17176, 17174, 1846, 17175])
+----------------------------------------
+QUERY #139: 'def bin_query(self, table, chrom, start, end):'
+  - FAISS (Truth) : [18789, 18775, 18793, 2537, 13892]
+  - V-Engram (P2P): [18789, 18775, 18793, 2537, 17062]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [18793, 2537, 18789, 18775])
+----------------------------------------
+QUERY #140: 'def _model_class_from_pk(definition_cls, definition_pk):'
+  - FAISS (Truth) : [14247, 13321, 11782, 5746, 5743]
+  - V-Engram (P2P): [14247, 2506, 13322, 7357, 10977]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [14247])
+----------------------------------------
+QUERY #141: 'def get_asset_path(self, filename):'
+  - FAISS (Truth) : [10200, 18051, 16956, 14558, 18797]
+  - V-Engram (P2P): [14558, 7449, 8146, 16618, 5384]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [14558])
+----------------------------------------
+QUERY #142: 'def query_one(self, sql, params=None):'
+  - FAISS (Truth) : [1261, 7632, 353, 7633, 1360]
+  - V-Engram (P2P): [1261, 7632, 1360, 2434, 12633]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [7632, 1360, 1261])
+----------------------------------------
+QUERY #143: 'def get_foreign_keys_in_altered_table(self, diff):'
+  - FAISS (Truth) : [2451, 2402, 2498, 2450, 2500]
+  - V-Engram (P2P): [2451, 6959, 6961, 304, 10943]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [2451])
+----------------------------------------
+QUERY #144: 'def add_name(self, name_attr, space_attr, new_schema):'
+  - FAISS (Truth) : [16433, 19271, 12791, 14572, 12199]
+  - V-Engram (P2P): [16433, 12791, 14572, 8716, 16432]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [16433, 14572, 12791])
+----------------------------------------
+QUERY #145: 'def equal(self, a, b, message=None):'
+  - FAISS (Truth) : [14360, 6156, 6158, 4156, 14361]
+  - V-Engram (P2P): [14360, 6156, 6158, 6157, 5644]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14360, 6156, 6158])
+----------------------------------------
+QUERY #146: 'def handle_model_generation(config, raml_resource):'
+  - FAISS (Truth) : [739, 771, 754, 738, 769]
+  - V-Engram (P2P): [771, 754, 738, 769, 765]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [754, 769, 738, 771])
+----------------------------------------
+QUERY #147: 'def axes_off(ax):'
+  - FAISS (Truth) : [19819, 13992, 11854, 8702, 3968]
+  - V-Engram (P2P): [19819, 13992, 7834, 3936, 3926]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13992, 19819])
+----------------------------------------
+QUERY #148: 'def get_version(self, as_tuple=False):'
+  - FAISS (Truth) : [5909, 15224, 1590, 11341, 5147]
+  - V-Engram (P2P): [5909, 1590, 11341, 13086, 224]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5909, 11341, 1590])
+----------------------------------------
+QUERY #149: 'def get_glitter_app(self, glitter_app_name):'
+  - FAISS (Truth) : [398, 399, 9913, 262, 456]
+  - V-Engram (P2P): [399, 456, 525, 9241, 6029]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [456, 399])
+----------------------------------------
+QUERY #150: 'def api_call(method, end_point, params=None, client_id=None, access_token=None):'
+  - FAISS (Truth) : [63, 8098, 7286, 4752, 15347]
+  - V-Engram (P2P): [7286, 15347, 16148, 6885, 16406]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [15347, 7286])
+----------------------------------------
+QUERY #151: 'def getFirstElementCustomFilter(self, filterFunc):'
+  - FAISS (Truth) : [14954, 14879, 14953, 14955, 14878]
+  - V-Engram (P2P): [14954, 14953, 14955, 14971, 14956]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14953, 14954, 14955])
+----------------------------------------
+QUERY #152: 'def embed_seq(X, Tau, D):'
+  - FAISS (Truth) : [11885, 15169, 11895, 19551, 8173]
+  - V-Engram (P2P): [15169, 11895, 8173, 19554, 1688]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15169, 8173, 11895])
+----------------------------------------
+QUERY #153: 'def GaussSpheres(q, A, R0, sigma, N=1000, weighting='intensity'):'
+  - FAISS (Truth) : [5018, 5017, 2798, 5010, 5023]
+  - V-Engram (P2P): [5018, 5017, 2798, 5023, 4803]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [5017, 5018, 2798, 5023])
+----------------------------------------
+QUERY #154: 'def runSearchBiosamples(self, request):'
+  - FAISS (Truth) : [13688, 13671, 13697, 13687, 13694]
+  - V-Engram (P2P): [13697, 13691, 13694, 13692, 13686]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13697, 13694])
+----------------------------------------
+QUERY #155: 'def process_sample(job, inputs, tar_id):'
+  - FAISS (Truth) : [17992, 17991, 17990, 17931, 17957]
+  - V-Engram (P2P): [17992, 17991, 17931, 17990, 17957]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [17957, 17990, 17991, 17992, 17931])
+----------------------------------------
+QUERY #156: 'def _process_req_txt(req):'
+  - FAISS (Truth) : [15421, 11463, 11529, 691, 1140]
+  - V-Engram (P2P): [15421, 18410, 12907, 10640, 1636]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [15421])
+----------------------------------------
+QUERY #157: 'def stationary_distribution(P, C=None, mincount_connectivity=0):'
+  - FAISS (Truth) : [8281, 8238, 8277, 8237, 9534]
+  - V-Engram (P2P): [8281, 8238, 8237, 8216, 9534]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [9534, 8281, 8237, 8238])
+----------------------------------------
+QUERY #158: 'def accept_hotp(key, response, counter, format='dec6', hash=hashlib.sha1,'
+  - FAISS (Truth) : [13984, 13983, 13986, 13985, 9457]
+  - V-Engram (P2P): [13983, 13986, 6036, 14786, 12106]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13986, 13983])
+----------------------------------------
+QUERY #159: 'def shares(self, token: dict = None, prot: str = "https") -> dict:'
+  - FAISS (Truth) : [5439, 5440, 5448, 9865, 9856]
+  - V-Engram (P2P): [5439, 5440, 9865, 5448, 5446]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [5440, 9865, 5448, 5439])
+----------------------------------------
+QUERY #160: 'def first(self, limit=1, columns=None):'
+  - FAISS (Truth) : [2435, 17067, 12630, 8932, 10944]
+  - V-Engram (P2P): [2435, 17067, 1360, 15201, 17599]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2435, 17067])
+----------------------------------------
+QUERY #161: 'def attach_new_eni(self, subnet_name, security_group_ids, device_index=2, allocation_id=None, description=''):'
+  - FAISS (Truth) : [5121, 4204, 4389, 4190, 5119]
+  - V-Engram (P2P): [5121, 4190, 4388, 4187, 5612]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [5121, 4190])
+----------------------------------------
+QUERY #162: 'def _process_monomial(self, monomial, n_vars):'
+  - FAISS (Truth) : [11320, 11235, 11264, 11261, 11237]
+  - V-Engram (P2P): [11320, 11235, 11251, 11236, 11241]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [11320, 11235])
+----------------------------------------
+QUERY #163: 'def create_tensorflow_extension(nvcc_settings, device_info):'
+  - FAISS (Truth) : [17083, 17152, 17105, 17103, 2906]
+  - V-Engram (P2P): [17083, 17105, 17103, 17116, 3168]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [17105, 17083, 17103])
+----------------------------------------
+QUERY #164: 'def fill_value(dtype):'
+  - FAISS (Truth) : [5078, 10966, 17608, 17444, 275]
+  - V-Engram (P2P): [5078, 275, 273, 280, 2210]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [275, 5078])
+----------------------------------------
+QUERY #165: 'def send_request(self, endpoint='ticker', coin_name=None, **kwargs):'
+  - FAISS (Truth) : [1763, 4755, 6416, 4754, 63]
+  - V-Engram (P2P): [1763, 4755, 6416, 4754, 14594]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6416, 4754, 1763, 4755])
+----------------------------------------
+QUERY #166: 'def rename(self, dn: str, new_rdn: str, new_base_dn: Optional[str] = None) -> None:'
+  - FAISS (Truth) : [246, 317, 188, 359, 373]
+  - V-Engram (P2P): [246, 317, 188, 359, 373]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [359, 373, 246, 188, 317])
+----------------------------------------
+QUERY #167: 'def get_task_subtasks(self, task_id, completed=False):'
+  - FAISS (Truth) : [11817, 11840, 11818, 11841, 11813]
+  - V-Engram (P2P): [11817, 11840, 11818, 11813, 11825]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [11840, 11817, 11818, 11813])
+----------------------------------------
+QUERY #168: 'def convert_decimal(value, parameter):'
+  - FAISS (Truth) : [14481, 14480, 14479, 7584, 37]
+  - V-Engram (P2P): [14481, 14480, 14479, 37, 7584]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [7584, 37, 14479, 14480, 14481])
+----------------------------------------
+QUERY #169: 'def copy_object(ACL=None, Bucket=None, CacheControl=None, ContentDisposition=None, ContentEncoding=None, ContentLanguage=None, ContentType=None, CopyS'
+  - FAISS (Truth) : [13917, 13922, 13923, 16877, 13925]
+  - V-Engram (P2P): [13917, 13922, 10238, 8757, 3807]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13922, 13917])
+----------------------------------------
+QUERY #170: 'def potential_radiation(dates, lon, lat, timezone, terrain_slope=0, terrain_slope_azimuth=0,'
+  - FAISS (Truth) : [10916, 10912, 10917, 10915, 10941]
+  - V-Engram (P2P): [10916, 10912, 10915, 10941, 10919]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [10912, 10915, 10916, 10941])
+----------------------------------------
+QUERY #171: 'def manage_service(service_name, service_action='status', systemd=None, output=True):'
+  - FAISS (Truth) : [5571, 6927, 7093, 1709, 12496]
+  - V-Engram (P2P): [5571, 6927, 7093, 1709, 6926]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [7093, 5571, 1709, 6927])
+----------------------------------------
+QUERY #172: 'def _clean_dead_sessions(self):'
+  - FAISS (Truth) : [10523, 7682, 10521, 3354, 3570]
+  - V-Engram (P2P): [10523, 7682, 3354, 2579, 11543]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [10523, 7682, 3354])
+----------------------------------------
+QUERY #173: 'def update(self, table, value, where, join=None, commit=True):'
+  - FAISS (Truth) : [12637, 12635, 6718, 634, 12638]
+  - V-Engram (P2P): [12637, 12635, 6718, 634, 12638]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [6718, 634, 12635, 12637, 12638])
+----------------------------------------
+QUERY #174: 'def add_interval(self, precision=0):'
+  - FAISS (Truth) : [5238, 5235, 5243, 5242, 5244]
+  - V-Engram (P2P): [5238, 5235, 5242, 5243, 5240]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [5242, 5235, 5243, 5238])
+----------------------------------------
+QUERY #175: 'def upsert(self, doc, namespace, timestamp, update_spec=None):'
+  - FAISS (Truth) : [18865, 6604, 18864, 6605, 18866]
+  - V-Engram (P2P): [6604, 6605, 6603, 6601, 12635]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6604, 6605])
+----------------------------------------
+QUERY #176: 'def __create_driver_from_browser_config(self):'
+  - FAISS (Truth) : [10202, 6200, 12194, 10203, 10205]
+  - V-Engram (P2P): [10202, 6200, 12194, 10203, 10205]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [12194, 6200, 10202, 10203, 10205])
+----------------------------------------
+QUERY #177: 'def hasBackground(fitParams):'
+  - FAISS (Truth) : [9757, 9756, 1432, 5512, 1451]
+  - V-Engram (P2P): [9757, 9756, 5512, 9770, 1437]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5512, 9756, 9757])
+----------------------------------------
+QUERY #178: 'def extended_cigar(aligned_template, aligned_query):'
+  - FAISS (Truth) : [6890, 6891, 2443, 2072, 4006]
+  - V-Engram (P2P): [10676, 7281, 4480, 16028, 16989]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #179: 'def create_change_set(StackName=None, TemplateBody=None, TemplateURL=None, UsePreviousTemplate=None, Parameters=None, Capabilities=None, ResourceTypes'
+  - FAISS (Truth) : [13908, 13910, 13909, 348, 350]
+  - V-Engram (P2P): [13908, 13910, 13909, 348, 3098]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13908, 13909, 13910, 348])
+----------------------------------------
+QUERY #180: 'def isequal(self, fieldname, value, places=7):'
+  - FAISS (Truth) : [13029, 13026, 12952, 12936, 12951]
+  - V-Engram (P2P): [13029, 13026, 12952, 12936, 1602]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [12936, 13026, 13029, 12952])
+----------------------------------------
+QUERY #181: 'def create_api_network_ipv6(self):'
+  - FAISS (Truth) : [4512, 4508, 4571, 4510, 4511]
+  - V-Engram (P2P): [4512, 4508, 4571, 4510, 4511]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [4512, 4571, 4508, 4510, 4511])
+----------------------------------------
+QUERY #182: 'def html_to_rgb(html):'
+  - FAISS (Truth) : [10266, 10265, 10270, 10267, 10283]
+  - V-Engram (P2P): [10266, 10265, 10264, 8338, 9623]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10265, 10266])
+----------------------------------------
+QUERY #183: 'def on_doctree_read(app, document):'
+  - FAISS (Truth) : [546, 542, 1423, 11747, 1421]
+  - V-Engram (P2P): [542, 546, 10655, 9558, 1421]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [546, 1421, 542])
+----------------------------------------
+QUERY #184: 'def pub_dates(soup):'
+  - FAISS (Truth) : [915, 914, 917, 916, 907]
+  - V-Engram (P2P): [915, 917, 12872, 5346, 16696]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [915, 917])
+----------------------------------------
+QUERY #185: 'def stopPowerNotificationsThread(self):'
+  - FAISS (Truth) : [15305, 15303, 15311, 15302, 15304]
+  - V-Engram (P2P): [15311, 15302, 15304, 264, 15308]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15304, 15302, 15311])
+----------------------------------------
+QUERY #186: 'def create_package_file(app, env, root_package, sub_package, private,'
+  - FAISS (Truth) : [12152, 12151, 7535, 12144, 12154]
+  - V-Engram (P2P): [12151, 12154, 12150, 12157, 3468]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [12154, 12151])
+----------------------------------------
+QUERY #187: 'def get_object(self, binding_name, cls):'
+  - FAISS (Truth) : [8420, 8421, 5388, 12943, 13663]
+  - V-Engram (P2P): [5388, 11788, 16748, 16018, 2311]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [5388])
+----------------------------------------
+QUERY #188: 'def _needs_elements(self, f):'
+  - FAISS (Truth) : [6260, 6283, 6257, 6258, 8011]
+  - V-Engram (P2P): [6260, 6257, 8011, 6261, 3914]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [6257, 8011, 6260])
+----------------------------------------
+QUERY #189: 'def iter_tree(root, on_error=None, follow_links=None):'
+  - FAISS (Truth) : [11746, 11747, 11742, 17465, 15903]
+  - V-Engram (P2P): [11746, 17469, 228, 17457, 17463]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [11746])
+----------------------------------------
+QUERY #190: 'def update_mutation_inputs(service):'
+  - FAISS (Truth) : [12487, 12486, 12488, 12505, 12514]
+  - V-Engram (P2P): [12487, 12486, 12488, 12505, 12434]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [12488, 12505, 12486, 12487])
+----------------------------------------
+QUERY #191: 'def filter_python_files(files):'
+  - FAISS (Truth) : [11187, 8058, 10707, 9166, 11193]
+  - V-Engram (P2P): [11187, 8058, 9166, 11193, 11751]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [11193, 8058, 11187, 9166])
+----------------------------------------
+QUERY #192: 'def yum_group_install(**kwargs):'
+  - FAISS (Truth) : [6638, 6637, 5551, 6639, 5550]
+  - V-Engram (P2P): [6638, 6637, 5551, 6639, 5550]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [6637, 6638, 5551, 5550, 6639])
+----------------------------------------
+QUERY #193: 'def extract_objects_from_source(self, text, type_filter=None):'
+  - FAISS (Truth) : [9801, 9790, 9800, 524, 89]
+  - V-Engram (P2P): [9801, 9790, 524, 8582, 8534]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9801, 524, 9790])
+----------------------------------------
+QUERY #194: 'def register_module_alias(self, alias, module_path, after_init=False):'
+  - FAISS (Truth) : [6033, 12425, 16386, 4887, 15642]
+  - V-Engram (P2P): [6033, 12425, 16386, 4887, 14523]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6033, 12425, 16386, 4887])
+----------------------------------------
+QUERY #195: 'def create_file_chooser_dialog(self, text, parent, name=Gtk.STOCK_OPEN):'
+  - FAISS (Truth) : [15470, 16560, 5134, 15467, 15576]
+  - V-Engram (P2P): [15470, 5134, 15467, 15574, 11478]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15467, 15470, 5134])
+----------------------------------------
+QUERY #196: 'def write_script(script, tempdir):'
+  - FAISS (Truth) : [11385, 11386, 1185, 10191, 12292]
+  - V-Engram (P2P): [10191, 18281, 12144, 10480, 19189]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [10191])
+----------------------------------------
+QUERY #197: 'def signal_list_names(type_):'
+  - FAISS (Truth) : [15958, 15964, 1234, 15960, 1232]
+  - V-Engram (P2P): [15958, 15983, 116, 6871, 4608]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [15958])
+----------------------------------------
+QUERY #198: 'def dx(mt, x):'
+  - FAISS (Truth) : [2599, 2598, 2615, 2614, 2600]
+  - V-Engram (P2P): [2599, 2615, 2598, 2614, 2593]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [2614, 2615, 2598, 2599])
+----------------------------------------
+QUERY #199: 'def circmean(dts, axis=2):'
+  - FAISS (Truth) : [11878, 11901, 11880, 14183, 4980]
+  - V-Engram (P2P): [11878, 11901, 11880, 14183, 14184]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [11880, 11901, 11878, 14183])
+----------------------------------------
+QUERY #200: 'def insert(self, table, value, ignore=False, commit=True):'
+  - FAISS (Truth) : [12634, 12635, 12636, 6717, 633]
+  - V-Engram (P2P): [12634, 12636, 6717, 1357, 12637]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12634, 12636, 6717])
+----------------------------------------
+QUERY #201: 'def cmd_slow_requests(self):'
+  - FAISS (Truth) : [15276, 15259, 15282, 12422, 5985]
+  - V-Engram (P2P): [15276, 15259, 6301, 15277, 11849]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [15259, 15276])
+----------------------------------------
+QUERY #202: 'def quaternion_product(quat1, quat2):'
+  - FAISS (Truth) : [3819, 3820, 9409, 3822, 3827]
+  - V-Engram (P2P): [3819, 3820, 3828, 9410, 13032]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [3819, 3820])
+----------------------------------------
+QUERY #203: 'def is_connected(self, use_cached=True):'
+  - FAISS (Truth) : [10443, 14829, 10740, 9981, 10444]
+  - V-Engram (P2P): [10443, 10444, 7773, 9980, 6283]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10443, 10444])
+----------------------------------------
+QUERY #204: 'def load_yaml_by_path(cls, path, log_debug=False):'
+  - FAISS (Truth) : [15490, 15489, 1883, 15488, 18373]
+  - V-Engram (P2P): [15490, 1883, 15488, 18373, 1928]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [15488, 15490, 1883, 18373])
+----------------------------------------
+QUERY #205: 'def quadraticInterpolation(valueList2d, numDegrees, n,'
+  - FAISS (Truth) : [10552, 9611, 17794, 17793, 8132]
+  - V-Engram (P2P): [10552, 9611, 17794, 17793, 9601]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [10552, 17793, 17794, 9611])
+----------------------------------------
+QUERY #206: 'def add_qpimage(self, qpi, identifier=None, bg_from_idx=None):'
+  - FAISS (Truth) : [1475, 1476, 15450, 1432, 1469]
+  - V-Engram (P2P): [1475, 1469, 1472, 1436, 5348]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1475, 1469])
+----------------------------------------
+QUERY #207: 'def bind_column(model, name, column, force=False, recursive=False, copy=False) -> Column:'
+  - FAISS (Truth) : [17040, 17041, 2449, 1354, 17037]
+  - V-Engram (P2P): [17040, 17041, 1354, 7779, 2418]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [17040, 17041, 1354])
+----------------------------------------
+QUERY #208: 'def create_replication_task(ReplicationTaskIdentifier=None, SourceEndpointArn=None, TargetEndpointArn=None, ReplicationInstanceArn=None, MigrationType'
+  - FAISS (Truth) : [13850, 14117, 11814, 14057, 14116]
+  - V-Engram (P2P): [13850, 14117, 11814, 14057, 11827]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [14057, 13850, 14117, 11814])
+----------------------------------------
+QUERY #209: 'def _ptn2fn(self, pattern):'
+  - FAISS (Truth) : [1285, 1286, 11744, 19862, 11745]
+  - V-Engram (P2P): [1285, 19862, 1546, 9481, 11739]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1285, 19862])
+----------------------------------------
+QUERY #210: 'def get_insert_fields_and_values_from_dict(dictionary, datetime_format='%Y-%m-%d %H:%M:%S', db_escape=True):'
+  - FAISS (Truth) : [6103, 6102, 6105, 12634, 349]
+  - V-Engram (P2P): [6103, 6102, 12635, 281, 283]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6102, 6103])
+----------------------------------------
+QUERY #211: 'def update(self, CorpNum, ItemCode, MgtKey, Statement, UserID=None):'
+  - FAISS (Truth) : [2953, 3022, 2910, 2956, 3070]
+  - V-Engram (P2P): [2953, 2955, 7487, 3030, 2960]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [2953])
+----------------------------------------
+QUERY #212: 'def write_to_cache(self, data, filename=''):'
+  - FAISS (Truth) : [15047, 6081, 698, 15046, 17831]
+  - V-Engram (P2P): [15047, 6081, 698, 10476, 17831]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [698, 6081, 15047, 17831])
+----------------------------------------
+QUERY #213: 'def search_ipv6_environment(self, ipv6, id_environment):'
+  - FAISS (Truth) : [4605, 4321, 4601, 4333, 4588]
+  - V-Engram (P2P): [4605, 4321, 4333, 4568, 4594]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4321, 4605, 4333])
+----------------------------------------
+QUERY #214: 'def normalize_efd(coeffs, size_invariant=True):'
+  - FAISS (Truth) : [803, 805, 19525, 9782, 17783]
+  - V-Engram (P2P): [803, 805, 9722, 7813, 9685]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [803, 805])
+----------------------------------------
+QUERY #215: 'def delete_one_word(self, word=RIGHT):'
+  - FAISS (Truth) : [18727, 18725, 18726, 18724, 8642]
+  - V-Engram (P2P): [18727, 18725, 18726, 7378, 1669]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [18725, 18726, 18727])
+----------------------------------------
+QUERY #216: 'def lxml(self) -> _LXML:'
+  - FAISS (Truth) : [3486, 3484, 3483, 8683, 3488]
+  - V-Engram (P2P): [3486, 3484, 8683, 3483, 3488]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [3488, 8683, 3483, 3484, 3486])
+----------------------------------------
+QUERY #217: 'def list2doe(alist):'
+  - FAISS (Truth) : [12981, 8038, 12985, 12982, 18259]
+  - V-Engram (P2P): [12981, 8038, 12985, 8042, 14642]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12985, 12981, 8038])
+----------------------------------------
+QUERY #218: 'def class_from_string(name):'
+  - FAISS (Truth) : [626, 10651, 1445, 5278, 6748]
+  - V-Engram (P2P): [626, 10651, 6748, 7353, 5278]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [626, 10651, 6748, 5278])
+----------------------------------------
+QUERY #219: 'def parse_xml_dataset(elem, handle_units):'
+  - FAISS (Truth) : [2201, 2198, 2199, 2193, 2204]
+  - V-Engram (P2P): [2201, 2198, 2199, 2192, 2027]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2201, 2198, 2199])
+----------------------------------------
+QUERY #220: 'def connectcomponents(idf, components, fluid=None):'
+  - FAISS (Truth) : [13124, 13126, 13117, 13116, 13120]
+  - V-Engram (P2P): [13124, 13126, 13116, 13117, 13058]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13116, 13124, 13117, 13126])
+----------------------------------------
+QUERY #221: 'def _check_property(self, rest=None, require_indexed=True):'
+  - FAISS (Truth) : [13261, 13264, 13280, 13275, 16539]
+  - V-Engram (P2P): [13261, 13264, 13280, 13258, 16454]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [13280, 13261, 13264])
+----------------------------------------
+QUERY #222: 'def create_multipart_upload(ACL=None, Bucket=None, CacheControl=None, ContentDisposition=None, ContentEncoding=None, ContentLanguage=None, ContentType'
+  - FAISS (Truth) : [13918, 14804, 14805, 13922, 5421]
+  - V-Engram (P2P): [13918, 14805, 14804, 13221, 13924]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14804, 14805, 13918])
+----------------------------------------
+QUERY #223: 'def _apply_callables(self, acl, obj=None):'
+  - FAISS (Truth) : [750, 773, 13254, 13923, 1251]
+  - V-Engram (P2P): [750, 1251, 1771, 1176, 1868]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1251, 750])
+----------------------------------------
+QUERY #224: 'def handle_charref(self, charRef):'
+  - FAISS (Truth) : [14868, 11668, 18513, 14867, 11695]
+  - V-Engram (P2P): [14868, 18513, 11668, 14867, 11695]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [11695, 18513, 14867, 11668, 14868])
+----------------------------------------
+QUERY #225: 'def _get_type(cls, ptr):'
+  - FAISS (Truth) : [15938, 3249, 13322, 11646, 15936]
+  - V-Engram (P2P): [15938, 3249, 13322, 11646, 15936]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [15936, 15938, 13322, 3249, 11646])
+----------------------------------------
+QUERY #226: 'def ncbi_blast(self, db="nr", megablast=True, sequence=None):'
+  - FAISS (Truth) : [18814, 6979, 6980, 6892, 18815]
+  - V-Engram (P2P): [18814, 6979, 6980, 6892, 6978]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6892, 6979, 6980, 18814])
+----------------------------------------
+QUERY #227: 'def Overlay_setShowPaintRects(self, result):'
+  - FAISS (Truth) : [10028, 10032, 10029, 10031, 10030]
+  - V-Engram (P2P): [10028, 10032, 5158, 15709, 18734]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10032, 10028])
+----------------------------------------
+QUERY #228: 'def styles(self, mutagen_file):'
+  - FAISS (Truth) : [5489, 5479, 5481, 5488, 5482]
+  - V-Engram (P2P): [5489, 5479, 5488, 5482, 5486]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [5488, 5489, 5482, 5479])
+----------------------------------------
+QUERY #229: 'def get_rackspace_info(server_id,'
+  - FAISS (Truth) : [7261, 7078, 7092, 7077, 7260]
+  - V-Engram (P2P): [7261, 7078, 7092, 14827, 5640]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [7092, 7261, 7078])
+----------------------------------------
+QUERY #230: 'def check_internet_connection(self, remote_server: str = "api.isogeo.com") -> bool:'
+  - FAISS (Truth) : [5393, 8301, 10595, 11076, 14155]
+  - V-Engram (P2P): [5393, 10595, 14155, 6409, 16749]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5393, 14155, 10595])
+----------------------------------------
+QUERY #231: 'def remove_line(self, section):'
+  - FAISS (Truth) : [7333, 13062, 7408, 3900, 12473]
+  - V-Engram (P2P): [7333, 13062, 12473, 3901, 5256]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12473, 7333, 13062])
+----------------------------------------
+QUERY #232: 'def rgb_to_ints(r, g=None, b=None):'
+  - FAISS (Truth) : [10263, 10264, 10267, 10271, 8338]
+  - V-Engram (P2P): [10263, 10264, 10267, 8338, 10271]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [8338, 10263, 10264, 10267, 10271])
+----------------------------------------
+QUERY #233: 'def get_row(self, index, default=None):'
+  - FAISS (Truth) : [3607, 7300, 1005, 7335, 16201]
+  - V-Engram (P2P): [3607, 4643, 7344, 4678, 4662]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [3607])
+----------------------------------------
+QUERY #234: 'def zmq_send_data(socket, data, flags=0, copy=True, track=False):'
+  - FAISS (Truth) : [19878, 19879, 6538, 6537, 1902]
+  - V-Engram (P2P): [19879, 1902, 15378, 16674, 16740]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1902, 19879])
+----------------------------------------
+QUERY #235: 'def make_fileitem_fileextension(extension, condition='is', negate=False, preserve_case=False):'
+  - FAISS (Truth) : [1948, 1949, 1950, 1966, 1951]
+  - V-Engram (P2P): [1948, 1949, 1950, 1966, 1951]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [1966, 1948, 1949, 1950, 1951])
+----------------------------------------
+QUERY #236: 'def load_data_split(proc_data_dir):'
+  - FAISS (Truth) : [7819, 9326, 19549, 4055, 7818]
+  - V-Engram (P2P): [7819, 7818, 12037, 4162, 2942]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [7818, 7819])
+----------------------------------------
+QUERY #237: 'def set_connections_params(self, harakiri=None, timeout_socket=None):'
+  - FAISS (Truth) : [6008, 6002, 6005, 5999, 6007]
+  - V-Engram (P2P): [6008, 6002, 6005, 6007, 5999]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [5999, 6002, 6005, 6007, 6008])
+----------------------------------------
+QUERY #238: 'def read(path, mode='tsv'):'
+  - FAISS (Truth) : [1400, 1401, 5434, 1126, 1422]
+  - V-Engram (P2P): [1401, 1126, 9738, 8187, 1145]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1401, 1126])
+----------------------------------------
+QUERY #239: 'def minor(self, minor: int) -> None:'
+  - FAISS (Truth) : [1447, 1446, 9576, 5243, 607]
+  - V-Engram (P2P): [1447, 9576, 607, 2448, 8430]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9576, 607, 1447])
+----------------------------------------
+QUERY #240: 'def inserir(self, id_permission, read, write, id_group):'
+  - FAISS (Truth) : [4494, 4278, 4495, 4279, 4206]
+  - V-Engram (P2P): [4494, 4278, 4206, 13675, 4235]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4494, 4278, 4206])
+----------------------------------------
+QUERY #241: 'def _register(self, form_class, check_middleware=True):'
+  - FAISS (Truth) : [1592, 1591, 17909, 14854, 2347]
+  - V-Engram (P2P): [17909, 2347, 14854, 563, 15366]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2347, 17909, 14854])
+----------------------------------------
+QUERY #242: 'def routeargs(self, path, routinemethod, container = None, host = None, vhost = None, method = [b'POST'],'
+  - FAISS (Truth) : [3367, 3364, 3363, 3362, 1818]
+  - V-Engram (P2P): [3367, 3364, 3363, 3362, 1818]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [3362, 3363, 3364, 3367, 1818])
+----------------------------------------
+QUERY #243: 'def diff_missed_lines(self, filename):'
+  - FAISS (Truth) : [16627, 16617, 16615, 16638, 16629]
+  - V-Engram (P2P): [16629, 16619, 16618, 13062, 12286]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [16629])
+----------------------------------------
+QUERY #244: 'def describeNextReport(self, simulation):'
+  - FAISS (Truth) : [14515, 14517, 14516, 14496, 11936]
+  - V-Engram (P2P): [14515, 14517, 14516, 19141, 7017]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14515, 14516, 14517])
+----------------------------------------
+QUERY #245: 'def get_tree(self, list_of_keys):'
+  - FAISS (Truth) : [7012, 3416, 17467, 3419, 12692]
+  - V-Engram (P2P): [7012, 3416, 5695, 6324, 17582]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [3416, 7012])
+----------------------------------------
+QUERY #246: 'def sign(self, payload):'
+  - FAISS (Truth) : [1626, 1624, 1637, 1627, 1629]
+  - V-Engram (P2P): [1626, 1624, 1637, 1629, 391]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [1624, 1626, 1629, 1637])
+----------------------------------------
+QUERY #247: 'def select_index(self, compare, result='boolean'):'
+  - FAISS (Truth) : [4650, 12211, 12784, 12212, 4651]
+  - V-Engram (P2P): [4650, 12211, 12212, 4651, 12784]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [4650, 4651, 12784, 12211, 12212])
+----------------------------------------
+QUERY #248: 'def set_param(self, into, name):'
+  - FAISS (Truth) : [10624, 12787, 8716, 16644, 5354]
+  - V-Engram (P2P): [10624, 8716, 5354, 16644, 11099]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [10624, 5354, 16644, 8716])
+----------------------------------------
+QUERY #249: 'def get_latex_name(func_in, **kwargs):'
+  - FAISS (Truth) : [12616, 12275, 12941, 19029, 16005]
+  - V-Engram (P2P): [12275, 12941, 16005, 3168, 19747]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12275, 16005, 12941])
+----------------------------------------
+QUERY #250: 'def write_block_data(self, cmd, block):'
+  - FAISS (Truth) : [100, 102, 8724, 97, 15977]
+  - V-Engram (P2P): [15977, 3223, 5531, 3348, 8108]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [15977])
+----------------------------------------
+QUERY #251: 'def _check_subresource(self, subresource: str):'
+  - FAISS (Truth) : [5402, 5401, 10181, 760, 761]
+  - V-Engram (P2P): [5402, 5401, 10181, 760, 14554]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [760, 5401, 5402, 10181])
+----------------------------------------
+QUERY #252: 'def default_combine_filenames_generator(filenames, max_length=40):'
+  - FAISS (Truth) : [18798, 9156, 4136, 17128, 6480]
+  - V-Engram (P2P): [18798, 6480, 7258, 9105, 11986]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6480, 18798])
+----------------------------------------
+QUERY #253: 'def normalize_slice(length, index):'
+  - FAISS (Truth) : [11294, 11317, 11315, 11303, 12990]
+  - V-Engram (P2P): [11294, 11317, 12990, 12000, 11422]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12990, 11317, 11294])
+----------------------------------------
+QUERY #254: 'def derive_fields(self):'
+  - FAISS (Truth) : [10999, 11019, 11012, 11002, 11005]
+  - V-Engram (P2P): [10999, 11019, 11012, 11002, 11005]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [11012, 11019, 10999, 11002, 11005])
+----------------------------------------
+QUERY #255: 'def roc_auc_xlim(x_bla, y_bla, xlim=0.1):'
+  - FAISS (Truth) : [19772, 12868, 19771, 3233, 12867]
+  - V-Engram (P2P): [19772, 12868, 19770, 13429, 19832]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [12868, 19772])
+----------------------------------------
+QUERY #256: 'def get_func_params(method, called_params):'
+  - FAISS (Truth) : [5760, 15348, 2371, 3526, 3207]
+  - V-Engram (P2P): [5760, 2371, 3207, 1931, 10871]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5760, 2371, 3207])
+----------------------------------------
+QUERY #257: 'def to_obj(cls, obj_data=None, *fields, **field_map):'
+  - FAISS (Truth) : [1089, 15108, 615, 8826, 1087]
+  - V-Engram (P2P): [1089, 15108, 6107, 13070, 7717]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1089, 15108])
+----------------------------------------
+QUERY #258: 'def _make_ctx_options(ctx_options, config_cls=ContextOptions):'
+  - FAISS (Truth) : [13200, 13174, 11375, 11379, 5739]
+  - V-Engram (P2P): [13200, 10670, 1760, 11373, 3719]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [13200])
+----------------------------------------
+QUERY #259: 'def random(cls, origin=None, radius=1):'
+  - FAISS (Truth) : [10400, 10352, 10392, 10390, 10391]
+  - V-Engram (P2P): [10400, 10352, 16744, 16711, 5198]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10400, 10352])
+----------------------------------------
+QUERY #260: 'def remove_note(self, username, index):'
+  - FAISS (Truth) : [160, 1392, 159, 156, 7302]
+  - V-Engram (P2P): [160, 1392, 7378, 16129, 16397]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [160, 1392])
+----------------------------------------
+QUERY #261: 'def remove_link_button(self):'
+  - FAISS (Truth) : [15595, 15598, 15604, 15605, 2014]
+  - V-Engram (P2P): [2014, 8454, 424, 15210, 18642]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [2014])
+----------------------------------------
+QUERY #262: 'def copy(self, h5file=None):'
+  - FAISS (Truth) : [1472, 1466, 6626, 17156, 6579]
+  - V-Engram (P2P): [1472, 1466, 12290, 3146, 1118]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1472, 1466])
+----------------------------------------
+QUERY #263: 'def create_helping_material_info(helping):'
+  - FAISS (Truth) : [7606, 7599, 7590, 1962, 925]
+  - V-Engram (P2P): [7606, 7590, 7599, 954, 2984]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [7606, 7590, 7599])
+----------------------------------------
+QUERY #264: 'def process_insert_get_id(self, query, sql, values, sequence=None):'
+  - FAISS (Truth) : [2473, 12634, 7631, 2550, 12636]
+  - V-Engram (P2P): [2473, 7631, 2550, 2401, 6114]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2473, 2550, 7631])
+----------------------------------------
+QUERY #265: 'def buscar_cliente_por_finalidade(self, finalidade_txt):'
+  - FAISS (Truth) : [4579, 4580, 4578, 4574, 4575]
+  - V-Engram (P2P): [4579, 4580, 4578, 4574, 4266]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [4578, 4579, 4580, 4574])
+----------------------------------------
+QUERY #266: 'def public_api(self,url):'
+  - FAISS (Truth) : [11326, 117, 897, 15424, 4742]
+  - V-Engram (P2P): [11326, 897, 899, 63, 7417]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [897, 11326])
+----------------------------------------
+QUERY #267: 'def calc_mean_time_deviation(timepoints, weights, mean_time=None):'
+  - FAISS (Truth) : [19418, 19417, 5240, 19521, 19532]
+  - V-Engram (P2P): [19417, 4796, 11941, 19425, 12553]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [19417])
+----------------------------------------
+QUERY #268: 'def is_handler(cls, name, value):'
+  - FAISS (Truth) : [1228, 2105, 10671, 6984, 1231]
+  - V-Engram (P2P): [1228, 6984, 2105, 1231, 984]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6984, 2105, 1228, 1231])
+----------------------------------------
+QUERY #269: 'def make_systeminfoitem_hostname(hostname, condition='contains', negate=False, preserve_case=False):'
+  - FAISS (Truth) : [1993, 1943, 1941, 1942, 5557]
+  - V-Engram (P2P): [1993, 1942, 5557, 1984, 1994]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1993, 5557, 1942])
+----------------------------------------
+QUERY #270: 'def _load_linestring(tokens, string):'
+  - FAISS (Truth) : [7918, 7922, 7917, 10633, 7919]
+  - V-Engram (P2P): [7918, 7922, 7917, 7919, 7907]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [7922, 7917, 7918, 7919])
+----------------------------------------
+QUERY #271: 'def __process_inequalities(self, block_index):'
+  - FAISS (Truth) : [11240, 11244, 11241, 11243, 11323]
+  - V-Engram (P2P): [11240, 11241, 11244, 11323, 9102]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [11240, 11241, 11323, 11244])
+----------------------------------------
+QUERY #272: 'def import_module(self, modules, shared=False, into_spooler=False):'
+  - FAISS (Truth) : [6034, 10721, 11506, 15644, 6524]
+  - V-Engram (P2P): [10721, 6645, 15644, 16388, 125]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10721, 15644])
+----------------------------------------
+QUERY #273: 'def load_yaml_file(file):'
+  - FAISS (Truth) : [1924, 1917, 1694, 1919, 1928]
+  - V-Engram (P2P): [1924, 1917, 1694, 18225, 5281]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1924, 1917, 1694])
+----------------------------------------
+QUERY #274: 'def _compute_key(self, id, nbytes):'
+  - FAISS (Truth) : [14699, 15772, 18967, 13298, 15707]
+  - V-Engram (P2P): [13298, 13297, 6067, 789, 6069]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [13298])
+----------------------------------------
+QUERY #275: 'def navierStokes2d(u, v, p, dt, nt, rho, nu,'
+  - FAISS (Truth) : [9714, 19675, 19679, 9605, 19681]
+  - V-Engram (P2P): [9714, 19675, 17142, 19681, 1079]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19681, 9714, 19675])
+----------------------------------------
+QUERY #276: 'def save_last_response_to_file(self, filename):'
+  - FAISS (Truth) : [6196, 6197, 12843, 14783, 1580]
+  - V-Engram (P2P): [6196, 14783, 1580, 19189, 12975]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1580, 6196, 14783])
+----------------------------------------
+QUERY #277: 'def _distance_correlation_sqr_naive(x, y, exponent=1):'
+  - FAISS (Truth) : [9421, 9422, 9432, 9419, 9418]
+  - V-Engram (P2P): [9421, 9422, 9419, 9432, 9418]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [9418, 9419, 9421, 9422, 9432])
+----------------------------------------
+QUERY #278: 'def check_edit_tab(self, tab: str, md_type: str):'
+  - FAISS (Truth) : [5398, 5104, 5399, 2931, 3139]
+  - V-Engram (P2P): [2931, 15514, 15579, 15500, 10165]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [2931])
+----------------------------------------
+QUERY #279: 'def translate_window_with_sizehint(self, window, width, height):'
+  - FAISS (Truth) : [828, 829, 840, 10040, 10032]
+  - V-Engram (P2P): [828, 7663, 18720, 10691, 18716]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [828])
+----------------------------------------
+QUERY #280: 'def symmetric_difference_update(self, other):'
+  - FAISS (Truth) : [7583, 1563, 7582, 8904, 3248]
+  - V-Engram (P2P): [7583, 1563, 7582, 1560, 8902]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1563, 7582, 7583])
+----------------------------------------
+QUERY #281: 'def _address2long(address):'
+  - FAISS (Truth) : [18021, 18002, 18004, 17986, 17987]
+  - V-Engram (P2P): [18021, 724, 15349, 4623, 95]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [18021])
+----------------------------------------
+QUERY #282: 'def get_all_team_ids():'
+  - FAISS (Truth) : [19695, 19696, 17218, 17293, 17215]
+  - V-Engram (P2P): [19695, 19696, 17218, 17293, 17215]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [17218, 17293, 19695, 19696, 17215])
+----------------------------------------
+QUERY #283: 'def _validate_sections(cls, sections):'
+  - FAISS (Truth) : [6026, 9158, 9152, 18982, 1618]
+  - V-Engram (P2P): [6026, 9158, 9152, 1618, 6852]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [9152, 6026, 1618, 9158])
+----------------------------------------
+QUERY #284: 'def get_image(self, id):'
+  - FAISS (Truth) : [8860, 8859, 8865, 8858, 8854]
+  - V-Engram (P2P): [8860, 17337, 8861, 17872, 8834]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [8860])
+----------------------------------------
+QUERY #285: 'def set_plugins_params(self, plugins=None, search_dirs=None, autoload=None, required=False):'
+  - FAISS (Truth) : [6020, 6032, 6029, 16527, 5983]
+  - V-Engram (P2P): [6029, 16527, 17907, 5957, 5907]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6029, 16527])
+----------------------------------------
+QUERY #286: 'def check_act_assert_spacing(self) -> typing.Generator[AAAError, None, None]:'
+  - FAISS (Truth) : [384, 383, 385, 578, 5858]
+  - V-Engram (P2P): [384, 385, 578, 11735, 5879]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [384, 385, 578])
+----------------------------------------
+QUERY #287: 'def disconnect(self, cback, subscribers=None, instance=None):'
+  - FAISS (Truth) : [1208, 1213, 1212, 1207, 17757]
+  - V-Engram (P2P): [1208, 1213, 17757, 9170, 1909]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1208, 17757, 1213])
+----------------------------------------
+QUERY #288: 'def assign_variable(variable, log_res, res, kwargs):'
+  - FAISS (Truth) : [15553, 16984, 19292, 394, 12430]
+  - V-Engram (P2P): [15553, 19292, 12349, 8422, 15124]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [15553, 19292])
+----------------------------------------
+QUERY #289: 'def cannon_normalize(spec_raw):'
+  - FAISS (Truth) : [4774, 4776, 12322, 4784, 9782]
+  - V-Engram (P2P): [4774, 4784, 9731, 9782, 9641]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4784, 9782, 4774])
+----------------------------------------
+QUERY #290: 'def plot(self, xmin, xmax, idx_input=0, idx_output=0, points=100,'
+  - FAISS (Truth) : [19452, 19458, 7835, 19424, 8690]
+  - V-Engram (P2P): [19452, 19458, 7835, 19424, 4865]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [19424, 19458, 7835, 19452])
+----------------------------------------
+QUERY #291: 'def __get_response(self, uri, params=None, method="get", stream=False):'
+  - FAISS (Truth) : [18694, 18696, 18695, 12100, 7551]
+  - V-Engram (P2P): [18696, 18695, 14592, 9806, 7425]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [18696, 18695])
+----------------------------------------
+QUERY #292: 'def get_firefox_binary():'
+  - FAISS (Truth) : [6215, 1052, 12562, 6925, 1590]
+  - V-Engram (P2P): [6215, 1052, 12562, 1245, 10208]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12562, 1052, 6215])
+----------------------------------------
+QUERY #293: 'def i18n_system_locale():'
+  - FAISS (Truth) : [10661, 10664, 10665, 10660, 6728]
+  - V-Engram (P2P): [10660, 6728, 7275, 624, 14540]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6728, 10660])
+----------------------------------------
+QUERY #294: 'def report(self, simulation, state):'
+  - FAISS (Truth) : [14517, 14516, 14496, 14515, 12177]
+  - V-Engram (P2P): [14517, 14516, 11935, 11936, 19141]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [14516, 14517])
+----------------------------------------
+QUERY #295: 'def feed_forward(self, input_data, prediction=False):'
+  - FAISS (Truth) : [18226, 18380, 18289, 18192, 18284]
+  - V-Engram (P2P): [18226, 18380, 18289, 18227, 18191]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [18289, 18226, 18380])
+----------------------------------------
+QUERY #296: 'def markdown_toclify(input_file, output_file=None, github=False,'
+  - FAISS (Truth) : [7415, 8685, 7414, 17422, 11720]
+  - V-Engram (P2P): [8685, 11720, 16805, 524, 8833]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [11720, 8685])
+----------------------------------------
+QUERY #297: 'def filter_ip_range(ip_range):'
+  - FAISS (Truth) : [15258, 18022, 4176, 4325, 2828]
+  - V-Engram (P2P): [18022, 4325, 4176, 4357, 2828]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [4176, 2828, 4325, 18022])
+----------------------------------------
+QUERY #298: 'def cudaMemcpy_dtoh(dst, src, count):'
+  - FAISS (Truth) : [18233, 18232, 18230, 18234, 18231]
+  - V-Engram (P2P): [18233, 18232, 18230, 18234, 18231]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [18230, 18231, 18232, 18233, 18234])
+----------------------------------------
+QUERY #299: 'def parse(self, stream, template, predefines=True, orig_filename=None, keep_successful=False, printf=True):'
+  - FAISS (Truth) : [11653, 11553, 11658, 11616, 12277]
+  - V-Engram (P2P): [11653, 11553, 11658, 11616, 12277]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [11616, 11553, 11653, 11658, 12277])
+----------------------------------------
+QUERY #300: 'def get_postalcodes_around_radius(self, pc, radius):'
+  - FAISS (Truth) : [19692, 3778, 18175, 11280, 3779]
+  - V-Engram (P2P): [19692, 7392, 8979, 9134, 7963]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [19692])
+----------------------------------------
+QUERY #301: 'def tasks(lancet, project_id):'
+  - FAISS (Truth) : [1714, 1713, 1674, 1673, 7589]
+  - V-Engram (P2P): [1714, 1713, 7591, 1675, 16361]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1713, 1714])
+----------------------------------------
+QUERY #302: 'def dump_pdb(filename, molecule, atomnames=None, resnames=None, chain_ids=None, occupancies=None, betas=None):'
+  - FAISS (Truth) : [4023, 4024, 3798, 3799, 3860]
+  - V-Engram (P2P): [4023, 14512, 14501, 3896, 3906]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [4023])
+----------------------------------------
+QUERY #303: 'def guess_encoding(text, default=DEFAULT_ENCODING):'
+  - FAISS (Truth) : [4115, 4116, 19437, 4117, 4113]
+  - V-Engram (P2P): [4115, 722, 10538, 5777, 4114]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [4115])
+----------------------------------------
+QUERY #304: 'def neigh(G: Graph, n: Node) -> RDFGraph:'
+  - FAISS (Truth) : [15752, 15753, 15750, 15748, 3171]
+  - V-Engram (P2P): [15752, 15750, 3172, 15647, 15675]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [15752, 15750])
+----------------------------------------
+QUERY #305: 'def FAXSend(self, CorpNum, statement, SendNum, ReceiveNum, UserID=None):'
+  - FAISS (Truth) : [2950, 2674, 2672, 2675, 2676]
+  - V-Engram (P2P): [2950, 2674, 2675, 2672, 2676]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [2950, 2672, 2674, 2675, 2676])
+----------------------------------------
+QUERY #306: 'def adjacent(geohash, direction):'
+  - FAISS (Truth) : [6432, 6433, 9095, 6430, 9055]
+  - V-Engram (P2P): [6432, 6430, 6428, 14611, 10547]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6432, 6430])
+----------------------------------------
+QUERY #307: 'def edit(self, id_equip, nome, id_tipo_equipamento, id_modelo, maintenance=None):'
+  - FAISS (Truth) : [4386, 4222, 4484, 4385, 4352]
+  - V-Engram (P2P): [4386, 4484, 4385, 4352, 4337]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [4352, 4385, 4386, 4484])
+----------------------------------------
+QUERY #308: 'def _doPrep(field_dict):'
+  - FAISS (Truth) : [3565, 3566, 1534, 3131, 11782]
+  - V-Engram (P2P): [3565, 3566, 1494, 11782, 11621]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3566, 3565, 11782])
+----------------------------------------
+QUERY #309: 'def write(self, bucket, rows, keyed=False, as_generator=False, update_keys=None):'
+  - FAISS (Truth) : [641, 631, 640, 633, 1863]
+  - V-Engram (P2P): [641, 631, 640, 633, 16632]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [640, 641, 633, 631])
+----------------------------------------
+QUERY #310: 'def find_in_bids(filename, pattern=None, generator=False, upwards=False,'
+  - FAISS (Truth) : [5705, 5704, 12021, 14468, 1791]
+  - V-Engram (P2P): [5705, 12021, 1791, 1789, 4986]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5705, 12021, 1791])
+----------------------------------------
+QUERY #311: 'def set_log_level(self, level=logging.INFO):'
+  - FAISS (Truth) : [7351, 681, 6824, 12646, 10903]
+  - V-Engram (P2P): [681, 7351, 6824, 7737, 10903]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6824, 681, 7351, 10903])
+----------------------------------------
+QUERY #312: 'def initial_bill_date(self):'
+  - FAISS (Truth) : [16678, 5000, 5599, 3067, 2612]
+  - V-Engram (P2P): [16678, 2613, 11139, 2612, 19624]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2612, 16678])
+----------------------------------------
+QUERY #313: 'def __add_query_comment(sql):'
+  - FAISS (Truth) : [6099, 644, 1259, 1000, 12454]
+  - V-Engram (P2P): [6099, 644, 1259, 2406, 12458]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1259, 644, 6099])
+----------------------------------------
+QUERY #314: 'def get_cqz(self, callsign, timestamp=timestamp_now):'
+  - FAISS (Truth) : [10760, 10761, 10757, 10849, 10856]
+  - V-Engram (P2P): [10760, 10761, 10757, 10849, 10856]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [10849, 10757, 10760, 10856, 10761])
+----------------------------------------
+QUERY #315: 'def _formatExternalIdentifiers(self, element, element_type):'
+  - FAISS (Truth) : [13815, 13816, 13819, 13820, 13817]
+  - V-Engram (P2P): [13815, 13816, 13819, 13820, 13818]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13816, 13819, 13820, 13815])
+----------------------------------------
+QUERY #316: 'def add_header(input_array, codec, length, param):'
+  - FAISS (Truth) : [11083, 11067, 11082, 5914, 11066]
+  - V-Engram (P2P): [11083, 11067, 11082, 5914, 11066]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [11082, 11083, 5914, 11066, 11067])
+----------------------------------------
+QUERY #317: 'def field_pklist_from_json(self, data):'
+  - FAISS (Truth) : [11780, 11782, 11781, 11772, 11783]
+  - V-Engram (P2P): [11780, 11782, 11772, 11783, 11396]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [11772, 11780, 11782, 11783])
+----------------------------------------
+QUERY #318: 'def set_dicts(self, word_dict, char_dict):'
+  - FAISS (Truth) : [15871, 15872, 15870, 19958, 12226]
+  - V-Engram (P2P): [15871, 15870, 3917, 3128, 13636]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [15870, 15871])
+----------------------------------------
+QUERY #319: 'def basic_extractor(document, train_set):'
+  - FAISS (Truth) : [8531, 8532, 8534, 2362, 8583]
+  - V-Engram (P2P): [8531, 8532, 8540, 18402, 19288]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [8531, 8532])
+----------------------------------------
+QUERY #320: 'def _check_rest_version(self, version):'
+  - FAISS (Truth) : [14744, 14745, 14746, 7205, 320]
+  - V-Engram (P2P): [14745, 14746, 7205, 320, 15998]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [320, 14745, 14746, 7205])
+----------------------------------------
+QUERY #321: 'def make_fileitem_streamlist_stream_name(stream_name, condition='is', negate=False, preserve_case=False):'
+  - FAISS (Truth) : [1965, 1949, 1966, 1962, 1950]
+  - V-Engram (P2P): [1950, 1962, 2244, 7258, 1646]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1962, 1950])
+----------------------------------------
+QUERY #322: 'def search(self, CorpNum, DType, SDate, EDate, State, TradeType, TradeUsage, TaxationType, Page, PerPage, Order,'
+  - FAISS (Truth) : [2913, 3035, 2957, 2726, 2682]
+  - V-Engram (P2P): [2913, 3035, 2957, 2726, 2682]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [2913, 2726, 2957, 2682, 3035])
+----------------------------------------
+QUERY #323: 'def create(self, task_type_id, task_queue_id, arguments=None, name=""):'
+  - FAISS (Truth) : [7107, 11814, 6691, 6969, 6968]
+  - V-Engram (P2P): [11814, 6903, 6931, 11819, 11827]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [11814])
+----------------------------------------
+QUERY #324: 'def flatFieldFromCloseDistance2(images, bgImages=None, calcStd=False,'
+  - FAISS (Truth) : [9731, 9730, 9785, 9784, 9592]
+  - V-Engram (P2P): [9731, 9730, 9785, 9592, 9584]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [9592, 9785, 9730, 9731])
+----------------------------------------
+QUERY #325: 'def get_last_scene_time(self, refresh=False):'
+  - FAISS (Truth) : [9991, 9990, 9994, 14661, 9981]
+  - V-Engram (P2P): [9991, 9990, 9994, 9981, 14661]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [14661, 9990, 9991, 9994, 9981])
+----------------------------------------
+QUERY #326: 'def slice_match(sub, counter):'
+  - FAISS (Truth) : [3954, 12990, 11315, 11422, 1527]
+  - V-Engram (P2P): [3954, 12990, 11315, 19827, 11294]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3954, 11315, 12990])
+----------------------------------------
+QUERY #327: 'def set_metrics_threshold(self, name, value, check_interval=None, reset_to=None, alarm=None, alarm_message=None):'
+  - FAISS (Truth) : [5992, 13865, 6048, 19826, 15252]
+  - V-Engram (P2P): [5992, 13865, 15252, 12414, 5972]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5992, 13865, 15252])
+----------------------------------------
+QUERY #328: 'def get_physical_port(self):'
+  - FAISS (Truth) : [14114, 3274, 555, 17743, 3273]
+  - V-Engram (P2P): [14114, 555, 3274, 14055, 16237]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3274, 14114, 555])
+----------------------------------------
+QUERY #329: 'def distance(self) -> ErrorValue:'
+  - FAISS (Truth) : [4998, 8456, 18819, 10884, 9585]
+  - V-Engram (P2P): [8456, 18819, 2811, 9585, 10884]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [8456, 9585, 18819, 10884])
+----------------------------------------
+QUERY #330: 'def _isclose(obja, objb, rtol=1e-05, atol=1e-08):'
+  - FAISS (Truth) : [12159, 19469, 19470, 7964, 19171]
+  - V-Engram (P2P): [12159, 12160, 14639, 8377, 12091]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [12159])
+----------------------------------------
+QUERY #331: 'def get(self, id_filter):'
+  - FAISS (Truth) : [4479, 4478, 2661, 13681, 9852]
+  - V-Engram (P2P): [4479, 4478, 2661, 12076, 9852]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [9852, 2661, 4478, 4479])
+----------------------------------------
+QUERY #332: 'def addClass(self, className):'
+  - FAISS (Truth) : [14944, 14209, 14945, 7352, 831]
+  - V-Engram (P2P): [14944, 14945, 831, 11377, 2030]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14944, 14945, 831])
+----------------------------------------
+QUERY #333: 'def ks_significance(fg_pos, bg_pos=None):'
+  - FAISS (Truth) : [19776, 19775, 19763, 19764, 19798]
+  - V-Engram (P2P): [19776, 19775, 19798, 19766, 19769]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19776, 19798, 19775])
+----------------------------------------
+QUERY #334: 'def check_contiguity(w, neighbors, leaver):'
+  - FAISS (Truth) : [9520, 16686, 15693, 2639, 9095]
+  - V-Engram (P2P): [9520, 385, 16686, 10385, 17062]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [9520, 16686])
+----------------------------------------
+QUERY #335: 'def delete_image_tar(file_obj, tar):'
+  - FAISS (Truth) : [9260, 9259, 14014, 9258, 5488]
+  - V-Engram (P2P): [9260, 5488, 1435, 10336, 16954]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [5488, 9260])
+----------------------------------------
+QUERY #336: 'def _analyze_chunk(data, subjgroup=None, subjname='Subject', listgroup=None,'
+  - FAISS (Truth) : [19965, 1646, 15117, 1094, 19964]
+  - V-Engram (P2P): [19965, 1646, 19964, 8567, 12907]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19964, 19965, 1646])
+----------------------------------------
+QUERY #337: 'def _percent_match(date_classes, tokens):'
+  - FAISS (Truth) : [3662, 3663, 3658, 3664, 3659]
+  - V-Engram (P2P): [3662, 3663, 3658, 3664, 4750]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3664, 3658, 3662, 3663])
+----------------------------------------
+QUERY #338: 'def done_evaluating(self, n: Node, s: ShExJ.shapeExpr, result: bool) -> Tuple[bool, bool]:'
+  - FAISS (Truth) : [15732, 15731, 15692, 15736, 15737]
+  - V-Engram (P2P): [15732, 15731, 15692, 15737, 15734]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [15732, 15737, 15731, 15692])
+----------------------------------------
+QUERY #339: 'def copyidfintoidf(toidf, fromidf):'
+  - FAISS (Truth) : [13105, 12969, 13034, 12918, 13033]
+  - V-Engram (P2P): [13105, 12969, 13034, 13092, 13104]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [12969, 13034, 13105])
+----------------------------------------
+QUERY #340: 'def build_cmake(self, extension: Extension):'
+  - FAISS (Truth) : [16502, 16503, 9555, 19541, 17596]
+  - V-Engram (P2P): [16502, 16503, 9555, 17083, 6050]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9555, 16502, 16503])
+----------------------------------------
+QUERY #341: 'def get_sequences(self, chr, coords):'
+  - FAISS (Truth) : [19914, 15098, 19915, 18813, 1843]
+  - V-Engram (P2P): [19914, 1843, 18782, 19915, 19913]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1843, 19914, 19915])
+----------------------------------------
+QUERY #342: 'def load_png(varNumVol, strPathPng, tplVslSpcSze=(200, 200), varStrtIdx=0,'
+  - FAISS (Truth) : [2644, 2795, 3078, 8781, 7838]
+  - V-Engram (P2P): [2644, 2795, 3078, 7838, 6943]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [2795, 2644, 3078, 7838])
+----------------------------------------
+QUERY #343: 'def _validate_value(self, value, field_spec, path, errors):'
+  - FAISS (Truth) : [1619, 1612, 1613, 1618, 1616]
+  - V-Engram (P2P): [1619, 1616, 1618, 8827, 273]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1616, 1618, 1619])
+----------------------------------------
+QUERY #344: 'def transactional_tasklet(func, args, kwds, **options):'
+  - FAISS (Truth) : [13238, 13236, 13237, 13308, 13285]
+  - V-Engram (P2P): [13238, 13236, 13308, 13285, 13239]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13308, 13236, 13285, 13238])
+----------------------------------------
+QUERY #345: 'def text_with_newlines(text, line_length=78, newline='\n'):'
+  - FAISS (Truth) : [12284, 12883, 2669, 9578, 1427]
+  - V-Engram (P2P): [12284, 2669, 12883, 2666, 9578]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [9578, 12883, 12284, 2669])
+----------------------------------------
+QUERY #346: 'def move(self, from_path, to_path, **kwargs):'
+  - FAISS (Truth) : [2235, 2237, 2236, 18181, 7555]
+  - V-Engram (P2P): [18181, 17157, 7558, 10694, 15642]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [18181])
+----------------------------------------
+QUERY #347: 'def get_set(self, project, articleset, **filters):'
+  - FAISS (Truth) : [1809, 1808, 1811, 1810, 502]
+  - V-Engram (P2P): [1809, 1808, 1514, 16130, 13536]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [1808, 1809])
+----------------------------------------
+QUERY #348: 'def read_raw_data_from_fifo(self, fifo, filter_func=None, converter_func=None):'
+  - FAISS (Truth) : [6552, 6551, 6550, 6547, 6580]
+  - V-Engram (P2P): [6552, 6551, 6550, 6547, 6581]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [6552, 6547, 6550, 6551])
+----------------------------------------
+QUERY #349: 'def compile_create(self, blueprint, command, _):'
+  - FAISS (Truth) : [2459, 2413, 2458, 2457, 2441]
+  - V-Engram (P2P): [2413, 2458, 2457, 6691, 19541]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2457, 2458, 2413])
+----------------------------------------
+QUERY #350: 'def _make_cloud_datastore_context(app_id, external_app_ids=()):'
+  - FAISS (Truth) : [13310, 13232, 13206, 13207, 721]
+  - V-Engram (P2P): [13310, 13206, 721, 5459, 18116]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [721, 13310, 13206])
+----------------------------------------
+QUERY #351: 'def _set_supported_content_type(self, content_types_supported):'
+  - FAISS (Truth) : [2050, 10497, 14537, 1159, 3096]
+  - V-Engram (P2P): [2050, 14537, 1159, 3096, 14600]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3096, 14537, 2050, 1159])
+----------------------------------------
+QUERY #352: 'def create_rackservers(self):'
+  - FAISS (Truth) : [4551, 4550, 7259, 7065, 7061]
+  - V-Engram (P2P): [4550, 7259, 4516, 3302, 7260]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [7259, 4550])
+----------------------------------------
+QUERY #353: 'def expand_dims(self, axis):'
+  - FAISS (Truth) : [11858, 11925, 11855, 1528, 3840]
+  - V-Engram (P2P): [11858, 11925, 1528, 12836, 3843]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1528, 11858, 11925])
+----------------------------------------
+QUERY #354: 'def generate_observation_trajectory(self, s_t, dtype=None):'
+  - FAISS (Truth) : [8255, 8215, 8246, 8247, 8285]
+  - V-Engram (P2P): [8247, 8254, 8244, 8224, 8252]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [8247])
+----------------------------------------
+QUERY #355: 'def registerHandler(self, matcher, handler):'
+  - FAISS (Truth) : [3370, 3288, 3371, 1773, 6252]
+  - V-Engram (P2P): [3370, 3288, 1773, 3289, 10921]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3288, 3370, 1773])
+----------------------------------------
+QUERY #356: 'def _construct_tensorflow_expression(slvr_cfg, feed_data, device, shard):'
+  - FAISS (Truth) : [17116, 17124, 17108, 17083, 17123]
+  - V-Engram (P2P): [17108, 17083, 13775, 3094, 17126]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [17083, 17108])
+----------------------------------------
+QUERY #357: 'def map_equal_contributions(contributors):'
+  - FAISS (Truth) : [965, 964, 17376, 930, 12375]
+  - V-Engram (P2P): [965, 964, 930, 1886, 939]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [930, 964, 965])
+----------------------------------------
+QUERY #358: 'def connection_from_host(self, host, port=None, scheme='http'):'
+  - FAISS (Truth) : [11459, 11438, 11442, 14695, 992]
+  - V-Engram (P2P): [11459, 11442, 14695, 9169, 1803]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [11442, 11459, 14695])
+----------------------------------------
+QUERY #359: 'def find_field_generator_templates(obj):'
+  - FAISS (Truth) : [5871, 5829, 5815, 5818, 16258]
+  - V-Engram (P2P): [14457, 5870, 18614, 5817, 13646]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #360: 'def match_indices(match):'
+  - FAISS (Truth) : [18895, 10765, 3441, 3250, 18454]
+  - V-Engram (P2P): [18895, 10765, 18454, 15160, 4650]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [10765, 18454, 18895])
+----------------------------------------
+QUERY #361: 'def find_lambda_condition(decorator_inspection: DecoratorInspection) -> Optional[ConditionLambdaInspection]:'
+  - FAISS (Truth) : [1487, 1488, 1489, 1496, 10217]
+  - V-Engram (P2P): [1487, 15164, 10217, 10219, 7129]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10217, 1487])
+----------------------------------------
+QUERY #362: 'def DOM_querySelector(self, nodeId, selector):'
+  - FAISS (Truth) : [10073, 10158, 10078, 10079, 10076]
+  - V-Engram (P2P): [10073, 10079, 10078, 10076, 10075]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [10073, 10076, 10078, 10079])
+----------------------------------------
+QUERY #363: 'def image_cache(article_cache, img_dir):'
+  - FAISS (Truth) : [2750, 2747, 2752, 2751, 9230]
+  - V-Engram (P2P): [2750, 2747, 2752, 9230, 9229]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [2752, 2747, 2750, 9230])
+----------------------------------------
+QUERY #364: 'def in_file(self, filename: str) -> Iterator[FunctionDesc]:'
+  - FAISS (Truth) : [3041, 2663, 2790, 3040, 2686]
+  - V-Engram (P2P): [3041, 2790, 2791, 16618, 10334]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [3041, 2790])
+----------------------------------------
+QUERY #365: 'def make_box_pixel_mask_from_col_row(column, row, default=0, value=1):'
+  - FAISS (Truth) : [6463, 6462, 6461, 6465, 6464]
+  - V-Engram (P2P): [6463, 6462, 6461, 6460, 6499]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [6461, 6462, 6463])
+----------------------------------------
+QUERY #366: 'def reference_preprocessing(job, samples, config):'
+  - FAISS (Truth) : [18009, 17926, 18017, 18012, 17990]
+  - V-Engram (P2P): [18009, 18012, 3052, 17990, 18010]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [18009, 18012, 17990])
+----------------------------------------
+QUERY #367: 'def custom_prefix_lax(instance):'
+  - FAISS (Truth) : [16267, 16271, 16269, 16283, 16266]
+  - V-Engram (P2P): [16267, 16284, 19235, 15044, 19248]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [16267])
+----------------------------------------
+QUERY #368: 'def read_list_from_csv(filepath, dict_form=False, headers=None, **kwargs):'
+  - FAISS (Truth) : [1862, 1145, 1863, 12721, 12764]
+  - V-Engram (P2P): [1862, 1144, 12720, 16879, 4975]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [1862])
+----------------------------------------
+QUERY #369: 'def _finished_callback(self, batch_fut, todo):'
+  - FAISS (Truth) : [13189, 13187, 9197, 13302, 6316]
+  - V-Engram (P2P): [13189, 13187, 9197, 6316, 13302]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [13187, 13189, 6316, 9197, 13302])
+----------------------------------------
+QUERY #370: 'def sendToNTS(self, CorpNum, MgtKeyType, MgtKey, UserID=None):'
+  - FAISS (Truth) : [3030, 3026, 2960, 2917, 3037]
+  - V-Engram (P2P): [3030, 3026, 2917, 3037, 3005]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3037, 3026, 2917, 3030])
+----------------------------------------
+QUERY #371: 'def iddofobject(data, commdct, key):'
+  - FAISS (Truth) : [12946, 12937, 13132, 13103, 12943]
+  - V-Engram (P2P): [12946, 12937, 13034, 8007, 12949]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [12937, 12946])
+----------------------------------------
+QUERY #372: 'def set_window_override_redirect(self, window, override_redirect):'
+  - FAISS (Truth) : [833, 15573, 6827, 6826, 3343]
+  - V-Engram (P2P): [833, 10025, 10155, 566, 3098]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [833])
+----------------------------------------
+QUERY #373: 'def detect_language_filename(cls, filename):'
+  - FAISS (Truth) : [10708, 10538, 10709, 722, 10654]
+  - V-Engram (P2P): [10708, 10538, 10709, 10654, 722]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [10538, 722, 10708, 10709, 10654])
+----------------------------------------
+QUERY #374: 'def tags_to_dict(self, tags=dict, prev_query=dict, duplicated: str = "rename"):'
+  - FAISS (Truth) : [5109, 11137, 5338, 5293, 12693]
+  - V-Engram (P2P): [5109, 12693, 16100, 5981, 5383]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [5109, 12693])
+----------------------------------------
+QUERY #375: 'def algorithm_u(ns, m):'
+  - FAISS (Truth) : [15715, 9409, 8203, 9269, 12857]
+  - V-Engram (P2P): [9409, 8203, 12857, 8142, 18345]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9409, 8203, 12857])
+----------------------------------------
+QUERY #376: 'def get_summary(self, squeeze=True, parameters=None, chains=None):'
+  - FAISS (Truth) : [19748, 19749, 19744, 1632, 19162]
+  - V-Engram (P2P): [19748, 19749, 19744, 12527, 19750]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19744, 19748, 19749])
+----------------------------------------
+QUERY #377: 'def getInfo(self, CorpNum, MgtKey):'
+  - FAISS (Truth) : [2914, 3023, 2916, 2915, 2958]
+  - V-Engram (P2P): [2914, 3023, 2916, 3024, 2959]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [2914, 2916, 3023])
+----------------------------------------
+QUERY #378: 'def add2node(self, othereplus, node):'
+  - FAISS (Truth) : [13052, 13051, 13053, 9239, 17451]
+  - V-Engram (P2P): [13052, 17451, 6323, 17449, 15037]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [17451, 13052])
+----------------------------------------
+QUERY #379: 'def load_cml(cml_filename):'
+  - FAISS (Truth) : [3797, 18369, 3799, 3890, 3798]
+  - V-Engram (P2P): [3797, 3799, 3890, 3798, 15951]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3890, 3797, 3798, 3799])
+----------------------------------------
+QUERY #380: 'def build_where_clause(mappings, operator='AND'):'
+  - FAISS (Truth) : [6109, 6106, 2430, 2483, 2403]
+  - V-Engram (P2P): [6109, 2403, 2440, 2432, 16026]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2403, 6109])
+----------------------------------------
+QUERY #381: 'def _strtobool(val):'
+  - FAISS (Truth) : [6864, 5472, 5582, 2812, 7934]
+  - V-Engram (P2P): [5472, 5582, 2812, 5254, 7934]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [5472, 2812, 5582, 7934])
+----------------------------------------
+QUERY #382: 'def contourf_to_geojson_overlap(contourf, geojson_filepath=None, min_angle_deg=None,'
+  - FAISS (Truth) : [710, 711, 709, 9672, 708]
+  - V-Engram (P2P): [710, 711, 708, 7907, 7901]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [708, 710, 711])
+----------------------------------------
+QUERY #383: 'def insertCallSet(self, callSet):'
+  - FAISS (Truth) : [13568, 13472, 13473, 13475, 13474]
+  - V-Engram (P2P): [13472, 13473, 13474, 13491, 13696]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [13472, 13473, 13474])
+----------------------------------------
+QUERY #384: 'def _get_value(self, entity):'
+  - FAISS (Truth) : [13246, 13319, 13256, 13263, 13257]
+  - V-Engram (P2P): [13246, 13319, 13256, 13263, 13255]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13256, 13263, 13246, 13319])
+----------------------------------------
+QUERY #385: 'def multi_split(text, regexes):'
+  - FAISS (Truth) : [18913, 18912, 11307, 2668, 5632]
+  - V-Engram (P2P): [2668, 5632, 12897, 1204, 5665]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [5632, 2668])
+----------------------------------------
+QUERY #386: 'def check_trigger(self, date_tuple, utc_offset=0):'
+  - FAISS (Truth) : [10563, 6589, 10852, 10855, 19582]
+  - V-Engram (P2P): [10563, 6589, 10852, 10855, 19582]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [10563, 10852, 10855, 6589, 19582])
+----------------------------------------
+QUERY #387: 'def accept_default_labels(self, other):'
+  - FAISS (Truth) : [14227, 14226, 17433, 11016, 17425]
+  - V-Engram (P2P): [13410, 17039, 17645, 15452, 13035]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #388: 'def _db_to_python(db_data: dict, table: LdapObjectClass, dn: str) -> LdapObject:'
+  - FAISS (Truth) : [349, 359, 355, 357, 352]
+  - V-Engram (P2P): [359, 357, 352, 373, 178]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [352, 357, 359])
+----------------------------------------
+QUERY #389: 'def new(cls, path, ckan_version, site_name, **kwargs):'
+  - FAISS (Truth) : [18076, 18065, 11509, 18087, 18033]
+  - V-Engram (P2P): [18076, 18033, 18085, 18057, 9557]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [18033, 18076])
+----------------------------------------
+QUERY #390: 'def source_zsh(args, stdin=None):'
+  - FAISS (Truth) : [13331, 13330, 13335, 13332, 5549]
+  - V-Engram (P2P): [13335, 5549, 7895, 18675, 16331]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [5549, 13335])
+----------------------------------------
+QUERY #391: 'def process_response(self, request, response, spider):'
+  - FAISS (Truth) : [11463, 11529, 476, 691, 1731]
+  - V-Engram (P2P): [11463, 11529, 691, 476, 1731]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [1731, 11463, 11529, 691, 476])
+----------------------------------------
+QUERY #392: 'def b58enc(uid):'
+  - FAISS (Truth) : [14466, 14465, 15403, 5630, 1382]
+  - V-Engram (P2P): [14466, 14465, 15399, 6282, 5341]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [14465, 14466])
+----------------------------------------
+QUERY #393: 'def check_channel_shell_request(self, channel):'
+  - FAISS (Truth) : [18497, 12520, 18498, 1656, 1657]
+  - V-Engram (P2P): [18497, 8397, 10212, 8377, 10565]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [18497])
+----------------------------------------
+QUERY #394: 'def print_textandtime(text: str) -> None:'
+  - FAISS (Truth) : [19398, 10180, 18605, 12713, 6018]
+  - V-Engram (P2P): [10180, 18602, 18593, 3113, 11409]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [10180])
+----------------------------------------
+QUERY #395: 'def is_valid_transition(cls, from_value, to_value):'
+  - FAISS (Truth) : [14296, 14298, 17618, 17620, 17615]
+  - V-Engram (P2P): [14296, 14298, 17615, 17619, 8832]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14296, 14298, 17615])
+----------------------------------------
+QUERY #396: 'def precision_at_proportions(y_true, y_score, ax=None):'
+  - FAISS (Truth) : [3230, 3220, 3214, 3215, 3216]
+  - V-Engram (P2P): [3230, 3220, 3214, 3227, 3211]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3230, 3220, 3214])
+----------------------------------------
+QUERY #397: 'def devserver(port, admin_port, clear):'
+  - FAISS (Truth) : [5735, 5460, 3302, 1908, 18034]
+  - V-Engram (P2P): [5735, 18034, 554, 3644, 8464]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [18034, 5735])
+----------------------------------------
+QUERY #398: 'def qAx(mt, x, q):'
+  - FAISS (Truth) : [2616, 2621, 2617, 2618, 2619]
+  - V-Engram (P2P): [2619, 2605, 2610, 2600, 2615]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [2619])
+----------------------------------------
+QUERY #399: 'def _read_prefetch(self, size):'
+  - FAISS (Truth) : [14723, 15331, 3432, 13230, 15757]
+  - V-Engram (P2P): [14723, 15331, 3431, 13173, 3433]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [14723, 15331])
+----------------------------------------
+QUERY #400: 'def hsv_to_rgb(h, s=None, v=None):'
+  - FAISS (Truth) : [10250, 10249, 10419, 10276, 10247]
+  - V-Engram (P2P): [10250, 10249, 10276, 10247, 10254]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [10249, 10250, 10276, 10247])
+----------------------------------------
+QUERY #401: 'def _get_has_relation_query(self, relation):'
+  - FAISS (Truth) : [2487, 2483, 2485, 2484, 2521]
+  - V-Engram (P2P): [2487, 2484, 2511, 2482, 2452]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2484, 2487])
+----------------------------------------
+QUERY #402: 'def ro_rw_to_binds(ro, rw):'
+  - FAISS (Truth) : [18138, 8436, 8446, 8427, 16182]
+  - V-Engram (P2P): [18138, 8432, 2440, 8338, 9515]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [18138])
+----------------------------------------
+QUERY #403: 'def _set_id(self, Id, is_added, index):'
+  - FAISS (Truth) : [7339, 7341, 7340, 7300, 8443]
+  - V-Engram (P2P): [7339, 7341, 7340, 8443, 18934]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [7339, 7340, 7341, 8443])
+----------------------------------------
+QUERY #404: 'def _is_referenced_in_argv(method_name):'
+  - FAISS (Truth) : [11467, 10671, 15580, 13830, 1728]
+  - V-Engram (P2P): [11467, 13598, 9878, 16451, 17166]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [11467])
+----------------------------------------
+QUERY #405: 'def register_parser_callback(self, func):'
+  - FAISS (Truth) : [2036, 14854, 3519, 1729, 14852]
+  - V-Engram (P2P): [2036, 14854, 3519, 3518, 14852]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3519, 14852, 14854, 2036])
+----------------------------------------
+QUERY #406: 'def tag_and_collect(lines, id_tag=True, back_links=False, exclude_h=None, remove_dashes=False):'
+  - FAISS (Truth) : [7410, 7408, 862, 3623, 959]
+  - V-Engram (P2P): [7410, 7408, 14904, 14976, 12900]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [7408, 7410])
+----------------------------------------
+QUERY #407: 'def sub_template(template,template_tag,substitution):'
+  - FAISS (Truth) : [11550, 12276, 15016, 10676, 14457]
+  - V-Engram (P2P): [11550, 12276, 15016, 14457, 9216]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [15016, 14457, 12276, 11550])
+----------------------------------------
+QUERY #408: 'def matchesEachOf(cntxt: Context, T: RDFGraph, expr: ShExJ.EachOf, _: DebugContext) -> bool:'
+  - FAISS (Truth) : [15698, 15696, 15694, 15700, 15697]
+  - V-Engram (P2P): [15699, 15675, 10898, 15621, 4022]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #409: 'def execute(cls, search, search_terms="", user=None, reference=None, save=True):'
+  - FAISS (Truth) : [16524, 16511, 16525, 16045, 16038]
+  - V-Engram (P2P): [16524, 16511, 16525, 3138, 14463]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [16524, 16525, 16511])
+----------------------------------------
+QUERY #410: 'def _handle_typename(self, node, scope, ctxt, stream):'
+  - FAISS (Truth) : [11662, 11675, 11669, 11676, 11661]
+  - V-Engram (P2P): [11662, 11675, 11661, 11693, 11674]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [11675, 11661, 11662])
+----------------------------------------
+QUERY #411: 'def escape_windows_cmd_string(s):'
+  - FAISS (Truth) : [13334, 1712, 3242, 15324, 1650]
+  - V-Engram (P2P): [13334, 1712, 15324, 413, 13332]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1712, 15324, 13334])
+----------------------------------------
+QUERY #412: 'def build_payload(cls, method, args):'
+  - FAISS (Truth) : [1732, 1733, 1637, 10733, 1730]
+  - V-Engram (P2P): [1732, 1733, 1637, 10733, 391]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [1733, 10733, 1732, 1637])
+----------------------------------------
+QUERY #413: 'def create_vip(self, vip_request_ids):'
+  - FAISS (Truth) : [4459, 4464, 4517, 4457, 4456]
+  - V-Engram (P2P): [4459, 4464, 4457, 4454, 4560]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [4464, 4457, 4459])
+----------------------------------------
+QUERY #414: 'def get_msg_info(yaml_info, topics, parse_header=True):'
+  - FAISS (Truth) : [14256, 14258, 10513, 14260, 14253]
+  - V-Engram (P2P): [14256, 14258, 14260, 14253, 2157]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [14256, 14258, 14260, 14253])
+----------------------------------------
+QUERY #415: 'def add_param(self, name, **kwargs):'
+  - FAISS (Truth) : [8716, 12795, 5804, 12787, 16644]
+  - V-Engram (P2P): [8716, 5804, 300, 2449, 302]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [5804, 8716])
+----------------------------------------
+QUERY #416: 'def _parse_bool(self, value):'
+  - FAISS (Truth) : [600, 14004, 5453, 14482, 19955]
+  - V-Engram (P2P): [14004, 19955, 14482, 14986, 1372]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [14482, 19955, 14004])
+----------------------------------------
+QUERY #417: 'def get_beam(self, ra, dec):'
+  - FAISS (Truth) : [8921, 8929, 8922, 8931, 8923]
+  - V-Engram (P2P): [8921, 8929, 8922, 8931, 8930]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [8929, 8922, 8931, 8921])
+----------------------------------------
+QUERY #418: 'def render(self, obj=None, condition=None, atomic=False, update=False, filter=None, projection=None, key=None):'
+  - FAISS (Truth) : [17003, 18722, 18734, 5216, 16996]
+  - V-Engram (P2P): [18722, 18734, 8822, 16996, 18721]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [18722, 16996, 18734])
+----------------------------------------
+QUERY #419: 'def update(self, counter, f, x_orig, gradient_orig):'
+  - FAISS (Truth) : [3964, 3965, 3966, 3960, 3958]
+  - V-Engram (P2P): [3964, 3965, 3958, 3959, 10696]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3964, 3965, 3958])
+----------------------------------------
+QUERY #420: 'def ipa_chars(self, value):'
+  - FAISS (Truth) : [4039, 4042, 4033, 4056, 4059]
+  - V-Engram (P2P): [4033, 4059, 4060, 9360, 4036]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [4033, 4059])
+----------------------------------------
+QUERY #421: 'def _visit_shape_te(self, te: ShExJ.tripleExpr, visit_center: _VisitorCenter) -> None:'
+  - FAISS (Truth) : [15729, 15730, 15728, 15712, 15737]
+  - V-Engram (P2P): [15729, 15730, 15728, 15737, 15711]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [15728, 15729, 15730, 15737])
+----------------------------------------
+QUERY #422: 'def registerFilter(self, column, patterns, is_regex=False,'
+  - FAISS (Truth) : [19959, 19961, 19960, 19962, 7782]
+  - V-Engram (P2P): [19959, 19961, 19960, 434, 1646]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19960, 19961, 19959])
+----------------------------------------
+QUERY #423: 'def add_success(self, group=None, type_='', field='', description=''):'
+  - FAISS (Truth) : [5805, 5804, 5221, 6317, 2576]
+  - V-Engram (P2P): [5805, 6317, 5221, 8720, 16009]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5805, 5221, 6317])
+----------------------------------------
+QUERY #424: 'def list_healthchecks(self, service_id, version_number):'
+  - FAISS (Truth) : [7155, 7157, 7123, 7156, 7129]
+  - V-Engram (P2P): [7155, 7157, 13976, 7144, 7207]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [7155, 7157])
+----------------------------------------
+QUERY #425: 'def content_type_snapshots(self, space_id, environment_id, content_type_id):'
+  - FAISS (Truth) : [14583, 14581, 14569, 14582, 14537]
+  - V-Engram (P2P): [14583, 14581, 14569, 14582, 14537]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [14569, 14537, 14581, 14582, 14583])
+----------------------------------------
+QUERY #426: 'def _read_as_table(self):'
+  - FAISS (Truth) : [7848, 7847, 7251, 13003, 642]
+  - V-Engram (P2P): [18946, 13004, 4681, 13580, 10228]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #427: 'def issue_command(self, cmd, *args):'
+  - FAISS (Truth) : [14353, 13217, 8314, 6396, 3028]
+  - V-Engram (P2P): [14353, 6396, 13217, 8314, 6363]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [13217, 8314, 6396, 14353])
+----------------------------------------
+QUERY #428: 'def indexof(self, value, tag=WORD):'
+  - FAISS (Truth) : [8679, 878, 8677, 5291, 6236]
+  - V-Engram (P2P): [8679, 878, 4632, 5291, 14902]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [5291, 878, 8679])
+----------------------------------------
+QUERY #429: 'def change_owners(self, group_id, owner_id):'
+  - FAISS (Truth) : [9858, 5953, 6001, 5952, 4279]
+  - V-Engram (P2P): [9858, 4279, 4263, 7491, 11523]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [9858, 4279])
+----------------------------------------
+QUERY #430: 'def pwm_scan_all(self, fa, cutoff=0.9, nreport=50, scan_rc=True):'
+  - FAISS (Truth) : [19870, 19869, 19871, 6541, 6466]
+  - V-Engram (P2P): [6541, 19858, 6466, 19857, 19760]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [6466, 6541])
+----------------------------------------
+QUERY #431: 'def uniform_get(sequence, index, default=None):'
+  - FAISS (Truth) : [16940, 16939, 15160, 15156, 1084]
+  - V-Engram (P2P): [16940, 16939, 1084, 15156, 15160]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [16939, 16940, 15156, 15160, 1084])
+----------------------------------------
+QUERY #432: 'def paths_to_top(self, term):'
+  - FAISS (Truth) : [13609, 12096, 7669, 1331, 2182]
+  - V-Engram (P2P): [7669, 15523, 8012, 17712, 8013]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [7669])
+----------------------------------------
+QUERY #433: 'def _partition_all_internal(s, sep):'
+  - FAISS (Truth) : [3053, 3054, 3056, 12846, 14192]
+  - V-Engram (P2P): [3053, 3054, 3056, 7546, 12315]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [3056, 3053, 3054])
+----------------------------------------
+QUERY #434: 'def get_bindings(self):'
+  - FAISS (Truth) : [16180, 8420, 13812, 1230, 16181]
+  - V-Engram (P2P): [8436, 8446, 7774, 9458, 11125]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #435: 'def compare_singularity_images(image_paths1, image_paths2=None):'
+  - FAISS (Truth) : [9218, 9247, 9219, 9232, 1866]
+  - V-Engram (P2P): [9218, 9247, 9217, 9695, 15586]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [9218, 9247])
+----------------------------------------
+QUERY #436: 'def convertPossibleValues(val, possibleValues, invalidDefault, emptyValue=''):'
+  - FAISS (Truth) : [14989, 14990, 14987, 5472, 14988]
+  - V-Engram (P2P): [14989, 14990, 14987, 14988, 14480]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [14987, 14988, 14989, 14990])
+----------------------------------------
+QUERY #437: 'def delete_cache_settings(self, service_id, version_number, name):'
+  - FAISS (Truth) : [7128, 7126, 7124, 7127, 7125]
+  - V-Engram (P2P): [7128, 7126, 7124, 7127, 7125]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [7124, 7125, 7126, 7127, 7128])
+----------------------------------------
+QUERY #438: 'def read_var_int(file_obj):'
+  - FAISS (Truth) : [2225, 19621, 2217, 8107, 11734]
+  - V-Engram (P2P): [2225, 2217, 18948, 19003, 2184]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2217, 2225])
+----------------------------------------
+QUERY #439: 'def sample_ising(self, linear, quadratic, **params):'
+  - FAISS (Truth) : [16843, 16845, 16838, 16936, 16847]
+  - V-Engram (P2P): [16843, 16936, 16847, 16937, 8216]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [16936, 16843, 16847])
+----------------------------------------
+QUERY #440: 'def keras_tuples(stream, inputs=None, outputs=None):'
+  - FAISS (Truth) : [19846, 19845, 19778, 5052, 9310]
+  - V-Engram (P2P): [19778, 8645, 3209, 9310, 13131]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [19778, 9310])
+----------------------------------------
+QUERY #441: 'def strip_boolean_result(method, exc_type=None, exc_str=None, fail_ret=None):'
+  - FAISS (Truth) : [15970, 14004, 2812, 6250, 14986]
+  - V-Engram (P2P): [15970, 2812, 857, 13338, 5472]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [15970, 2812])
+----------------------------------------
+QUERY #442: 'def create_api_network_ipv4(self):'
+  - FAISS (Truth) : [4511, 4507, 4509, 4179, 4510]
+  - V-Engram (P2P): [4511, 4509, 4507, 4179, 4510]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [4179, 4507, 4509, 4510, 4511])
+----------------------------------------
+QUERY #443: 'def change_parent_of_project(self, ID, NewParrentID):'
+  - FAISS (Truth) : [7475, 7474, 15577, 7476, 15578]
+  - V-Engram (P2P): [15577, 7474, 7476, 7596, 15578]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [15577, 7474, 7476, 15578])
+----------------------------------------
+QUERY #444: 'def send_keysequence_window_list_do('
+  - FAISS (Truth) : [821, 822, 824, 823, 820]
+  - V-Engram (P2P): [821, 822, 823, 820, 819]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [820, 821, 822, 823])
+----------------------------------------
+QUERY #445: 'def replacement_fields_from_context(context):'
+  - FAISS (Truth) : [11416, 3565, 12989, 11005, 13121]
+  - V-Engram (P2P): [16421, 594, 15178, 6715, 11003]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #446: 'def get_object(conn, binding_name, object_cls):'
+  - FAISS (Truth) : [8421, 8420, 8320, 5388, 13663]
+  - V-Engram (P2P): [8421, 8420, 5388, 17762, 7248]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [8420, 8421, 5388])
+----------------------------------------
+QUERY #447: 'def growthfactor(z, norm=True, **cosmo):'
+  - FAISS (Truth) : [135, 134, 133, 138, 19525]
+  - V-Engram (P2P): [135, 134, 131, 5010, 2618]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [134, 135])
+----------------------------------------
+QUERY #448: 'def load_all(self, workers=None, limit=None, n_expected=None):'
+  - FAISS (Truth) : [7371, 390, 110, 161, 8317]
+  - V-Engram (P2P): [7371, 110, 390, 172, 19606]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [110, 7371, 390])
+----------------------------------------
+QUERY #449: 'def update_cache_settings(self, service_id, version_number, name_key, **kwargs):'
+  - FAISS (Truth) : [7127, 7126, 7124, 7128, 7179]
+  - V-Engram (P2P): [7127, 7126, 7124, 7128, 7125]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [7128, 7124, 7126, 7127])
+----------------------------------------
+QUERY #450: 'def mid_generate(self):'
+  - FAISS (Truth) : [15407, 5826, 11966, 1587, 5836]
+  - V-Engram (P2P): [15407, 5836, 1587, 3253, 1586]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [1587, 5836, 15407])
+----------------------------------------
+QUERY #451: 'def lazy_module(modname, error_strings=None, lazy_mod_class=LazyModule,'
+  - FAISS (Truth) : [16386, 16387, 16390, 16391, 16388]
+  - V-Engram (P2P): [16386, 16387, 16388, 8615, 3403]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [16386, 16387, 16388])
+----------------------------------------
+QUERY #452: 'def has_option(self, section, option):'
+  - FAISS (Truth) : [12470, 6795, 12468, 12467, 12472]
+  - V-Engram (P2P): [12470, 12472, 6793, 12469, 15551]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [12472, 12470])
+----------------------------------------
+QUERY #453: 'def validar(self, id_vlan):'
+  - FAISS (Truth) : [4200, 4201, 4202, 4199, 4193]
+  - V-Engram (P2P): [4200, 4198, 4203, 4387, 2815]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [4200])
+----------------------------------------
+QUERY #454: 'def getInfo(self, CorpNum, MgtKeyType, MgtKey):'
+  - FAISS (Truth) : [3023, 2914, 2915, 2916, 3024]
+  - V-Engram (P2P): [3023, 2914, 3031, 3032, 2961]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [2914, 3023])
+----------------------------------------
+QUERY #455: 'def normalize_response_value(rv):'
+  - FAISS (Truth) : [9562, 9563, 4114, 10907, 15741]
+  - V-Engram (P2P): [9562, 9563, 15741, 6262, 2070]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9562, 9563, 15741])
+----------------------------------------
+QUERY #456: 'def build_wes_request(workflow_file, json_path, attachments=None):'
+  - FAISS (Truth) : [4095, 4097, 4102, 4104, 4100]
+  - V-Engram (P2P): [4095, 4102, 7694, 17951, 14811]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [4102, 4095])
+----------------------------------------
+QUERY #457: 'def _handle_start_dag(self, request):'
+  - FAISS (Truth) : [10771, 10774, 10773, 10775, 10770]
+  - V-Engram (P2P): [10771, 10774, 10773, 10777, 10779]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [10771, 10773, 10774])
+----------------------------------------
+QUERY #458: 'def get_list_subtask_positions_objs(client, list_id):'
+  - FAISS (Truth) : [11838, 11837, 11836, 11841, 11823]
+  - V-Engram (P2P): [11837, 11841, 11823, 11825, 11831]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [11841, 11837, 11823])
+----------------------------------------
+QUERY #459: 'def cublasDgemm(handle, transa, transb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc):'
+  - FAISS (Truth) : [18345, 18344, 18348, 18346, 18355]
+  - V-Engram (P2P): [18345, 18344, 18346, 18348, 18349]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [18344, 18345, 18346, 18348])
+----------------------------------------
+QUERY #460: 'def addNoise(self, nlf_coeff, date=None, info='', error=None):'
+  - FAISS (Truth) : [9634, 13600, 9635, 9637, 13602]
+  - V-Engram (P2P): [9634, 9637, 1270, 4614, 13602]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9634, 13602, 9637])
+----------------------------------------
+QUERY #461: 'def delete_user(self, username):'
+  - FAISS (Truth) : [16185, 1392, 7189, 16491, 17205]
+  - V-Engram (P2P): [17205, 16491, 8327, 8866, 8328]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [16491, 17205])
+----------------------------------------
+QUERY #462: 'def generate_base(path: str) -> str:'
+  - FAISS (Truth) : [15754, 1133, 12291, 9174, 16710]
+  - V-Engram (P2P): [15754, 1133, 9174, 14544, 30]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [15754, 1133, 9174])
+----------------------------------------
+QUERY #463: 'def getFixedStar(ID, date):'
+  - FAISS (Truth) : [7951, 7952, 8048, 8019, 8033]
+  - V-Engram (P2P): [8048, 8033, 7948, 9628, 8006]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [8048, 8033])
+----------------------------------------
+QUERY #464: 'def _buttonbox(msg, title, choices, root=None, timeout=None):'
+  - FAISS (Truth) : [17800, 17797, 17799, 17798, 17802]
+  - V-Engram (P2P): [17797, 17799, 17798, 17802, 17789]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [17802, 17797, 17798, 17799])
+----------------------------------------
+QUERY #465: 'def iter_contributor_statistics(self, number=-1, etag=None):'
+  - FAISS (Truth) : [17377, 17376, 17374, 17372, 17233]
+  - V-Engram (P2P): [17377, 17376, 17374, 17372, 17233]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [17376, 17377, 17233, 17372, 17374])
+----------------------------------------
+QUERY #466: 'def getReadAlignmentId(self, gaAlignment):'
+  - FAISS (Truth) : [13734, 13729, 13730, 13736, 13740]
+  - V-Engram (P2P): [13734, 13735, 13740, 13732, 13499]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13740, 13734])
+----------------------------------------
+QUERY #467: 'def _add_workflow(mcs, field_name, state_field, attrs):'
+  - FAISS (Truth) : [17633, 17635, 17634, 8829, 17613]
+  - V-Engram (P2P): [17633, 8827, 14275, 8418, 10802]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [17633])
+----------------------------------------
+QUERY #468: 'def take_reference_screenshot(webdriver, file_name):'
+  - FAISS (Truth) : [10214, 10213, 10215, 10163, 10231]
+  - V-Engram (P2P): [10214, 10213, 619, 10182, 4885]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10213, 10214])
+----------------------------------------
+QUERY #469: 'def format_xml(xml_str: str, exceptions: bool=False):'
+  - FAISS (Truth) : [5661, 8648, 985, 13352, 8651]
+  - V-Engram (P2P): [13352, 8651, 2886, 13354, 13425]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13352, 8651])
+----------------------------------------
+QUERY #470: 'def get_isogeo_version(self, component: str = "api", prot: str = "https"):'
+  - FAISS (Truth) : [5103, 9464, 5100, 5451, 5449]
+  - V-Engram (P2P): [5103, 9464, 5100, 5451, 5449]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [5449, 5451, 5100, 5103, 9464])
+----------------------------------------
+QUERY #471: 'def history_date(soup, date_type = None):'
+  - FAISS (Truth) : [916, 907, 914, 915, 15821]
+  - V-Engram (P2P): [916, 914, 3658, 913, 10851]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [914, 916])
+----------------------------------------
+QUERY #472: 'def scan_to_best_match(fname, motifs, ncpus=None, genome=None, score=False):'
+  - FAISS (Truth) : [19824, 19830, 19837, 19870, 19829]
+  - V-Engram (P2P): [19824, 19830, 19829, 19837, 19870]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [19824, 19829, 19830, 19837, 19870])
+----------------------------------------
+QUERY #473: 'def is_older_than(before, seconds):'
+  - FAISS (Truth) : [7310, 7311, 7318, 19624, 16326]
+  - V-Engram (P2P): [7310, 7318, 19624, 6357, 12936]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [19624, 7318, 7310])
+----------------------------------------
+QUERY #474: 'def incr(self, key, value):'
+  - FAISS (Truth) : [15707, 15690, 15772, 6067, 18933]
+  - V-Engram (P2P): [15690, 15707, 15772, 6067, 18933]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [15690, 6067, 18933, 15707, 15772])
+----------------------------------------
+QUERY #475: 'def create(self, export):'
+  - FAISS (Truth) : [2080, 18039, 7364, 289, 18832]
+  - V-Engram (P2P): [7364, 18039, 289, 14675, 13956]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [289, 7364, 18039])
+----------------------------------------
+QUERY #476: 'def create_mypassword(self, data):'
+  - FAISS (Truth) : [7484, 7478, 7486, 7485, 7490]
+  - V-Engram (P2P): [7486, 7485, 16090, 2089, 12506]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [7485, 7486])
+----------------------------------------
+QUERY #477: 'def get_uuid(obj):'
+  - FAISS (Truth) : [9213, 9212, 2311, 5188, 328]
+  - V-Engram (P2P): [9213, 2311, 440, 14440, 5190]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [9213, 2311])
+----------------------------------------
+QUERY #478: 'def header(self, key, value, replace = True):'
+  - FAISS (Truth) : [3338, 3339, 14342, 5914, 11395]
+  - V-Engram (P2P): [3338, 14342, 3339, 5914, 5915]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [3338, 3339, 5914, 14342])
+----------------------------------------
+QUERY #479: 'def get_lat_long(self, callsign, timestamp=timestamp_now):'
+  - FAISS (Truth) : [10759, 10450, 10764, 10762, 10757]
+  - V-Engram (P2P): [10759, 10450, 10755, 10763, 10756]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [10450, 10759])
+----------------------------------------
+QUERY #480: 'def _iter_descendants_levelorder(self, is_leaf_fn=None):'
+  - FAISS (Truth) : [17463, 17459, 17464, 17460, 17457]
+  - V-Engram (P2P): [17464, 17462, 17465, 9874, 2637]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [17464])
+----------------------------------------
+QUERY #481: 'def print_time(self, message="Time is now: ", print_frame_info=True):'
+  - FAISS (Truth) : [10180, 19398, 12713, 1137, 3846]
+  - V-Engram (P2P): [10180, 19398, 12713, 1137, 11485]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [12713, 10180, 19398, 1137])
+----------------------------------------
+QUERY #482: 'def _pfp__build(self, stream=None, save_offset=False):'
+  - FAISS (Truth) : [11603, 11610, 11617, 11608, 11616]
+  - V-Engram (P2P): [11603, 11617, 11590, 11614, 11595]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [11617, 11603])
+----------------------------------------
+QUERY #483: 'def add(self, tipo_opcao, nome_opcao_txt):'
+  - FAISS (Truth) : [4336, 4467, 4574, 4337, 4468]
+  - V-Engram (P2P): [11395, 13748, 4554, 8443, 4392]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
+----------------------------------------
+QUERY #484: 'def question_default_loader(self, pk):'
+  - FAISS (Truth) : [11761, 11764, 11757, 11760, 11762]
+  - V-Engram (P2P): [11764, 11766, 375, 1796, 14185]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [11764])
+----------------------------------------
+QUERY #485: 'def iter_commits(self, number=-1, etag=None):'
+  - FAISS (Truth) : [17233, 17375, 17374, 17371, 17373]
+  - V-Engram (P2P): [17233, 17374, 17375, 17371, 17373]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [17233, 17371, 17373, 17374, 17375])
+----------------------------------------
+QUERY #486: 'def paragraph(node):'
+  - FAISS (Truth) : [18617, 952, 18907, 18627, 18625]
+  - V-Engram (P2P): [18617, 955, 18627, 18625, 18621]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [18625, 18617, 18627])
+----------------------------------------
+QUERY #487: 'def generate(tagGroups, terms):'
+  - FAISS (Truth) : [18839, 18838, 1587, 7811, 7823]
+  - V-Engram (P2P): [18839, 1587, 7811, 7823, 7812]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [18839, 1587, 7811, 7823])
+----------------------------------------
+QUERY #488: 'def describe_reserved_db_instances(ReservedDBInstanceId=None, ReservedDBInstancesOfferingId=None, DBInstanceClass=None, Duration=None, ProductDescript'
+  - FAISS (Truth) : [13967, 13968, 13930, 13964, 13970]
+  - V-Engram (P2P): [13967, 13968, 13964, 13966, 13975]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [13968, 13964, 13967])
+----------------------------------------
+QUERY #489: 'def get_span_char_width(span, column_widths):'
+  - FAISS (Truth) : [17509, 17730, 17559, 17701, 11310]
+  - V-Engram (P2P): [17509, 17730, 17701, 17559, 17507]
+  => TRẠNG THÁI: KHỚP (4 kết quả: [17730, 17509, 17701, 17559])
+----------------------------------------
+QUERY #490: 'def validate(self, tracking_number):'
+  - FAISS (Truth) : [12351, 12352, 12353, 7705, 7700]
+  - V-Engram (P2P): [12352, 12353, 272, 2832, 2834]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [12352, 12353])
+----------------------------------------
+QUERY #491: 'def _always_unicode(cls, path):'
+  - FAISS (Truth) : [9173, 4117, 5132, 12013, 16085]
+  - V-Engram (P2P): [9173, 4117, 12013, 14741, 15179]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [9173, 4117, 12013])
+----------------------------------------
+QUERY #492: 'def add_bindings(self, g: Graph) -> "PrefixLibrary":'
+  - FAISS (Truth) : [15779, 13822, 13812, 13813, 15647]
+  - V-Engram (P2P): [13822, 13813, 15459, 3170, 13112]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [13813, 13822])
+----------------------------------------
+QUERY #493: 'def pyprf_opt_brute(strCsvCnfg, objNspc, lgcTest=False, strPathHrf=None,'
+  - FAISS (Truth) : [3074, 2895, 2642, 2688, 2756]
+  - V-Engram (P2P): [3074, 2895, 13982, 4748, 19160]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [3074, 2895])
+----------------------------------------
+QUERY #494: 'def set_ipcsem_params(self, ftok=None, persistent=None):'
+  - FAISS (Truth) : [5928, 5920, 6010, 6000, 5927]
+  - V-Engram (P2P): [5928, 5993, 3122, 5323, 6036]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [5928])
+----------------------------------------
+QUERY #495: 'def get_service(self, service_id):'
+  - FAISS (Truth) : [7170, 7174, 7171, 7176, 7180]
+  - V-Engram (P2P): [7170, 7174, 7180, 7172, 7173]
+  => TRẠNG THÁI: KHỚP (3 kết quả: [7170, 7180, 7174])
+----------------------------------------
+QUERY #496: 'def get_assistants_file_hierarchy(cls, dirs):'
+  - FAISS (Truth) : [15618, 15617, 15485, 15616, 15546]
+  - V-Engram (P2P): [15546, 15507, 15543, 15486, 1282]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [15546])
+----------------------------------------
+QUERY #497: 'def requirement_args(argv, want_paths=False, want_other=False):'
+  - FAISS (Truth) : [18674, 18680, 18681, 18682, 1162]
+  - V-Engram (P2P): [18674, 18680, 10974, 18101, 5758]
+  => TRẠNG THÁI: KHỚP (2 kết quả: [18680, 18674])
+----------------------------------------
+QUERY #498: 'def get_ip_address(ifname):'
+  - FAISS (Truth) : [17102, 5545, 13386, 5555, 5621]
+  - V-Engram (P2P): [17102, 12697, 11964, 5320, 16470]
+  => TRẠNG THÁI: KHỚP (1 kết quả: [17102])
+----------------------------------------
+QUERY #499: 'def visit_Subscript(self, node: ast.Subscript) -> Any:'
+  - FAISS (Truth) : [1529, 1518, 1526, 1510, 1527]
+  - V-Engram (P2P): [1529, 1518, 1526, 1510, 1527]
+  => TRẠNG THÁI: KHỚP (5 kết quả: [1510, 1518, 1526, 1527, 1529])
+----------------------------------------
+QUERY #500: 'def chars2str(chars) -> List[str]:'
+  - FAISS (Truth) : [19650, 19649, 7930, 12980, 4042]
+  - V-Engram (P2P): [9347, 11087, 413, 16313, 11300]
+  => TRẠNG THÁI: LỆCH (Sai số do tính chất xấp xỉ của LSH)
 ----------------------------------------
