@@ -18,14 +18,14 @@ class VEngramNode:
 
     def store_shard(self, object_tag, shard_id, pq_code, virtual_payload):
         if object_tag not in self.RAM_Index:
-            self.RAM_Index[object_tag] = pq_code # Lưu mảng uint8 256-bytes
+            self.RAM_Index[object_tag] = pq_code # Lưu mảng uint8 PQ code
         shard_key = f"{object_tag}_shard_{shard_id}"
         self.SSD_Storage[shard_key] = virtual_payload
         
     def adc_search(self, query_vector, codebook, top_k=5):
         """
         GIAI ĐOẠN 3: TÍNH ADC THỰC TẾ TRÊN RAM.
-        Sử dụng Bảng mã Codebook (256, 256, 4) và mã PQ uint8.
+        Sử dụng Bảng mã Codebook (m, 256, d_sub) và mã PQ uint8.
         """
         candidates = []
         if not self.RAM_Index:

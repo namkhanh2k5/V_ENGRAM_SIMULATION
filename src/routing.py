@@ -7,21 +7,35 @@ import hmac
 # ============================================================================
 VECTOR_DIM = 1024   
 NUM_PROJECTIONS = 5  # Số lượng ma trận chiếu độc lập
-np.random.seed(20235956)   # Đảm bảo tính nhất quán toàn mạng
+DEFAULT_LSH_SEED = 20235956
 
-# Khởi tạo 3 ma trận chiếu thưa {-1, 0, 1}
-# Giúp nén thông tin hiệu quả và giảm thiểu sai số ranh giới (Boundary problem)
+# Khai báo rỗng, KHÔNG sinh ma trận ngay lúc import file
 PROJECTION_MATRICES = []
-for _ in range(NUM_PROJECTIONS):
-    # Achlioptas Distribution: P(1)=1/6, P(-1)=1/6, P(0)=2/3
-    matrix = np.random.choice([0, 1, -1], size=(VECTOR_DIM, 160), p=[2/3, 1/6, 1/6])
-    PROJECTION_MATRICES.append(matrix)
+
+def generate_lsh_projections(seed, vector_dim=VECTOR_DIM, num_projections=NUM_PROJECTIONS):
+    """Sinh ma trận chiếu bằng Local Random Generator, miễn nhiễm với bên ngoài"""
+    rng = np.random.RandomState(seed)
+    projections = []
+    for _ in range(num_projections):
+        # Achlioptas Distribution: P(1)=1/6, P(-1)=1/6, P(0)=2/3
+        matrix = rng.choice([0, 1, -1], size=(vector_dim, 160), p=[2/3, 1/6, 1/6])
+        projections.append(matrix)
+    return projections
+
+def initialize_lsh_projections(seed=DEFAULT_LSH_SEED):
+    """Hàm này sẽ được gọi ở main.py mỗi khi bắt đầu một Seed mới"""
+    global PROJECTION_MATRICES
+    PROJECTION_MATRICES = generate_lsh_projections(seed)
 
 def generate_multi_semantic_keys(vector):
     """
     Sinh ra 3 Semantic Keys 160-bit khác nhau cho cùng một Vector.
     Mỗi Key đại diện cho một 'góc nhìn' ngữ nghĩa khác nhau.
     """
+    # Rào bảo vệ: Đề phòng quên chưa gọi initialize()
+    if not PROJECTION_MATRICES:
+        initialize_lsh_projections()
+        
     vec = np.asarray(vector).flatten()
     keys = []
     for i in range(NUM_PROJECTIONS):

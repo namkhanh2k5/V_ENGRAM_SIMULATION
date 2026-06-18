@@ -11,8 +11,11 @@ from src.routing import (
 # [MỚI] BẢNG BĂM HAI TẦNG - LƯU DANH BẠ METADATA CỦA TOÀN MẠNG
 GLOBAL_METADATA_DHT = {}
 
+def reset_global_metadata_dht():
+    GLOBAL_METADATA_DHT.clear()
+
 # [MỚI] So luong ung vien dong bo giua luu va doc
-PLACEMENT_CANDIDATES = 250
+PLACEMENT_CANDIDATES = 300
 
 # [MỚI] Gioi han shard tren moi node
 MAX_SHARDS_PER_NODE = 2500
@@ -44,13 +47,23 @@ def bootstrap_network(env, num_nodes, k_size_far=50, k_size_near=50):
     return network_nodes
 
 
-def data_ingestion_process(env, network_nodes, num_files, shards_per_file):
+def data_ingestion_process(
+    env,
+    network_nodes,
+    num_files,
+    shards_per_file,
+    embeddings_path="./data/scifact_embeddings.npy", # <-- Cập nhật SciFact
+    pq_codes_path="./data/scifact_pq_codes.npy",     # <-- Cập nhật SciFact
+    data_label="SciFact",
+):
     print("\n" + "=" * 60)
-    print("GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU (8-BIT + LOAD BALANCING + ANTI-AFFINITY)")
+    print(
+        f"GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU {data_label} (8-BIT + LOAD BALANCING + ANTI-AFFINITY)"
+    )
     print("=" * 60)
 
-    vectors = np.load("./data/embeddings_20k.npy")
-    pq_codes = np.load("./data/pq_codes.npy")  # Load bản thu gọn uint8
+    vectors = np.load(embeddings_path)
+    pq_codes = np.load(pq_codes_path)
     total_shards = 0
 
     for i in range(num_files):
@@ -116,17 +129,17 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
     for idx, s_key in enumerate(q_s_keys):
         bootstrap_node = random.choice(network_nodes)
         search_radius_nodes, hops = iterative_find_k_closest_nodes(
-            s_key, bootstrap_node, alpha=3, k=150
+            s_key, bootstrap_node, alpha=3, k=300
         )
         total_hops += hops
         for node in search_radius_nodes:
             yield env.timeout(random.uniform(5, 15))
 
             # Tính bằng Codebook chuẩn PQ
-            local_candidates = node.adc_search(query_vector, codebook, top_k=10)
+            local_candidates = node.adc_search(query_vector, codebook, top_k=30)
             all_candidates.extend(local_candidates)
 
-            if len(all_candidates) >= target_k * 40:
+            if len(all_candidates) >= target_k * 80:
                 break
 
     print("\n" + "=" * 60)
