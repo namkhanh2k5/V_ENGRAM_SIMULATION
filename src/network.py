@@ -14,8 +14,13 @@ GLOBAL_METADATA_DHT = {}
 def reset_global_metadata_dht():
     GLOBAL_METADATA_DHT.clear()
 
-# [MỚI] So luong ung vien dong bo giua luu va doc
+# [MỚI] So luong ung vien dong bo giua luu va doc (TẦNG PAYLOAD)
 PLACEMENT_CANDIDATES = 300
+
+# [MỚI] So node neo METADATA (PQ code) quanh MOI semantic key — TẦNG METADATA.
+# Nhan ban L lan (mot lan moi semantic key) de discovery ben va giu Success@5.
+# Khong anh huong "Mean Load (shards/node)" vi load chi dem SSD_Storage (payload).
+METADATA_ANCHORS = 30
 
 # [MỚI] Gioi han shard tren moi node
 MAX_SHARDS_PER_NODE = 2500
@@ -58,13 +63,14 @@ def data_ingestion_process(
 ):
     print("\n" + "=" * 60)
     print(
-        f"GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU {data_label} (8-BIT + LOAD BALANCING + ANTI-AFFINITY)"
+        f"GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU {data_label} (TWO-TIER: METADATA L-replica + PAYLOAD-ONCE)"
     )
     print("=" * 60)
 
     vectors = np.load(embeddings_path)
     pq_codes = np.load(pq_codes_path)
-    total_shards = 0
+    total_shards = 0       # tong so payload shard da dat (ky vong = num_files * shards_per_file)
+    total_anchors = 0      # tong so ban sao metadata (ky vong ~ num_files * L * METADATA_ANCHORS)
 
     for i in range(num_files):
         vector = vectors[i]
@@ -73,48 +79,56 @@ def data_ingestion_process(
 
         s_keys = generate_multi_semantic_keys(vector)
 
-        # [MỚI] Lưu Sổ đỏ (Danh bạ) vào DHT
+        # Sổ đỏ (Danh bạ) tag -> L semantic keys
         GLOBAL_METADATA_DHT[tag] = s_keys
 
-        # [MỚI] Anti-affinity: Node nao da cam shard cua doc nay thi tranh
+        # ============================================================
+        # TẦNG 1 — METADATA: neo PQ code tại L semantic key (nhân L lần)
+        # Day la be mat discovery: query dinh tuyen toi vung ngu nghia se thay PQ code.
+        # ============================================================
+        for s_key in s_keys:
+            bootstrap_node = random.choice(network_nodes)
+            anchors, _ = iterative_find_k_closest_nodes(
+                s_key, bootstrap_node, alpha=3, k=METADATA_ANCHORS
+            )
+            for anchor in anchors[:METADATA_ANCHORS]:
+                anchor.store_metadata(tag, pq_code)
+                total_anchors += 1
+
+        # ============================================================
+        # TẦNG 2 — PAYLOAD: đặt 30 shard MỘT lần ở K_place(s)=HMAC(tag,s)
+        # Doc lap ngu nghia -> rai DEU (het semantic hotspot o payload).
+        # ============================================================
         nodes_used_for_this_doc = set()
+        for s_id in range(shards_per_file):
+            p_key = generate_placement_key(tag, s_id)
 
-        for idx, s_key in enumerate(s_keys):
-            for s_id in range(shards_per_file):
-                p_key = generate_placement_key(s_key, tag, s_id)
+            bootstrap_node = random.choice(network_nodes)
+            candidates, _ = iterative_find_k_closest_nodes(
+                p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
+            )
+            if not candidates:
+                candidates = [bootstrap_node]
 
-                # Optimistic routing: tim node gan nhat qua iterative lookup
-                bootstrap_node = random.choice(network_nodes)
-                candidates, _ = iterative_find_k_closest_nodes(
-                    p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
-                )
-                if not candidates:
-                    candidates = [bootstrap_node]
-
-                primary = candidates[0]
-                current_load = len(primary.SSD_Storage)
-
-                if current_load < MAX_SHARDS_PER_NODE and primary.node_id not in nodes_used_for_this_doc:
-                    payload = {"shard_id": f"{idx}_{s_id}", "is_aes": True}
-                    primary.store_shard(tag, s_id, pq_code, payload)
+            # Dat tren node gan nhat con cho & chua giu shard khac cua doc nay (anti-affinity)
+            for target in candidates:
+                if (
+                    len(target.SSD_Storage) < MAX_SHARDS_PER_NODE
+                    and target.node_id not in nodes_used_for_this_doc
+                ):
+                    target.store_payload_shard(tag, s_id, {"shard_id": f"{s_id}", "is_aes": True})
                     total_shards += 1
-                    nodes_used_for_this_doc.add(primary.node_id)
-                    continue
-
-                # Fallback: chi khi can moi duyet cac ung vien con lai
-                for target in candidates[1:]:
-                    current_load = len(target.SSD_Storage)
-
-                    if current_load < MAX_SHARDS_PER_NODE and target.node_id not in nodes_used_for_this_doc:
-                        payload = {"shard_id": f"{idx}_{s_id}", "is_aes": True}
-                        target.store_shard(tag, s_id, pq_code, payload)
-                        total_shards += 1
-                        nodes_used_for_this_doc.add(target.node_id)
-                        break
+                    nodes_used_for_this_doc.add(target.node_id)
+                    break
 
         yield env.timeout(random.uniform(10, 30))
         if (i + 1) % 5000 == 0:
             print(f"  ... Đã phân bổ {i + 1:,}/{num_files:,} files.")
+
+    print(
+        f"✓ Hoàn tất: {total_shards:,} payload shard (đặt 1 lần) "
+        f"| {total_anchors:,} bản sao metadata (nhân L lần)."
+    )
 
 
 def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5):
@@ -150,46 +164,37 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
     for tag, score in all_candidates:
         if tag not in unique_candidates or score < unique_candidates[tag]:
             unique_candidates[tag] = score
+    # [MỚI] So object UNIQUE thuc su duoc rerank cho query nay (phep do Q1:
+    # bac bo gia thuyet "recall den tu rerank rong" — bao nhieu % corpus duoc xet)
+    num_unique_candidates = len(unique_candidates)
     reranked_top = sorted(unique_candidates.items(), key=lambda x: x[1])[:target_k]
 
+    # --- KHÔI PHỤC: payload lấy MỘT lần từ HMAC key tái tạo từ tag ---
     k_required = 20
     for rank, (tag, score) in enumerate(reranked_top, 1):
-        best_collected = 0
-
-        # [MỚI] Tra sổ đỏ từ DHT Network, KHÔNG ngó vào Vector
-        actual_doc_keys = GLOBAL_METADATA_DHT.get(tag)
-        if not actual_doc_keys:
+        # Tra sổ đỏ chỉ để xác nhận object tồn tại (placement KHÔNG cần semantic key)
+        if not GLOBAL_METADATA_DHT.get(tag):
             continue
 
-        for semantic_key in actual_doc_keys:
-            shards_collected = 0
-
-            for s_id in range(30):
-                # Client tự "múa" ra toạ độ và phi thẳng đến đích
-                p_key = generate_placement_key(semantic_key, tag, s_id)
-
-                # [MỚI] Đồng bộ tìm ứng viên y hệt lúc lưu
-                bootstrap_node = random.choice(network_nodes)
-                candidate_nodes, hops = iterative_find_k_closest_nodes(
-                    p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
-                )
-
-                for target_node in candidate_nodes:
-                    yield env.timeout(random.uniform(2, 5))
-                    shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
-                    if shard_data:
-                        shards_collected += 1
-                        break
-
-                if shards_collected >= k_required:
+        shards_collected = 0
+        for s_id in range(30):
+            # Client tự tái tạo toạ độ shard CHỈ từ tag
+            p_key = generate_placement_key(tag, s_id)
+            bootstrap_node = random.choice(network_nodes)
+            candidate_nodes, _ = iterative_find_k_closest_nodes(
+                p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
+            )
+            for target_node in candidate_nodes:
+                yield env.timeout(random.uniform(2, 5))
+                shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
+                if shard_data:
+                    shards_collected += 1
                     break
-
-            best_collected = max(best_collected, shards_collected)
-            if best_collected >= k_required:
+            if shards_collected >= k_required:
                 break
 
-        status = "THÀNH CÔNG" if best_collected >= k_required else "THẤT BẠI"
-        print(f"  - Top {rank} ({tag}): Khôi phục {status}! ({best_collected}/30 Shards)")
+        status = "THÀNH CÔNG" if shards_collected >= k_required else "THẤT BẠI"
+        print(f"  - Top {rank} ({tag}): Khôi phục {status}! ({shards_collected}/30 Shards)")
 
     retrieved_tags = [tag for tag, score in reranked_top]
-    return retrieved_tags, total_hops
+    return retrieved_tags, total_hops, num_unique_candidates

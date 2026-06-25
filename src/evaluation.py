@@ -89,7 +89,7 @@ def stage5_metrics_collection(env, network_nodes, test_results):
     print(f"    - Trung bình (Mean): {metrics['avg_shards']:.1f} Shards / Node")
     print(f"    - Độ lệch chuẩn (Std): {metrics['std_shards']:.1f}")
     print(f"    - Node nặng nhất (Max Load): {metrics['max_shards']:,.0f} Shards")
-    print(f"    -> Nhận xét: Độ lệch chuẩn cao chứng minh tính Semantic của LSH (Hotspot vùng code phổ biến).")
+    print(f"    -> Nhận xét: Payload đặt 1 lần qua HMAC nên tải không còn nhân theo L.")
 
     print(f"\n[2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:")
     print(f"    - Hiệu quả định tuyến: Trung bình ~{metrics['avg_hops']:.1f} Hops (Chặng) mỗi truy vấn")

@@ -1,0 +1,10 @@
+BÁO CÁO BASELINE — corpus=scifact, N=5183, Q=500, L=5, pool/table=100, rerank=adc
+
+Method                                    Success@5    MRR@5   Note
+-------------------------------------------------------------------
+Exact Brute-Force (IndexFlatIP)             100.00%    1.000   Centralized reference = Ground Truth
+FAISS-HNSW (M=32, ef=200)                   100.00%    1.000   Centralized graph ANN
+Centralized Multi-Table LSH                 100.00%    1.000   LSH signal ceiling, no DHT hops (pool~419)
+Crypto-DHT (same budget + rerank)            39.00%    0.386   DHT floor: random keys, semantics removed
+Random-5 (no rerank)                          0.60%    0.002   Pure chance ~ 1-(1-5/N)^5
+V-Engram (P2P, từ comparison_report)         ~97.2%    ~0.97   Distributed rendezvous (chạy từ simulation)

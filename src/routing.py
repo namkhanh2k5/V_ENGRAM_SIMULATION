@@ -12,8 +12,10 @@ DEFAULT_LSH_SEED = 20235956
 # Khai báo rỗng, KHÔNG sinh ma trận ngay lúc import file
 PROJECTION_MATRICES = []
 
-def generate_lsh_projections(seed, vector_dim=VECTOR_DIM, num_projections=NUM_PROJECTIONS):
+def generate_lsh_projections(seed, vector_dim=VECTOR_DIM, num_projections=None):
     """Sinh ma trận chiếu bằng Local Random Generator, miễn nhiễm với bên ngoài"""
+    if num_projections is None:
+        num_projections = NUM_PROJECTIONS
     rng = np.random.RandomState(seed)
     projections = []
     for _ in range(num_projections):
@@ -38,7 +40,7 @@ def generate_multi_semantic_keys(vector):
         
     vec = np.asarray(vector).flatten()
     keys = []
-    for i in range(NUM_PROJECTIONS):
+    for i in range(len(PROJECTION_MATRICES)):
         # Nhân ma trận thưa và lấy dấu (Sign)
         bits = (np.dot(vec, PROJECTION_MATRICES[i]) > 0).astype(int)
         bit_string = "".join(map(str, bits))
@@ -51,13 +53,18 @@ def generate_semantic_key(vector):
 
 USER_SECRET_KEY = b"v_engram_dummy_secret_key"
 
-def generate_placement_key(semantic_key, object_tag, shard_id):
-    """Tạo địa chỉ cho mảnh vỡ dựa trên nhiễu HMAC 8-bit"""
-    base_key = semantic_key & ((1 << 160) - (1 << 8))
-    seed_str = f"{semantic_key}_{object_tag}_shard_{shard_id}".encode("utf-8")
+def generate_placement_key(object_tag, shard_id):
+    """Placement key độc lập ngữ nghĩa: K_place(s) = HMAC(tag, s) trên toàn bộ
+    không gian khoá 160-bit của Kademlia.
+
+    Không phụ thuộc semantic key, nên các shard được rải ĐỀU khắp không gian địa chỉ
+    và mọi vị trí đều tái tạo được CHỈ từ object_tag (phục vụ khôi phục stateless).
+    Đây là tầng PAYLOAD: mỗi object chỉ đặt MỘT bộ 30 shard (không nhân theo L).
+    """
+    seed_str = f"{object_tag}_shard_{shard_id}".encode("utf-8")
     mac_hash = hmac.new(USER_SECRET_KEY, seed_str, hashlib.sha256).hexdigest()
-    noise_8bit = int(mac_hash, 16) % 256
-    return base_key | noise_8bit
+    # SHA-256 cho 256 bit -> thu về 160-bit keyspace
+    return int(mac_hash, 16) % (1 << 160)
 
 def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=3, k=20, max_rounds=15):
     """

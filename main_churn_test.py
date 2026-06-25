@@ -32,32 +32,27 @@ def kill_random_nodes(network_nodes, target_ratio, total_nodes):
 
 
 def can_recover_file(tag, network_nodes):
-    actual_doc_keys = GLOBAL_METADATA_DHT.get(tag)
-    if not actual_doc_keys:
+    if not GLOBAL_METADATA_DHT.get(tag):
         return False
 
-    best_collected = 0
-    for semantic_key in actual_doc_keys:
-        shards_collected = 0
-        for s_id in range(SHARDS_PER_FILE):
-            if not network_nodes:
+    # Payload đặt 1 lần: tái tạo 30 placement key CHỈ từ tag, cần >=20/30 shard sống sót.
+    shards_collected = 0
+    for s_id in range(SHARDS_PER_FILE):
+        if not network_nodes:
+            break
+        p_key = generate_placement_key(tag, s_id)
+        bootstrap_node = random.choice(network_nodes)
+        candidate_nodes, _ = iterative_find_k_closest_nodes(
+            p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
+        )
+        for target_node in candidate_nodes:
+            if f"{tag}_shard_{s_id}" in target_node.SSD_Storage:
+                shards_collected += 1
                 break
-            p_key = generate_placement_key(semantic_key, tag, s_id)
-            bootstrap_node = random.choice(network_nodes)
-            candidate_nodes, _ = iterative_find_k_closest_nodes(
-                p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
-            )
-            for target_node in candidate_nodes:
-                if f"{tag}_shard_{s_id}" in target_node.SSD_Storage:
-                    shards_collected += 1
-                    break
-            if shards_collected >= K_REQUIRED:
-                break
-        best_collected = max(best_collected, shards_collected)
-        if best_collected >= K_REQUIRED:
+        if shards_collected >= K_REQUIRED:
             break
 
-    return best_collected >= K_REQUIRED
+    return shards_collected >= K_REQUIRED
 
 
 def count_recovered_files(network_nodes, doc_ids):

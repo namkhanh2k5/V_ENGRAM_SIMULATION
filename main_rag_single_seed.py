@@ -44,6 +44,7 @@ def run_rag_simulation(env, seed, model, codebook, ground_truth, num_files):
     mrr_total = 0.0
     total_queries = len(ground_truth)
     total_hops_all_queries = 0
+    uniq_cands = []
     
     # 2. Xử lý Truy vấn RAG
     for item in ground_truth:
@@ -52,10 +53,11 @@ def run_rag_simulation(env, seed, model, codebook, ground_truth, num_files):
         query_vector = model.encode(q_text)
         
         # Tiến hành Ripple Search trên mạng P2P
-        retrieved_tags, hops = yield env.process(
+        retrieved_tags, hops, n_uniq = yield env.process(
             query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5)
         )
         total_hops_all_queries += hops
+        uniq_cands.append(n_uniq)
         
         # Đối chiếu trực tiếp với Chân lý FAISS FlatL2
         gt_indices = set([res['index'] for res in item['top_5_results']])
@@ -80,6 +82,8 @@ def run_rag_simulation(env, seed, model, codebook, ground_truth, num_files):
     success_at_5 = (hit_count / total_queries) * 100
     mrr_at_5 = mrr_total / total_queries
     avg_hops = total_hops_all_queries / total_queries if total_queries else 0
+    avg_uniq = float(np.mean(uniq_cands)) if uniq_cands else 0.0
+    pct_uniq = 100.0 * avg_uniq / num_files if num_files else 0.0
 
     # Phân tích Tải trọng (Load Distribution)
     shard_counts = [len(node.SSD_Storage) for node in network_nodes]
@@ -96,12 +100,13 @@ def run_rag_simulation(env, seed, model, codebook, ground_truth, num_files):
     print(f"    - Trung bình (Mean): {avg_shards:.1f} Shards / Node")
     print(f"    - Độ lệch chuẩn (Std): {std_shards:.1f}")
     print(f"    - Node nặng nhất (Max Load): {max_shards:,.0f} Shards")
-    print(f"    -> Nhận xét: Độ lệch chuẩn cao chứng minh tính Semantic của LSH (Hotspot vùng ngữ nghĩa phổ biến).")
+    print(f"    -> Nhận xét: Payload đặt 1 lần qua HMAC nên rải ĐỀU (Std thấp, hết semantic hotspot ở payload).")
 
     print(f"\n[2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:")
     print(f"    - Hiệu quả định tuyến: Trung bình ~{avg_hops:.1f} Hops (Chặng) mỗi truy vấn")
     print(f"    - Success@5: {success_at_5:.1f}% (So với Server FAISS tập trung)")
     print(f"    - MRR@5: {mrr_at_5:.3f} (Mean Reciprocal Rank trong Top-5 P2P)")
+    print(f"    - Unique-candidate/query: {avg_uniq:.1f} objects (~{pct_uniq:.2f}% corpus)")
     print(f"    -> Kết luận: Hệ thống phân tán đạt độ chính xác ấn tượng trên tập dữ liệu chuyên ngành.")
 
     print(f"\n[3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):")
@@ -116,6 +121,7 @@ def run_rag_simulation(env, seed, model, codebook, ground_truth, num_files):
         f.write(f"Success@5 : {success_at_5:.2f}%\n")
         f.write(f"MRR@5     : {mrr_at_5:.3f}\n")
         f.write(f"Avg Hops  : {avg_hops:.1f}\n")
+        f.write(f"UniqCand/q: {avg_uniq:.1f} (~{pct_uniq:.2f}% corpus)\n")
 
 if __name__ == "__main__":
     print("\n[*] Khởi động hệ sinh thái RAG... Đang nạp Codebook và Mô hình BAAI...")

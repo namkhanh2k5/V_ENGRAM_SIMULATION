@@ -16,11 +16,22 @@ class VEngramNode:
     def get_neighbors(self):
         return list(self.routing_table)
 
-    def store_shard(self, object_tag, shard_id, pq_code, virtual_payload):
+    def store_metadata(self, object_tag, pq_code):
+        """TẦNG 1 (Metadata): neo PQ code (phục vụ ADC rerank) vào RAM.
+        Được nhân bản tại các node gần MỖI semantic key trong L key của object."""
         if object_tag not in self.RAM_Index:
-            self.RAM_Index[object_tag] = pq_code # Lưu mảng uint8 PQ code
+            self.RAM_Index[object_tag] = pq_code
+
+    def store_payload_shard(self, object_tag, shard_id, virtual_payload):
+        """TẦNG 2 (Payload): lưu MỘT mảnh Reed-Solomon xuống đĩa.
+        Mỗi object chỉ đặt một bộ shard (không nhân theo L)."""
         shard_key = f"{object_tag}_shard_{shard_id}"
         self.SSD_Storage[shard_key] = virtual_payload
+
+    def store_shard(self, object_tag, shard_id, pq_code, virtual_payload):
+        """[Giữ cho tương thích ngược - không dùng trong pipeline two-tier mới]"""
+        self.store_metadata(object_tag, pq_code)
+        self.store_payload_shard(object_tag, shard_id, virtual_payload)
         
     def adc_search(self, query_vector, codebook, top_k=5):
         """
