@@ -1,0 +1,6 @@
+13:26:19 | ====================================================================================
+13:26:19 | V-ENGRAM RUN-ALL (PAYLOAD-ONCE) | seeds=[20235956, 2026, 11, 12, 18] | log: logs/v_engram_all_20260625_132619.log
+13:26:19 | Tổng ~44 lần ingest: L-ablation 25 + SciFact 5 + Churn 5 + Scalability 4 + Placement 5. RẤT LÂU.
+13:26:19 | ====================================================================================
+13:26:19 | [*] Nạp model BAAI/bge-large-en-v1.5 ...
+13:26:25 | Lỗi nạp model/data: Cannot send a request, as the client has been closed. — kiểm CONFIG đường dẫn ./data/.

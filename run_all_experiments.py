@@ -28,10 +28,12 @@ import sys
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _VENV_PYTHON = os.path.join(_HERE, "venv", "bin", "python")
-if os.path.exists(_VENV_PYTHON) and os.path.abspath(sys.executable) != os.path.abspath(_VENV_PYTHON):
+if __name__ == "__main__" and os.path.exists(_VENV_PYTHON) and os.path.abspath(sys.executable) != os.path.abspath(_VENV_PYTHON):
     os.execv(_VENV_PYTHON, [_VENV_PYTHON] + sys.argv)
 
 import time, json, random, logging, contextlib
+from dataclasses import replace, dataclass
+from typing import Any
 import numpy as np
 import simpy
 
@@ -48,8 +50,20 @@ SEEDS  = [20235956, 2026, 11, 12, 18]      # chạy HẾT 5 seed cho cả 3 kh�
 SHARDS = 30
 MODEL_NAME = "BAAI/bge-large-en-v1.5"
 
+
+@dataclass(frozen=True)
+class CorpusConfig:
+    name: str
+    emb: str
+    pq: str
+    cb: str
+    gt: str
+    num_nodes: int
+    num_files: int | None
+
+
 # --- Code corpus (m=256, do prepare/02+05 sinh) ---
-CODE = dict(
+CODE = CorpusConfig(
     name="CODE",
     emb="./data/embeddings_20k.npy",
     pq="./data/pq_codes.npy",
@@ -60,7 +74,7 @@ CODE = dict(
 L_VALUES_CODE = [1, 2, 3, 4, 5]
 
 # --- SciFact corpus (bộ đã xác nhận chạy được) ---
-SCIFACT = dict(
+SCIFACT = CorpusConfig(
     name="SCIFACT",
     emb="./data/scifact_embeddings.npy",
     pq="./data/scifact_pq_codes.npy",
@@ -113,17 +127,25 @@ def _seed(seed, L):
     reset_global_metadata_dht()
 
 
-def run_retrieval(corpus, L, seed, model, codebook, ground_truth, num_files):
+def run_retrieval(
+    corpus: CorpusConfig,
+    L: int,
+    seed: int,
+    model: Any,
+    codebook: np.ndarray,
+    ground_truth: list[dict[str, Any]],
+    num_files: int,
+):
     """Một lần chạy truy hồi đầy đủ (dùng chung Code & SciFact). Trả dict số liệu."""
     _seed(seed, L)
     res = {}
 
     def proc(env):
-        nodes = yield env.process(bootstrap_network(env, corpus["num_nodes"], 50, 50))
+        nodes = yield env.process(bootstrap_network(env, corpus.num_nodes, 50, 50))
         yield env.process(data_ingestion_process(
             env, nodes, num_files, SHARDS,
-            embeddings_path=corpus["emb"], pq_codes_path=corpus["pq"],
-            data_label=f"{corpus['name']}-L{L}-s{seed}"))
+            embeddings_path=corpus.emb, pq_codes_path=corpus.pq,
+            data_label=f"{corpus.name}-L{L}-s{seed}"))
 
         hit = 0; mrr = 0.0; hops_all = 0; uniqs = []
         for item in ground_truth:
@@ -152,17 +174,17 @@ def run_retrieval(corpus, L, seed, model, codebook, ground_truth, num_files):
     return res
 
 
-def run_ingest_only(corpus, L, seed, num_files):
+def run_ingest_only(corpus: CorpusConfig, L: int, seed: int, num_files: int):
     """Chỉ ingest + đo phân bố load (KHÔNG query) — cho placement-breadth ablation."""
     _seed(seed, L)
     res = {}
 
     def proc(env):
-        nodes = yield env.process(bootstrap_network(env, corpus["num_nodes"], 50, 50))
+        nodes = yield env.process(bootstrap_network(env, corpus.num_nodes, 50, 50))
         yield env.process(data_ingestion_process(
             env, nodes, num_files, SHARDS,
-            embeddings_path=corpus["emb"], pq_codes_path=corpus["pq"],
-            data_label=f"{corpus['name']}-ingest"))
+            embeddings_path=corpus.emb, pq_codes_path=corpus.pq,
+            data_label=f"{corpus.name}-ingest"))
         loads = [len(n.SSD_Storage) for n in nodes]
         res.update(load_mean=float(np.mean(loads)), load_std=float(np.std(loads)), load_max=int(np.max(loads)))
     env = simpy.Environment(); env.process(proc(env)); env.run()
@@ -193,10 +215,10 @@ def run_churn(seed, codebook, num_files):
     out = {}
 
     def proc(env):
-        nodes = yield env.process(bootstrap_network(env, CODE["num_nodes"], 50, 50))
+        nodes = yield env.process(bootstrap_network(env, CODE.num_nodes, 50, 50))
         yield env.process(data_ingestion_process(
             env, nodes, num_files, SHARDS,
-            embeddings_path=CODE["emb"], pq_codes_path=CODE["pq"], data_label=f"CHURN-s{seed}"))
+            embeddings_path=CODE.emb, pq_codes_path=CODE.pq, data_label=f"CHURN-s{seed}"))
 
         rnd = random.Random(seed)
         doc_ids = rnd.sample(range(num_files), min(RECOVERY_SAMPLE, num_files))
@@ -235,10 +257,10 @@ def main():
     log.info("[*] Nạp model %s ...", MODEL_NAME)
     try:
         model = get_model()
-        code_cb = np.load(CODE["cb"]); code_gt = json.load(open(CODE["gt"], encoding="utf-8"))
-        code_nf = min(CODE["num_files"], np.load(CODE["emb"], mmap_mode="r").shape[0])
-        sci_cb = np.load(SCIFACT["cb"]); sci_gt = json.load(open(SCIFACT["gt"], encoding="utf-8"))
-        sci_nf = int(np.load(SCIFACT["emb"], mmap_mode="r").shape[0])
+        code_cb = np.load(CODE.cb); code_gt = json.load(open(CODE.gt, encoding="utf-8"))
+        code_nf = min(CODE.num_files or 0, np.load(CODE.emb, mmap_mode="r").shape[0])
+        sci_cb = np.load(SCIFACT.cb); sci_gt = json.load(open(SCIFACT.gt, encoding="utf-8"))
+        sci_nf = int(np.load(SCIFACT.emb, mmap_mode="r").shape[0])
     except Exception as e:
         log.error("Lỗi nạp model/data: %s — kiểm CONFIG đường dẫn ./data/.", e); sys.exit(1)
 
@@ -300,7 +322,7 @@ def main():
     scal_rows = []
     for N in NODE_SWEEP:
         t0 = time.time()
-        corpus_N = {**CODE, "num_nodes": N}
+        corpus_N = replace(CODE, num_nodes=N)
         with quiet():
             r = run_retrieval(corpus_N, L_DEFAULT, SWEEP_SEED, model, code_cb, code_gt, code_nf)
         done += 1
@@ -317,7 +339,7 @@ def main():
         net.PLACEMENT_CANDIDATES = B          # đổi breadth lúc đặt shard
         t0 = time.time()
         with quiet():
-            r = run_ingest_only({**CODE, "num_nodes": CODE["num_nodes"]}, L_DEFAULT, SWEEP_SEED, code_nf)
+            r = run_ingest_only(CODE, L_DEFAULT, SWEEP_SEED, code_nf)
         done += 1
         log.info("  [%d/%d] B_place=%-4d | %5.0fs | Load mean/std/max = %.1f / %.1f / %d",
                  done, n_runs, B, time.time()-t0, r["load_mean"], r["load_std"], r["load_max"])
