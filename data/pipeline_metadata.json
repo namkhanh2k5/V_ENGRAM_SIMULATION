@@ -1,0 +1,10 @@
+{
+  "stage": "1",
+  "dataset": "CodeSearchNet Python",
+  "num_vectors": 20000,
+  "vector_dimension": 1024,
+  "embedding_model": "BAAI/bge-large-en-v1.5",
+  "index_type": "IndexFlatIP (Cosine)",
+  "queries_tested": 10,
+  "top_k": 5
+}

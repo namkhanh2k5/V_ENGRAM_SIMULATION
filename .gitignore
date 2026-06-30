@@ -9,9 +9,5 @@ env/
 __pycache__/
 *.pyc
 
-# Bỏ qua các file Data nặng (Người khác tải code về sẽ tự sinh ra data sau)
-data/*.npy
-data/*.json
-
 # Bỏ qua file báo cáo (nếu ngài không muốn push lên)
 # comparison_report.txt
