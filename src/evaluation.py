@@ -1,7 +1,7 @@
 import json
 import numpy as np
 
-def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="./data/faiss_absolute_baseline.json"):
+def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="./data/code_ground_truth.json"):
     # 1. PHÂN TÍCH TẢI TRỌNG (LOAD DISTRIBUTION)
     shard_counts = [len(node.SSD_Storage) for node in network_nodes]
     avg_shards = np.mean(shard_counts)
@@ -19,6 +19,11 @@ def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="
     hit_count = 0
     total_hops = 0
     mrr_total = 0.0
+    # [MỚI] Recall@K — Hit@5 bão hoà ở 100% nên không phân biệt được cấu hình.
+    # Bằng chứng: K=300/r=30 cho Hit@5=100% nhưng Recall@5=78.0%.
+    recall5_total = 0.0
+    recall10_total = 0.0
+    n_gt_recovered_total = 0
 
     for q_res in test_results:
         q_id = q_res['query_id']
@@ -32,6 +37,7 @@ def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="
 
         # Lấy danh sách Top 5 index chuẩn từ FAISS
         gt_indices = [res['index'] for res in gt_item['top_5_results']]
+        gt_indices10 = [res['index'] for res in gt_item.get('top_10_results', gt_item['top_5_results'])]
 
         # Chuyển đổi 'doc_1272' thành số nguyên 1272 để so sánh
         retrieved_indices = []
@@ -47,6 +53,12 @@ def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="
         gt_index_set = set(gt_indices)
         if set(retrieved_indices).intersection(gt_index_set):
             hit_count += 1
+
+        # Recall@5 / Recall@10 / số GT thu hồi được — metric chính (mục 4.3)
+        n_hit5 = len(set(retrieved_indices[:5]) & gt_index_set)
+        recall5_total += n_hit5 / 5.0
+        n_gt_recovered_total += n_hit5
+        recall10_total += len(set(retrieved_indices[:10]) & set(gt_indices10)) / max(1, len(gt_indices10))
 
         # MRR: tìm vị trí đầu tiên trong Top-5 P2P khớp với Ground Truth
         reciprocal_rank = 0.0
@@ -66,13 +78,17 @@ def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="
         "std_shards": std_shards,
         "max_shards": max_shards,
         "avg_hops": avg_hops,
-        "success_rate": success_rate,
+        "hit_at_5": success_rate,          # đổi tên: Success@5 -> Hit@5 (bão hoà)
+        "success_rate": success_rate,      # giữ để tương thích ngược
+        "recall_at_5": (recall5_total / total_queries * 100) if total_queries else 0,
+        "recall_at_10": (recall10_total / total_queries * 100) if total_queries else 0,
+        "mean_gt_recovered": (n_gt_recovered_total / total_queries) if total_queries else 0,
         "mrr_score": mrr_score,
         "sim_time_ms": env.now,
     }
 
 
-def stage5_metrics_collection(env, network_nodes, test_results):
+def stage5_metrics_collection(env, network_nodes, test_results, ground_truth_path="./data/code_ground_truth.json"):
     """
     GIAI ĐOẠN 5: Thu hoạch và phân tích số liệu cuối cùng.
     Chứng minh các chỉ số Success@5, Hops và Cân bằng tải.
@@ -81,7 +97,7 @@ def stage5_metrics_collection(env, network_nodes, test_results):
     print("GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)")
     print("★" * 80)
 
-    metrics = compute_stage5_metrics(env, network_nodes, test_results)
+    metrics = compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path)
     if metrics is None:
         return
 
@@ -92,10 +108,12 @@ def stage5_metrics_collection(env, network_nodes, test_results):
     print(f"    -> Nhận xét: Payload đặt 1 lần qua HMAC nên tải không còn nhân theo L.")
 
     print(f"\n[2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:")
-    print(f"    - Hiệu quả định tuyến: Trung bình ~{metrics['avg_hops']:.1f} Hops (Chặng) mỗi truy vấn")
-    print(f"    - Success@5: {metrics['success_rate']:.1f}% (So với Server FAISS tập trung)")
-    print(f"    - MRR@5: {metrics['mrr_score']:.3f} (Mean Reciprocal Rank trong Top-5 P2P)")
-    print(f"    -> Kết luận: Hệ thống phân tán đạt độ chính xác gần tương đương hệ thống tập trung.")
+    print(f"    - Định tuyến: ~{metrics['avg_hops']:.1f} rounds mỗi truy vấn")
+    print(f"    - Recall@5 : {metrics['recall_at_5']:.1f}%   <- METRIC CHÍNH")
+    print(f"    - Recall@10: {metrics['recall_at_10']:.1f}%")
+    print(f"    - GT thu hồi: {metrics['mean_gt_recovered']:.2f}/5 mỗi query")
+    print(f"    - Hit@5    : {metrics['hit_at_5']:.1f}% (bão hoà ở 100% — KHÔNG dùng để so cấu hình)")
+    print(f"    - MRR@5    : {metrics['mrr_score']:.3f}")
 
     # 3. CHI PHÍ TÀI NGUYÊN (RESOURCE COST)
     print(f"\n[3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):")
@@ -103,6 +121,7 @@ def stage5_metrics_collection(env, network_nodes, test_results):
     print(f"    - Tổng thời gian mô phỏng ảo: {metrics['sim_time_ms']:,.2f} ms")
     print(f"    - Tỷ lệ tiết kiệm RAM: 16x (4096 bytes Vector -> 256 bytes PQ Code)")
     print("★" * 80 + "\n")
+    return metrics
 
 
 def test_data_integrity(network_nodes, test_doc_id=99):

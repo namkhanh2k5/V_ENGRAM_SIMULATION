@@ -4,8 +4,14 @@ import numpy as np
 from src.node import VEngramNode
 from src.routing import (
     generate_multi_semantic_keys,
+    generate_probe_keys,
     generate_placement_key,
     iterative_find_k_closest_nodes,
+    NUM_PROJECTIONS,
+    DEFAULT_ALPHA,
+    DEFAULT_R_MAX,
+    DEFAULT_MULTI_PROBE,
+    DEFAULT_PROBE_BITS,
 )
 
 # [MỚI] BẢNG BĂM HAI TẦNG - LƯU DANH BẠ METADATA CỦA TOÀN MẠNG
@@ -17,10 +23,33 @@ def reset_global_metadata_dht():
 # [MỚI] So luong ung vien dong bo giua luu va doc (TẦNG PAYLOAD)
 PLACEMENT_CANDIDATES = 300
 
-# [MỚI] So node neo METADATA (PQ code) quanh MOI semantic key — TẦNG METADATA.
-# Nhan ban L lan (mot lan moi semantic key) de discovery ben va giu Success@5.
-# Khong anh huong "Mean Load (shards/node)" vi load chi dem SSD_Storage (payload).
-METADATA_ANCHORS = 30
+def _rtt():
+    """RTT mỗi message ~ N(50ms, sigma=15ms), khớp mục 4.1 trong paper.
+    Bản cũ dùng uniform(5,15)/(2,5)/(10,30) — lệch với con số đã in trong paper."""
+    return max(1.0, random.normalvariate(50, 15))
+
+# ============================================================================
+# THAM SỐ GIAO THỨC — khớp Table 2 trong paper
+# ============================================================================
+# r — số node neo metadata quanh MỖI semantic key (tầng METADATA).
+# Mỗi object có L*r bản metadata.
+#
+# QUAN TRỌNG: r KHÔNG phải tham số độ bền tự do. Nó quyết định semantic key có
+# giá trị hay không. Mỗi object phủ L*r / N mạng; khi tỉ lệ này đủ lớn, một client
+# chạm cùng số node NGẪU NHIÊN cũng giao với anchor set, và semantic routing không
+# còn đóng góp gì (mục 3.6 + 4.x ngưỡng r*).
+# Số đo: r=1 -> semantic 43.8% vs random 3.6% (thắng 12.2x)
+#        r=30 -> semantic 48.2% vs random 73.8% (random THẮNG!)
+METADATA_ANCHORS = 1
+
+# K — ngân sách node mỗi bảng (số node chạy ADC cho mỗi prefix)
+K_QUERY = 20
+
+# T — số prefix probe mỗi bảng (multi-probe, mục 3.5)
+MULTI_PROBE = DEFAULT_MULTI_PROBE
+
+# kappa — số tag mỗi node trả về
+LOCAL_TOP_K = 30
 
 # [MỚI] Gioi han shard tren moi node
 MAX_SHARDS_PER_NODE = 2500
@@ -57,9 +86,9 @@ def data_ingestion_process(
     network_nodes,
     num_files,
     shards_per_file,
-    embeddings_path="./data/scifact_embeddings.npy", # <-- Cập nhật SciFact
-    pq_codes_path="./data/scifact_pq_codes.npy",     # <-- Cập nhật SciFact
-    data_label="SciFact",
+    embeddings_path="./data/code_corpus_embeddings.npy",
+    pq_codes_path="./data/code_pq_codes.npy",
+    data_label="CODE",
 ):
     print("\n" + "=" * 60)
     print(
@@ -88,8 +117,8 @@ def data_ingestion_process(
         # ============================================================
         for s_key in s_keys:
             bootstrap_node = random.choice(network_nodes)
-            anchors, _ = iterative_find_k_closest_nodes(
-                s_key, bootstrap_node, alpha=3, k=METADATA_ANCHORS
+            anchors, _, _ = iterative_find_k_closest_nodes(
+                s_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=METADATA_ANCHORS
             )
             for anchor in anchors[:METADATA_ANCHORS]:
                 anchor.store_metadata(tag, pq_code)
@@ -104,8 +133,8 @@ def data_ingestion_process(
             p_key = generate_placement_key(tag, s_id)
 
             bootstrap_node = random.choice(network_nodes)
-            candidates, _ = iterative_find_k_closest_nodes(
-                p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
+            candidates, _, _ = iterative_find_k_closest_nodes(
+                p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
             )
             if not candidates:
                 candidates = [bootstrap_node]
@@ -121,7 +150,7 @@ def data_ingestion_process(
                     nodes_used_for_this_doc.add(target.node_id)
                     break
 
-        yield env.timeout(random.uniform(10, 30))
+        yield env.timeout(_rtt())
         if (i + 1) % 5000 == 0:
             print(f"  ... Đã phân bổ {i + 1:,}/{num_files:,} files.")
 
@@ -131,70 +160,108 @@ def data_ingestion_process(
     )
 
 
-def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5):
-    print("\n" + "=" * 60)
-    print("GIAI ĐOẠN 3: RIPPLE SEARCH BẰNG PQ (KHÔNG DÙNG ORACLE)")
-    print("=" * 60)
+def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5,
+                           k_query=None, multi_probe=None, random_routing=False,
+                           verbose=True):
+    """Đường đọc: Ripple Search đa bảng + multi-probe -> ADC -> merge -> fetch payload.
 
-    q_s_keys = generate_multi_semantic_keys(query_vector)
+    Sửa so với bản cũ:
+      1. BUG NGÂN SÁCH: bản cũ `if len(all_candidates) >= target_k*80: break` cộng dồn
+         qua CẢ 5 bảng, nên bảng 1 ghé ~14 node còn bảng 2-5 mỗi bảng ghé ĐÚNG 1 node.
+         Paper mô tả 5 bảng đối xứng. Nay ngân sách áp theo TỪNG bảng (k_query).
+      2. MULTI-PROBE (mục 3.5): mỗi bảng probe T prefix thay vì 1.
+      3. Đếm TÁCH BẠCH rounds / RPC / contacted nodes (mục 3.9).
+      4. random_routing=True: baseline chạm CÙNG số node nhưng chọn ngẫu nhiên,
+         bỏ qua semantic key — phép so duy nhất trả lời "semantic key có đáng không".
+    """
+    if k_query is None:
+        k_query = K_QUERY
+    if multi_probe is None:
+        multi_probe = MULTI_PROBE
+
+    if verbose:
+        print("\n" + "=" * 60)
+        print(f"GIAI ĐOẠN 3: RIPPLE SEARCH (L={NUM_PROJECTIONS}, K={k_query}, "
+              f"T={multi_probe}{', RANDOM' if random_routing else ''})")
+        print("=" * 60)
+
     all_candidates = []
-    total_hops = 0
+    total_hops = 0          # routing rounds
+    total_rpcs = 0          # RPC count
+    contacted = set()       # node chạy ADC
 
-    for idx, s_key in enumerate(q_s_keys):
-        bootstrap_node = random.choice(network_nodes)
-        search_radius_nodes, hops = iterative_find_k_closest_nodes(
-            s_key, bootstrap_node, alpha=3, k=300
-        )
-        total_hops += hops
-        for node in search_radius_nodes:
-            yield env.timeout(random.uniform(5, 15))
+    if random_routing:
+        # BASELINE: chạm đúng cùng số node nhưng chọn ngẫu nhiên
+        n_touch = min(k_query * NUM_PROJECTIONS * multi_probe, len(network_nodes))
+        for node in random.sample(network_nodes, n_touch):
+            contacted.add(node.node_id)
+            yield env.timeout(_rtt())
+            all_candidates.extend(node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K))
+    else:
+        for t in range(NUM_PROJECTIONS):
+            # Multi-probe: T prefix cho bảng này (gốc + T-1 biến thể lật bit yếu)
+            for p_key in generate_probe_keys(query_vector, t, T=multi_probe,
+                                             c=DEFAULT_PROBE_BITS):
+                bootstrap_node = random.choice(network_nodes)
+                nodes, hops, rpcs = iterative_find_k_closest_nodes(
+                    p_key, bootstrap_node, alpha=DEFAULT_ALPHA,
+                    k=k_query, max_rounds=DEFAULT_R_MAX
+                )
+                total_hops += hops
+                total_rpcs += rpcs
+                # NGÂN SÁCH THEO TỪNG PREFIX — không cộng dồn qua các bảng
+                for node in nodes:
+                    if node.node_id in contacted:
+                        continue          # node đã chạy ADC cho prefix khác
+                    contacted.add(node.node_id)
+                    yield env.timeout(_rtt())
+                    total_rpcs += 1       # ADC request
+                    all_candidates.extend(
+                        node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K)
+                    )
 
-            # Tính bằng Codebook chuẩn PQ
-            local_candidates = node.adc_search(query_vector, codebook, top_k=30)
-            all_candidates.extend(local_candidates)
-
-            if len(all_candidates) >= target_k * 80:
-                break
-
-    print("\n" + "=" * 60)
-    print("GIAI ĐOẠN 4: KHÔI PHỤC THEO KIẾN TRÚC TWO-TIER DHT")
-    print("=" * 60)
-
+    # --- Merge: giữ khoảng cách nhỏ nhất cho mỗi tag, dedup giữa các bảng ---
     unique_candidates = {}
     for tag, score in all_candidates:
         if tag not in unique_candidates or score < unique_candidates[tag]:
             unique_candidates[tag] = score
-    # [MỚI] So object UNIQUE thuc su duoc rerank cho query nay (phep do Q1:
-    # bac bo gia thuyet "recall den tu rerank rong" — bao nhieu % corpus duoc xet)
     num_unique_candidates = len(unique_candidates)
     reranked_top = sorted(unique_candidates.items(), key=lambda x: x[1])[:target_k]
+    retrieved_tags = [tag for tag, _ in reranked_top]
 
-    # --- KHÔI PHỤC: payload lấy MỘT lần từ HMAC key tái tạo từ tag ---
+    if verbose:
+        print("\n" + "=" * 60)
+        print("GIAI ĐOẠN 4: KHÔI PHỤC PAYLOAD (HMAC key tái tạo từ tag)")
+        print("=" * 60)
+
+    # --- Payload: client tự tính lại toạ độ shard CHỈ từ tag (stateless) ---
+    # Bỏ lối tắt tra GLOBAL_METADATA_DHT: trong thí nghiệm churn nó khiến metadata
+    # KHÔNG BAO GIỜ chết, nên metadata availability không đo được (mục Threats).
     k_required = 20
     for rank, (tag, score) in enumerate(reranked_top, 1):
-        # Tra sổ đỏ chỉ để xác nhận object tồn tại (placement KHÔNG cần semantic key)
-        if not GLOBAL_METADATA_DHT.get(tag):
-            continue
-
         shards_collected = 0
         for s_id in range(30):
-            # Client tự tái tạo toạ độ shard CHỈ từ tag
             p_key = generate_placement_key(tag, s_id)
             bootstrap_node = random.choice(network_nodes)
-            candidate_nodes, _ = iterative_find_k_closest_nodes(
-                p_key, bootstrap_node, alpha=3, k=PLACEMENT_CANDIDATES
+            candidate_nodes, _, _ = iterative_find_k_closest_nodes(
+                p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
             )
             for target_node in candidate_nodes:
-                yield env.timeout(random.uniform(2, 5))
+                yield env.timeout(_rtt())
                 shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
                 if shard_data:
                     shards_collected += 1
                     break
             if shards_collected >= k_required:
                 break
+        if verbose:
+            status = "THÀNH CÔNG" if shards_collected >= k_required else "THẤT BẠI"
+            print(f"  - Top {rank} ({tag}): Khôi phục {status}! ({shards_collected}/30 Shards)")
 
-        status = "THÀNH CÔNG" if shards_collected >= k_required else "THẤT BẠI"
-        print(f"  - Top {rank} ({tag}): Khôi phục {status}! ({shards_collected}/30 Shards)")
-
-    retrieved_tags = [tag for tag, score in reranked_top]
-    return retrieved_tags, total_hops, num_unique_candidates
+    stats = {
+        "rounds": total_hops,
+        "rpcs": total_rpcs,
+        "contacted_nodes": len(contacted),
+        "unique_candidates": num_unique_candidates,
+    }
+    return retrieved_tags, total_hops, num_unique_candidates, stats

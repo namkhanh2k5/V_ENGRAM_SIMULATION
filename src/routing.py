@@ -5,9 +5,15 @@ import hmac
 # ============================================================================
 # CẤU HÌNH LSH ĐA VŨ TRỤ (MULTI-INDEX)
 # ============================================================================
-VECTOR_DIM = 1024   
-NUM_PROJECTIONS = 5  # Số lượng ma trận chiếu độc lập
+VECTOR_DIM = 1024
+NUM_PROJECTIONS = 5      # L — số bảng chiếu độc lập (paper: Table 2)
 DEFAULT_LSH_SEED = 20235956
+
+# --- Tham số giao thức, khớp Table 2 trong paper ---
+DEFAULT_ALPHA = 3        # alpha — độ song song của lookup
+DEFAULT_R_MAX = 15       # R_max — trần số vòng mỗi lookup
+DEFAULT_MULTI_PROBE = 3  # T — số prefix probe mỗi bảng (mục 3.5)
+DEFAULT_PROBE_BITS = 16  # c — số bit đầu được phép lật khi probe
 
 # Khai báo rỗng, KHÔNG sinh ma trận ngay lúc import file
 PROJECTION_MATRICES = []
@@ -51,6 +57,41 @@ def generate_semantic_key(vector):
     """Hàm wrapper cho các logic cũ cần 1 key (mặc định lấy key đầu tiên)"""
     return generate_multi_semantic_keys(vector)[0]
 
+
+def generate_probe_keys(vector, table_idx, T=DEFAULT_MULTI_PROBE, c=DEFAULT_PROBE_BITS):
+    """Multi-probe prefix selection (paper mục 3.5).
+
+    Sinh T prefix cho MỘT bảng chiếu: key gốc + (T-1) biến thể lật bit YẾU nhất.
+
+    Bit i ghi dấu của (v . r_i). Độ lớn |v . r_i| cho biết vector nằm xa hay gần
+    siêu phẳng chiếu:
+      - |proj| LỚN  -> bit ổn định, neighbor gần góc gần như chắc chắn đồng ý
+      - |proj| NHỎ  -> vector sát siêu phẳng, đây CHÍNH LÀ bit mà neighbor dễ
+                       bất đồng (boundary effect, mục 3.2)
+    Nên xếp c bit đầu theo |proj| tăng dần = xếp theo xác suất neighbor lệch ở đó.
+    Lật những bit yếu nhất = nhảy sang subtree mà neighbor nhiều khả năng rơi vào.
+
+    Khác với việc tăng K (mở rộng frontier quanh CÙNG một prefix): probe đi tới
+    các subtree KHÁC NHAU mà frontier mở rộng không bao giờ chạm tới.
+    """
+    if not PROJECTION_MATRICES:
+        initialize_lsh_projections()
+
+    vec = np.asarray(vector).flatten()
+    proj = np.dot(vec, PROJECTION_MATRICES[table_idx])
+    bits = (proj > 0).astype(int)
+    base = int("".join(map(str, bits)), 2)
+
+    keys = [base]
+    if T <= 1:
+        return keys
+
+    c = min(c, 160)
+    weak_first = np.argsort(np.abs(proj[:c]))   # bit yếu nhất trước
+    for j in weak_first[: T - 1]:
+        keys.append(base ^ (1 << (159 - int(j))))   # lật bit j (bit 0 = MSB)
+    return keys
+
 USER_SECRET_KEY = b"v_engram_dummy_secret_key"
 
 def generate_placement_key(object_tag, shard_id):
@@ -66,16 +107,24 @@ def generate_placement_key(object_tag, shard_id):
     # SHA-256 cho 256 bit -> thu về 160-bit keyspace
     return int(mac_hash, 16) % (1 << 160)
 
-def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=3, k=20, max_rounds=15):
-    """
-    Mô phỏng định tuyến Kademlia kiểu iterative, không dùng global view.
-    Trả về danh sách k node gần nhất và số vòng nhảy (overlay hops).
+def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
+                                   k=20, max_rounds=DEFAULT_R_MAX):
+    """Ripple Search cho MỘT prefix (paper Algorithm 1).
+
+    Điều kiện dừng: tập k node gần nhất KHÔNG ĐỔI giữa hai vòng liên tiếp
+    ("vùng đã được liệt kê", không phải "vừa chạm tới"), hoặc chạm R_max.
+    KHÔNG dùng tiêu chí "XOR distance nhỏ nhất chững lại" — tiêu chí đó dừng
+    ngay khi frontier vừa tới đích, trước khi kịp gom hàng xóm (mục 3.4).
+
+    Trả về (k node gần nhất, số vòng, số RPC).
+    Ba đại lượng rounds/RPC/contacted-nodes được đếm TÁCH BẠCH (mục 3.9).
     """
     candidates = set([bootstrap_node])
     candidates.update(bootstrap_node.get_neighbors())
     queried = set()
     prev_best = None
     hops = 0
+    rpcs = 0
 
     for _ in range(max_rounds):
         ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
@@ -86,6 +135,7 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=3, k=20, max_round
         hops += 1
         for node in to_query:
             queried.add(node)
+            rpcs += 1                      # mỗi FIND_NODE là một RPC
             candidates.update(node.get_neighbors())
 
         best_ids = tuple(node.node_id for node in ordered[:k])
@@ -94,4 +144,4 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=3, k=20, max_round
         prev_best = best_ids
 
     ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
-    return ordered[:k], hops
+    return ordered[:k], hops, rpcs
