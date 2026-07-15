@@ -52,7 +52,7 @@ PATHS = {
     },
 }[CORPUS]
 
-MODEL_NAME       = "BAAI/bge-large-en-v1.5"
+# MODEL_NAME bỏ: query embeddings đọc từ file precomputed
 LSH_SEED         = 20235956   # PHẢI trùng DEFAULT_LSH_SEED trong src/routing.py
 NUM_PROJECTIONS  = 5          # L
 POOL_PER_TABLE   = 100        # ngân sách gom mỗi bảng.
@@ -70,7 +70,6 @@ RNG_SEED         = 42         # cho random-5
 # ========================================================
 
 import faiss
-from sentence_transformers import SentenceTransformer
 # Import ĐÚNG ma trận chiếu của V-Engram để key hoàn toàn trùng khớp
 from src.routing import initialize_lsh_projections
 import src.routing as routing
@@ -183,11 +182,14 @@ def main():
         pq_codes = pq_encode(E, codebook)
     log(f"[*] PQ codes: {pq_codes.shape}")
 
-    # 2) Encode query bằng đúng model của V-Engram
-    log("[*] Nạp model & encode query ...")
-    model = SentenceTransformer(MODEL_NAME)
-    Qv = np.asarray(model.encode(queries, normalize_embeddings=True, show_progress_bar=False),
-                    dtype=np.float32)
+    # 2) Query embeddings: dùng file PRECOMPUTED, KHÔNG encode lại.
+    # V-Engram (main_simulation.py) đọc chính file này. Nếu baseline encode lại bằng
+    # model thì hai bên có thể lệch (version model, normalize, prefix instruction),
+    # và mọi so sánh giữa chúng mất ý nghĩa. Dùng chung một nguồn mới công bằng.
+    log("[*] Nạp query embeddings precomputed ...")
+    Qv = np.load(PATHS["q"]).astype(np.float32)
+    assert Qv.shape[0] == Q, f"query_embeddings ({Qv.shape[0]}) lệch ground truth ({Q})"
+    assert Qv.shape[1] == dim, f"query dim ({Qv.shape[1]}) lệch corpus dim ({dim})"
 
     # 3) Sanity: brute-force exact PHẢI = 100% so với GT (nếu không -> lệch model/normalize)
     flat = faiss.IndexFlatIP(dim); flat.add(E)
