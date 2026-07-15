@@ -46,6 +46,27 @@ class FastNetwork:
         idx = np.argpartition(d, k - 1)[:k]
         return idx
 
+    @staticmethod
+    def probe_keys63(vector, proj, T, c=16):
+        """Sinh T prefix: key gốc + (T-1) biến thể lật bit YẾU nhất.
+
+        Bit 'yếu' = |v . r_i| nhỏ => vector nằm sát siêu phẳng chiếu => bit dễ lật
+        ở neighbor đúng (boundary effect, mục 3.2 của paper). Lật đúng những bit
+        đó = đi tới subtree mà neighbor nhiều khả năng rơi vào.
+        Chỉ lật trong c bit đầu vì chỉ prefix mới quyết định vùng node.
+        """
+        pr = np.asarray(vector).flatten() @ proj
+        bits = (pr > 0).astype(int)[:63]
+        base = int(''.join(map(str, bits)), 2)
+        keys = [np.int64(base)]
+        if T <= 1:
+            return keys
+        c = min(c, 63)
+        weak = np.argsort(np.abs(pr[:c]))          # bit yếu nhất trước
+        for j in weak[:T - 1]:
+            keys.append(np.int64(base ^ (1 << (62 - int(j)))))
+        return keys
+
     def metadata_count(self):
         return np.array([len(r) for r in self.ram])
 
@@ -70,6 +91,12 @@ def main():
     ap.add_argument('--nq', type=int, default=100, help='số query chạy (500 = full)')
     ap.add_argument('--use-pq', dest='use_pq', action='store_true', default=True)
     ap.add_argument('--no-pq', dest='use_pq', action='store_false')
+    ap.add_argument('--multi-probe', type=int, default=1, metavar='T',
+                    help='Số prefix probe mỗi bảng (T=1 là single-probe như hiện tại). '
+                         'Lật T-1 bit YẾU nhất (|proj| nhỏ = vector sát siêu phẳng). '
+                         'Tăng node chạm nhưng KHÔNG tăng nhân bản metadata.')
+    ap.add_argument('--probe-bits', type=int, default=16, metavar='C',
+                    help='Chỉ xét lật bit trong C bit đầu (prefix hiệu dụng)')
     ap.add_argument('--random-routing', action='store_true',
                     help='BASELINE: chạm cùng số node nhưng chọn NGẪU NHIÊN '
                          '(không dùng semantic key). So với bản thường để biết '
@@ -136,12 +163,12 @@ def main():
         touched = set()
         if args.random_routing:
             # BASELINE: chạm ĐÚNG cùng số node, nhưng chọn ngẫu nhiên
-            n_touch = args.k_query * L
+            n_touch = args.k_query * L * args.multi_probe
             touched = set(rnd_route.sample(range(args.nodes), min(n_touch, args.nodes)))
         else:
             for proj in P:
-                qkey = net.key63(q, proj)
-                touched.update(int(x) for x in net.knn(qkey, args.k_query))
+                for qkey in net.probe_keys63(q, proj, args.multi_probe, args.probe_bits):
+                    touched.update(int(x) for x in net.knn(qkey, args.k_query))
         touched_list.append(len(touched))
 
         # Tầng 1: reachable — GT có nằm trong RAM của node được ghé không
@@ -190,6 +217,7 @@ def main():
         'dataset': args.dataset, 'nodes': args.nodes, 'seed': args.seed,
         'k_query': args.k_query, 'meta_anchors': args.meta_anchors,
         'random_routing': args.random_routing,
+        'multi_probe': args.multi_probe,
         'local_topk': args.local_topk, 'use_pq': args.use_pq, 'n_query': n_run,
         'reachable_hit5': 100 * reach_hit / n_run,
         'returned_hit5':  100 * ret_hit / n_run,
@@ -208,7 +236,8 @@ def main():
 
     print("\n" + "=" * 62)
     print(f"KẾT QUẢ | {args.dataset} | K={args.k_query} MA={args.meta_anchors} "
-          f"PQ={'ON' if args.use_pq else 'OFF'}")
+          f"T={args.multi_probe} PQ={'ON' if args.use_pq else 'OFF'}"
+          f"{' [RANDOM]' if args.random_routing else ''}")
     print("=" * 62)
     print(f"  {'':34s}  Hit@5    Recall@5")
     print(f"  Tầng 1 reachable (thuần discovery) : {res['reachable_hit5']:6.1f}%  {res['reachable_recall5']:6.1f}%")
@@ -227,6 +256,7 @@ def main():
 
     out = args.out or (f"result_{args.dataset}_K{args.k_query}_MA{args.meta_anchors}_"
                        f"{'pq' if args.use_pq else 'nopq'}"
+                       f"_T{args.multi_probe}"
                        f"{'_RANDOM' if args.random_routing else ''}.json")
     json.dump(res, open(out, 'w'), indent=2)
     print(f"\n→ Lưu: {out}")
