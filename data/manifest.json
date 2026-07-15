@@ -1,0 +1,23 @@
+[
+  {
+    "name": "code",
+    "corpus": 20000,
+    "queries": 500,
+    "angle_mean": 43.38079071044922,
+    "dim": 1024
+  },
+  {
+    "name": "scifact",
+    "corpus": 5183,
+    "queries": 500,
+    "angle_mean": 43.3203239440918,
+    "dim": 1024
+  },
+  {
+    "name": "squad",
+    "corpus": 18891,
+    "queries": 500,
+    "angle_mean": 48.61313247680664,
+    "dim": 1024
+  }
+]
