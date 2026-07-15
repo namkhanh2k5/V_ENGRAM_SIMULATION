@@ -22,7 +22,7 @@ import numpy as np
 
 # ======================= CẤU HÌNH =======================
 CORPUS      = "code"     # "code" | "scifact"
-EMB_PATHS   = {"code": "./data/embeddings_20k.npy", "scifact": "./data/scifact_embeddings.npy"}
+EMB_PATHS   = {"code": "./data/code_corpus_embeddings.npy", "scifact": "./data/scifact_corpus_embeddings.npy"}
 EMB_PATH    = EMB_PATHS[CORPUS]
 LSH_SEED    = 20235956   # PHẢI trùng DEFAULT_LSH_SEED trong src/routing.py
 NUM_PROJ    = 5          # L (gộp số liệu trên cả L bảng độc lập)

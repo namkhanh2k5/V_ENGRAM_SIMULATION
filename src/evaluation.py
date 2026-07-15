@@ -13,7 +13,7 @@ def compute_stage5_metrics(env, network_nodes, test_results, ground_truth_path="
         with open(ground_truth_path, "r", encoding="utf-8") as f:
             ground_truth = json.load(f)
     except FileNotFoundError:
-        print("❌ LỖI: Không tìm thấy file faiss_absolute_baseline.json để đối chiếu.")
+        print(f"❌ LỖI: Không tìm thấy ground truth: {ground_truth_path}")
         return None
 
     hit_count = 0

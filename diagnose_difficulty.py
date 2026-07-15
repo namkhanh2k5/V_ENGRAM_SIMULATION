@@ -9,7 +9,7 @@ Mục đích: xác nhận giả thuyết "corpus quá dễ" (near-duplicate / qu
 import json
 import numpy as np
 
-GT_PATH = "./data/faiss_absolute_baseline.json"   # đổi sang scifact GT nếu muốn so sánh
+GT_PATH = "./data/code_ground_truth.json"
 
 gt = json.load(open(GT_PATH, "r", encoding="utf-8"))
 n = len(gt)

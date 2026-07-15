@@ -30,10 +30,10 @@ SEEDS       = [20235956, 2026, 11, 12, 18]   # chạy HẾT 5 seed trong 1 lần
 MODEL_NAME  = "BAAI/bge-large-en-v1.5"
 
 # --- ĐƯỜNG DẪN DATA CODE-CORPUS (sửa cho khớp máy anh) ---
-EMBEDDINGS_PATH   = "./data/embeddings_20k.npy"   # prepare/02 (1024-d, 20k) — KHỚP pq_codes.npy
-PQ_CODES_PATH     = "./data/pq_codes.npy"         # prepare/05 (m=256) — adc_search yêu cầu m=256
-PQ_CODEBOOK_PATH  = "./data/pq_codebook.npy"
-GROUND_TRUTH_PATH = "./data/faiss_absolute_baseline.json"
+EMBEDDINGS_PATH   = "./data/code_corpus_embeddings.npy"
+PQ_CODES_PATH     = "./data/code_pq_codes.npy"
+PQ_CODEBOOK_PATH  = "./data/code_pq_codebook.npy"
+GROUND_TRUTH_PATH = "./data/code_ground_truth.json"
 
 LOG_PATH = f"logs/L_ablation_{time.strftime('%Y%m%d_%H%M%S')}.log"
 # ================================================================
@@ -67,7 +67,7 @@ def run_one(L, seed, model, codebook, ground_truth, embeddings):
         hit = 0; mrr = 0.0; hops_all = 0; uniqs = []
         for item in ground_truth:
             qv = model.encode(item["query_text"])
-            tags, hops, n_uniq = yield env.process(
+            tags, hops, n_uniq, _stats = yield env.process(
                 query_pipeline_process(env, nodes, qv, codebook, target_k=5))
             hops_all += hops; uniqs.append(n_uniq)
             gt = set(r["index"] for r in item["top_5_results"])

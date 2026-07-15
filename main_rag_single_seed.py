@@ -12,10 +12,10 @@ NUM_NODES = 10000
 SHARDS_PER_FILE = 30
 TARGET_SEED = 20235956
 REPORT_PATH = "scifact_single_seed_report.txt"
-EMBEDDINGS_PATH = "./data/scifact_embeddings.npy"
+EMBEDDINGS_PATH = "./data/scifact_corpus_embeddings.npy"
 PQ_CODES_PATH = "./data/scifact_pq_codes.npy"
 PQ_CODEBOOK_PATH = "./data/scifact_pq_codebook.npy"
-GROUND_TRUTH_PATH = "./data/scifact_faiss_absolute_baseline.json"
+GROUND_TRUTH_PATH = "./data/scifact_ground_truth.json"
 DATA_LABEL = "SCIFACT"
 
 def seed_everything(seed):
@@ -53,7 +53,7 @@ def run_rag_simulation(env, seed, model, codebook, ground_truth, num_files):
         query_vector = model.encode(q_text)
         
         # Tiến hành Ripple Search trên mạng P2P
-        retrieved_tags, hops, n_uniq = yield env.process(
+        retrieved_tags, hops, n_uniq, _stats = yield env.process(
             query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5)
         )
         total_hops_all_queries += hops

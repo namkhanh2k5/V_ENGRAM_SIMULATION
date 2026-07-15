@@ -18,7 +18,9 @@ Gồm 5 khối:
 
 Số kỳ vọng sau khi sửa payload-once:
   - Mean Load (shards/node) ~ files*30/nodes, KHÔNG đổi theo L; Std/Max thấp (hết hotspot payload).
-  - Success@5 / MRR@5 / Hops ~ GIỮ NGUYÊN so với bản cũ. Nếu tụt -> tăng METADATA_ANCHORS.
+  - Metric chinh la Recall@5 (Hit@5 bao hoa o 100%).
+  - KHONG tang METADATA_ANCHORS de 'cuu' recall: r lon lam random routing THANG
+    semantic routing (r=30: random 73.8% vs semantic 48.2%). Dung multi-probe (T).
   - Unique-candidate/query: phép đo mới cho Q1.
 
 >>> Kiểm CONFIG đường dẫn ./data/ bên dưới cho khớp server <<<
@@ -65,10 +67,10 @@ class CorpusConfig:
 # --- Code corpus (m=256, do prepare/02+05 sinh) ---
 CODE = CorpusConfig(
     name="CODE",
-    emb="./data/embeddings_20k.npy",
-    pq="./data/pq_codes.npy",
-    cb="./data/pq_codebook.npy",
-    gt="./data/faiss_absolute_baseline.json",
+    emb="./data/code_corpus_embeddings.npy",
+    pq="./data/code_pq_codes.npy",
+    cb="./data/code_pq_codebook.npy",
+    gt="./data/code_ground_truth.json",
     num_nodes=10000, num_files=20000,
 )
 L_VALUES_CODE = [1, 2, 3, 4, 5]
@@ -76,10 +78,10 @@ L_VALUES_CODE = [1, 2, 3, 4, 5]
 # --- SciFact corpus (bộ đã xác nhận chạy được) ---
 SCIFACT = CorpusConfig(
     name="SCIFACT",
-    emb="./data/scifact_embeddings.npy",
+    emb="./data/scifact_corpus_embeddings.npy",
     pq="./data/scifact_pq_codes.npy",
     cb="./data/scifact_pq_codebook.npy",
-    gt="./data/scifact_faiss_absolute_baseline.json",
+    gt="./data/scifact_ground_truth.json",
     num_nodes=10000, num_files=None,        # None -> dùng embeddings.shape[0]
 )
 L_SCIFACT = 5
@@ -150,7 +152,7 @@ def run_retrieval(
         hit = 0; mrr = 0.0; hops_all = 0; uniqs = []
         for item in ground_truth:
             qv = model.encode(item["query_text"])
-            tags, hops, n_uniq = yield env.process(
+            tags, hops, n_uniq, _stats = yield env.process(
                 query_pipeline_process(env, nodes, qv, codebook, target_k=5))
             hops_all += hops; uniqs.append(n_uniq)
             gt = set(r["index"] for r in item["top_5_results"])
@@ -200,7 +202,7 @@ def _can_recover(tag, nodes):
         if not nodes:
             break
         p_key = generate_placement_key(tag, s_id)
-        cand, _ = iterative_find_k_closest_nodes(p_key, random.choice(nodes), alpha=3, k=PLACEMENT_CANDIDATES)
+        cand, _, _ = iterative_find_k_closest_nodes(p_key, random.choice(nodes), alpha=3, k=PLACEMENT_CANDIDATES)
         for n in cand:
             if f"{tag}_shard_{s_id}" in n.SSD_Storage:
                 got += 1; break

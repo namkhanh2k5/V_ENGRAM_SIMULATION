@@ -26,27 +26,39 @@ import hashlib
 import numpy as np
 
 # ======================= CẤU HÌNH =======================
-CORPUS = "scifact"            # "code" hoặc "scifact"
+CORPUS = "code"               # "code" | "scifact" | "squad"
 
 PATHS = {
     "code": {
-        "emb":      "./data/embeddings_20k.npy",
-        "gt":       "./data/faiss_absolute_baseline.json",
-        "codebook": "./data/pq_codebook.npy",
-        "pq_codes": "./data/pq_codes.npy",        # nếu thiếu -> tự encode từ emb+codebook
+        "emb":      "./data/code_corpus_embeddings.npy",
+        "q":        "./data/code_query_embeddings.npy",
+        "gt":       "./data/code_ground_truth.json",
+        "codebook": "./data/code_pq_codebook.npy",
+        "pq_codes": "./data/code_pq_codes.npy",
     },
     "scifact": {
-        "emb":      "./data/scifact_embeddings.npy",
-        "gt":       "./data/scifact_faiss_absolute_baseline.json",
+        "emb":      "./data/scifact_corpus_embeddings.npy",
+        "q":        "./data/scifact_query_embeddings.npy",
+        "gt":       "./data/scifact_ground_truth.json",
         "codebook": "./data/scifact_pq_codebook.npy",
         "pq_codes": "./data/scifact_pq_codes.npy",
+    },
+    "squad": {
+        "emb":      "./data/squad_corpus_embeddings.npy",
+        "q":        "./data/squad_query_embeddings.npy",
+        "gt":       "./data/squad_ground_truth.json",
+        "codebook": "./data/squad_pq_codebook.npy",
+        "pq_codes": "./data/squad_pq_codes.npy",
     },
 }[CORPUS]
 
 MODEL_NAME       = "BAAI/bge-large-en-v1.5"
 LSH_SEED         = 20235956   # PHẢI trùng DEFAULT_LSH_SEED trong src/routing.py
 NUM_PROJECTIONS  = 5          # L
-POOL_PER_TABLE   = 100        # ngân sách gom mỗi bảng (×L ~ 500 ứng viên, khớp V-Engram)
+POOL_PER_TABLE   = 100        # ngân sách gom mỗi bảng.
+                              # LƯU Ý: phải khớp UNIQUE candidates của V-Engram, không phải
+                              # 100/bảng vs ~146 tổng như bản cũ. Đọc mean_candidates từ
+                              # result_full_*.json rồi đặt POOL_PER_TABLE = mean/L.
 RERANK           = "adc"      # "adc" (giống V-Engram) hoặc "exact" (cosine chính xác)
 INDEXED_COUNT    = None       # None = index toàn bộ corpus (khớp main_simulation NUM_FILES).
                               # Đặt 16000 nếu run chính thức dùng 80/20 (nhớ GT phải tính
@@ -115,6 +127,20 @@ def rerank(query_vec, cand_idx, E, pq_codes, codebook):
     if RERANK == "adc" and pq_codes is not None:
         return adc_rerank(query_vec, cand_idx, pq_codes, codebook)
     return exact_rerank(query_vec, cand_idx, E)
+
+
+# ---------- Random selection: baseline ngang ngân sách ----------
+def random_candidates(n_corpus, budget, rng):
+    """Bốc NGẪU NHIÊN `budget` ứng viên rồi rerank y hệt các baseline khác.
+
+    Vì sao cần: baseline "Crypto-DHT" (SHA key) trong bản cũ cho 12-39%, TRÙNG KHỚP
+    xác suất bốc ngẫu nhiên cùng ngân sách:
+        1-(1-500/20000)^5 = 11.9%  (đo được 12.2%)
+        1-(1-500/5183)^5  = 39.7%  (đo được 39.0%)
+    => Crypto-DHT KHÔNG chứng minh gì về semantic key; nó chỉ là random sampling.
+    Đặt Random-N cạnh nó để người đọc thấy hai số trùng nhau.
+    """
+    return rng.choice(n_corpus, size=min(budget, n_corpus), replace=False)
 
 
 # ---------- SRP keys (trùng V-Engram) ----------
