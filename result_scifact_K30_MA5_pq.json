@@ -1,0 +1,23 @@
+{
+  "dataset": "scifact",
+  "nodes": 1000,
+  "seed": 20235956,
+  "k_query": 30,
+  "meta_anchors": 5,
+  "local_topk": 30,
+  "use_pq": true,
+  "n_query": 30,
+  "reachable_hit5": 100.0,
+  "returned_hit5": 100.0,
+  "final_hit5": 100.0,
+  "reachable_recall5": 88.66666666666669,
+  "returned_recall5": 88.66666666666669,
+  "recall5": 78.6666666666667,
+  "recall10": 81.33333333333331,
+  "mean_unique_candidates": 834.4,
+  "mean_nodes_touched": 143.1,
+  "pct_network_touched": 14.31,
+  "metadata_total": 127153,
+  "metadata_mean_per_node": 127.153,
+  "metadata_gini": 0.7107558217265814
+}

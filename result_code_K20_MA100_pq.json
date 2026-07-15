@@ -1,0 +1,23 @@
+{
+  "dataset": "code",
+  "nodes": 10000,
+  "seed": 20235956,
+  "k_query": 20,
+  "meta_anchors": 100,
+  "local_topk": 30,
+  "use_pq": true,
+  "n_query": 100,
+  "reachable_hit5": 100.0,
+  "returned_hit5": 100.0,
+  "final_hit5": 100.0,
+  "reachable_recall5": 69.79999999999997,
+  "returned_recall5": 69.79999999999997,
+  "recall5": 65.79999999999995,
+  "recall10": 66.20000000000002,
+  "mean_unique_candidates": 152.17,
+  "mean_nodes_touched": 99.73,
+  "pct_network_touched": 0.9973,
+  "metadata_total": 9897946,
+  "metadata_mean_per_node": 989.7946,
+  "metadata_gini": 0.3944176455397918
+}
