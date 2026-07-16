@@ -11,3 +11,7 @@ __pycache__/
 
 # Bỏ qua file báo cáo (nếu ngài không muốn push lên)
 # comparison_report.txt
+# Ket qua chay — sinh lai duoc, khong commit
+result_*.json
+summary.csv
+*.log
