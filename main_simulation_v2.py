@@ -91,6 +91,11 @@ def main():
     ap.add_argument('--nq', type=int, default=100, help='số query chạy (500 = full)')
     ap.add_argument('--use-pq', dest='use_pq', action='store_true', default=True)
     ap.add_argument('--no-pq', dest='use_pq', action='store_false')
+    ap.add_argument('--num-tables', type=int, default=None, metavar='L',
+                    help='L — số bảng chiếu. Mặc định lấy từ routing.py (5).\n'
+                         'LƯU Ý: tăng L NHÂN metadata theo L (L*r ban/doc), nên no\n'
+                         'roi vao dung bay r*: random routing cung trung cao.\n'
+                         'Chi co T (multi-probe) la KHONG nhan metadata.')
     ap.add_argument('--multi-probe', type=int, default=1, metavar='T',
                     help='Số prefix probe mỗi bảng (T=1 là single-probe như hiện tại). '
                          'Lật T-1 bit YẾU nhất (|proj| nhỏ = vector sát siêu phẳng). '
@@ -116,7 +121,16 @@ def main():
 
     # LSH projections — dùng đúng hàm của repo để không lệch với code gốc
     initialize_lsh_projections(args.seed)
-    from src.routing import PROJECTION_MATRICES as P
+    from src.routing import PROJECTION_MATRICES as _P
+    if args.num_tables is None:
+        P = _P
+    elif args.num_tables <= len(_P):
+        P = _P[:args.num_tables]
+    else:
+        # cần nhiều bảng hơn mặc định -> sinh lại bằng cùng seed, cùng phân phối Achlioptas
+        rng = np.random.RandomState(args.seed)
+        P = [rng.choice([0, 1, -1], size=(E.shape[1], 160), p=[2/3, 1/6, 1/6])
+             for _ in range(args.num_tables)]
     L = len(P)
     print(f"[*] L={L} bảng chiếu, seed={args.seed}")
 
@@ -218,6 +232,7 @@ def main():
         'k_query': args.k_query, 'meta_anchors': args.meta_anchors,
         'random_routing': args.random_routing,
         'multi_probe': args.multi_probe,
+        'num_tables': L,
         'local_topk': args.local_topk, 'use_pq': args.use_pq, 'n_query': n_run,
         'reachable_hit5': 100 * reach_hit / n_run,
         'returned_hit5':  100 * ret_hit / n_run,
@@ -236,7 +251,7 @@ def main():
 
     print("\n" + "=" * 62)
     print(f"KẾT QUẢ | {args.dataset} | K={args.k_query} MA={args.meta_anchors} "
-          f"T={args.multi_probe} PQ={'ON' if args.use_pq else 'OFF'}"
+          f"L={L} T={args.multi_probe} PQ={'ON' if args.use_pq else 'OFF'}"
           f"{' [RANDOM]' if args.random_routing else ''}")
     print("=" * 62)
     print(f"  {'':34s}  Hit@5    Recall@5")
@@ -256,7 +271,7 @@ def main():
 
     out = args.out or (f"result_{args.dataset}_K{args.k_query}_MA{args.meta_anchors}_"
                        f"{'pq' if args.use_pq else 'nopq'}"
-                       f"_T{args.multi_probe}"
+                       f"_L{L}_T{args.multi_probe}"
                        f"{'_RANDOM' if args.random_routing else ''}.json")
     json.dump(res, open(out, 'w'), indent=2)
     print(f"\n→ Lưu: {out}")
