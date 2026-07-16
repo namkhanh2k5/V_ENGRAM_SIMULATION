@@ -1,52 +1,75 @@
 #!/bin/bash
 # ============================================================================
-# V-Engram — chạy full cho paper. 5 seed × 500 query.
-# Chạy:  bash run_full.sh 2>&1 | tee run_full.log
-# Xuất:  result_*.json + summary.csv
+# V-Engram — QUÉT TÌM CẤU HÌNH, 2 PHA
+#
+# PHA 1 (quét rộng, 1 seed, nq=200): tìm cấu hình đạt Recall@5 > 80% MÀ semantic
+#        vẫn thắng random đậm. Mọi cấu hình đều chạy KÈM random baseline.
+# PHA 2 (chỉ chạy sau khi chọn): 5 seed × 500 query cho cấu hình đã chốt.
+#
+# NGUYÊN TẮC: recall cao mà random cũng cao thì VÔ NGHĨA.
+#   r=150 cho semantic 70.0% nhưng random 87.6% -> bỏ.
+#   r=1,T=3 cho semantic 62.2%, random 13.6%   -> giữ.
+# Chọn theo TỈ LỆ semantic/random, không theo recall tuyệt đối.
+#
+# Chạy:  nohup bash run_full.sh > run_full.log 2>&1 &
 # ============================================================================
 set -u
-SEEDS="20235956 1 2 3 4"
-NQ=500
-mkdir -p results && cd results 2>/dev/null || true
-cd "$(dirname "$0")"
+NQ=${NQ:-200}
+SEED=${SEED:-20235956}
+DS=${DS:-code}
 
-run() {  # bỏ qua nếu file kết quả đã có -> chạy lại được sau khi ngắt
-    local tag="$1"; shift
-    if ls result_*"$tag"*.json >/dev/null 2>&1; then
-        echo "  [bỏ qua, đã có] $tag"; return
-    fi
-    python main_simulation_v2.py "$@" >/dev/null 2>&1 || echo "  [LỖI] $tag"
+run() {
+    local desc="$1"; shift
+    python main_simulation_v2.py --dataset $DS --nodes 10000 --seed $SEED --nq $NQ "$@" \
+        >/dev/null 2>&1 || echo "  [LỖI] $desc"
 }
 
-echo "########## NHÓM 1: BẢNG CHÍNH (r=1, K=20, T=3, PQ on/off) ##########"
-for s in $SEEDS; do for ds in code scifact; do
-    echo "[N1] $ds seed=$s"
-    run "${ds}_K20_MA1_pq_T3_s${s}"   --dataset $ds --seed $s --k-query 20 --meta-anchors 1 --multi-probe 3 --nq $NQ --use-pq
-    run "${ds}_K20_MA1_nopq_T3_s${s}" --dataset $ds --seed $s --k-query 20 --meta-anchors 1 --multi-probe 3 --nq $NQ --no-pq
+pair() {  # chạy cả semantic + random ở CÙNG cấu hình
+    local desc="$1"; shift
+    echo "  $desc"
+    run "$desc"          "$@"
+    run "$desc RANDOM"   "$@" --random-routing
+}
+
+echo "##### PHA 1A: quét L × T (r=1, K=20) — trục rẻ nhất #####"
+# Tăng L nhân metadata theo L (L=8,r=1 -> 8 bản/doc, vẫn rẻ hơn r=30,L=5 -> 150 bản)
+# Tăng T KHÔNG nhân metadata chút nào -> ưu tiên T trước L
+for L in 5 8 12; do for T in 1 3 5 8; do
+    pair "L=$L T=$T" --num-tables $L --multi-probe $T --meta-anchors 1 --k-query 20 --use-pq
 done; done
 
-echo "########## NHÓM 2: NGƯỠNG r* (contribution chính) ##########"
-for s in $SEEDS; do for r in 1 5 10 30 150; do
-    echo "[N2] r=$r seed=$s"
-    run "code_K20_MA${r}_pq_T3_s${s}"        --dataset code --seed $s --k-query 20 --meta-anchors $r --multi-probe 3 --nq $NQ --use-pq
-    run "code_K20_MA${r}_pq_T3_RANDOM_s${s}" --dataset code --seed $s --k-query 20 --meta-anchors $r --multi-probe 3 --nq $NQ --use-pq --random-routing
+echo "##### PHA 1B: K cao hơn cho cấu hình hứa hẹn #####"
+for L in 5 8; do for T in 3 5; do for K in 50 100; do
+    pair "L=$L T=$T K=$K" --num-tables $L --multi-probe $T --meta-anchors 1 --k-query $K --use-pq
+done; done; done
+
+echo "##### PHA 1C: r nhỏ (kiểm tra r=5 có đáng không) #####"
+for r in 1 5 10; do for T in 3 5; do
+    pair "r=$r T=$T" --num-tables 8 --multi-probe $T --meta-anchors $r --k-query 20 --use-pq
 done; done
 
-echo "########## NHÓM 3: PROBE vs WIDEN (ngân sách khớp) ##########"
-for s in $SEEDS; do
-    echo "[N3] seed=$s"
-    run "code_K20_MA1_pq_T3_s${s}" --dataset code --seed $s --k-query 20 --meta-anchors 1 --multi-probe 3 --nq $NQ --use-pq
-    run "code_K40_MA1_pq_T1_s${s}" --dataset code --seed $s --k-query 40 --meta-anchors 1 --multi-probe 1 --nq $NQ --use-pq
-    run "code_K20_MA1_pq_T5_s${s}" --dataset code --seed $s --k-query 20 --meta-anchors 1 --multi-probe 5 --nq $NQ --use-pq
-    run "code_K65_MA1_pq_T1_s${s}" --dataset code --seed $s --k-query 65 --meta-anchors 1 --multi-probe 1 --nq $NQ --use-pq
+echo "##### PHA 1D: trần no-PQ cho top cấu hình #####"
+for L in 5 8 12; do for T in 3 5 8; do
+    run "L=$L T=$T noPQ" --num-tables $L --multi-probe $T --meta-anchors 1 --k-query 20 --no-pq
+done; done
+
+echo "##### PHA 1E: probe_bits (c) — trục chưa test #####"
+for c in 8 12 16 24; do
+    pair "c=$c" --num-tables 8 --multi-probe 5 --meta-anchors 1 --k-query 20 --probe-bits $c --use-pq
 done
 
-echo "########## NHÓM 4: ĐƯỜNG CONG NGÂN SÁCH ##########"
-for s in $SEEDS; do for K in 5 10 20 50 100 300; do
-    echo "[N4] K=$K seed=$s"
-    run "code_K${K}_MA1_pq_T3_s${s}"        --dataset code --seed $s --k-query $K --meta-anchors 1 --multi-probe 3 --nq $NQ --use-pq
-    run "code_K${K}_MA1_pq_T3_RANDOM_s${s}" --dataset code --seed $s --k-query $K --meta-anchors 1 --multi-probe 3 --nq $NQ --use-pq --random-routing
+echo "##### PHA 1F: xác nhận trên scifact #####"
+for L in 5 8; do for T in 3 5; do
+    echo "  scifact L=$L T=$T"
+    python main_simulation_v2.py --dataset scifact --nodes 10000 --seed $SEED --nq $NQ \
+        --num-tables $L --multi-probe $T --meta-anchors 1 --k-query 20 --use-pq >/dev/null 2>&1
+    python main_simulation_v2.py --dataset scifact --nodes 10000 --seed $SEED --nq $NQ \
+        --num-tables $L --multi-probe $T --meta-anchors 1 --k-query 20 --use-pq --random-routing >/dev/null 2>&1
 done; done
 
-echo "########## TỔNG HỢP ##########"
+echo ""
+echo "##### TỔNG HỢP #####"
 python summarize.py
+echo ""
+echo "ĐỌC BẢNG: chọn cấu hình có Recall@5 cao MÀ tỉ lệ sem/rand còn lớn."
+echo "Rồi chạy PHA 2:  bash run_phase2.sh L T K r"

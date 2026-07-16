@@ -6,8 +6,8 @@ import statistics as st
 rows = defaultdict(list)
 for f in glob.glob("result_*.json"):
     r = json.load(open(f))
-    key = (r["dataset"], r["k_query"], r["meta_anchors"], r.get("multi_probe", 1),
-           r["use_pq"], r.get("random_routing", False))
+    key = (r["dataset"], r.get("num_tables", 5), r["k_query"], r["meta_anchors"],
+           r.get("multi_probe", 1), r["use_pq"], r.get("random_routing", False))
     rows[key].append(r)
 
 def ms(vals):
@@ -17,10 +17,10 @@ def ms(vals):
 
 out = []
 for key in sorted(rows):
-    ds, K, r, T, pq, rand = key
+    ds, L, K, r, T, pq, rand = key
     g = rows[key]
     out.append({
-        "dataset": ds, "K": K, "r": r, "T": T,
+        "dataset": ds, "L": L, "K": K, "r": r, "T": T,
         "PQ": "on" if pq else "off", "routing": "random" if rand else "semantic",
         "seeds": len(g),
         "recall@5": ms([x["recall5"] for x in g]),
@@ -37,23 +37,62 @@ if out:
         w = csv.DictWriter(f, fieldnames=list(out[0]))
         w.writeheader(); w.writerows(out)
 
-hdr = f"{'ds':8s} {'K':>4s} {'r':>4s} {'T':>2s} {'PQ':>3s} {'routing':>8s} {'n':>2s} " \
-      f"{'R@5':>12s} {'reach':>12s} {'cand%':>10s} {'node%':>10s}"
+hdr = f"{'ds':8s} {'L':>3s} {'K':>4s} {'r':>3s} {'T':>2s} {'PQ':>3s} {'routing':>8s} {'n':>2s} " \
+      f"{'R@5':>12s} {'reach':>12s} {'cand%':>9s} {'node%':>9s}"
 print("\n" + hdr); print("-"*len(hdr))
 for o in out:
-    print(f"{o['dataset']:8s} {o['K']:>4} {o['r']:>4} {o['T']:>2} {o['PQ']:>3s} "
+    print(f"{o['dataset']:8s} {o['L']:>3} {o['K']:>4} {o['r']:>3} {o['T']:>2} {o['PQ']:>3s} "
           f"{o['routing']:>8s} {o['seeds']:>2} {o['recall@5']:>12s} "
-          f"{o['reachable_r@5']:>12s} {o['cand_pct']:>10s} {o['node_pct']:>10s}")
+          f"{o['reachable_r@5']:>12s} {o['cand_pct']:>9s} {o['node_pct']:>9s}")
 print(f"\n-> summary.csv ({len(out)} cấu hình)")
 
-# Bảng r* — contribution chính
-print("\n=== NGƯỠNG r*: semantic vs random (code, K=20, T=3) ===")
-print(f"{'r':>4s} {'semantic':>12s} {'random':>12s} {'gấp':>7s}")
-for r in [1, 5, 10, 30, 150]:
-    k_sem = ("code", 20, r, 3, True, False); k_rnd = ("code", 20, r, 3, True, True)
-    if k_sem in rows and k_rnd in rows:
-        s_ = st.mean([x["recall5"] for x in rows[k_sem]])
-        n_ = st.mean([x["recall5"] for x in rows[k_rnd]])
-        ratio = f"{s_/n_:.1f}x" if n_ > 0 else "inf"
-        flag = "  <- RANDOM THẮNG" if n_ > s_ else ""
-        print(f"{r:>4} {s_:>11.1f}% {n_:>11.1f}% {ratio:>7s}{flag}")
+# ===== BẢNG CHỌN CẤU HÌNH: recall cao MÀ vẫn thắng random đậm =====
+print("\n" + "="*88)
+print("CHỌN CẤU HÌNH — sắp theo Recall@5. Chỉ nhận cấu hình có TỈ LỆ sem/rand lớn.")
+print("  recall cao mà random cũng cao => VÔ NGHĨA (vd r=150: sem 70.0% vs rand 87.6%)")
+print("="*88)
+print(f"{'ds':8s} {'L':>3s} {'K':>4s} {'r':>3s} {'T':>2s} {'semantic':>10s} {'random':>10s} "
+      f"{'tỉ lệ':>8s} {'node%':>7s}  đánh giá")
+print("-"*88)
+
+cand_rows = []
+for key in rows:
+    ds, L, K, r, T, pq, rand = key
+    if rand or not pq:
+        continue
+    k_rnd = (ds, L, K, r, T, pq, True)
+    if k_rnd not in rows:
+        continue
+    sem = st.mean([x["recall5"] for x in rows[key]])
+    rnd = st.mean([x["recall5"] for x in rows[k_rnd]])
+    node = st.mean([x["pct_network_touched"] for x in rows[key]])
+    ratio = sem / rnd if rnd > 0 else 999
+    cand_rows.append((sem, rnd, ratio, node, ds, L, K, r, T))
+
+for sem, rnd, ratio, node, ds, L, K, r, T in sorted(cand_rows, reverse=True):
+    if rnd > sem:
+        verdict = "BỎ — random thắng"
+    elif ratio < 1.5:
+        verdict = "yếu — sem/rand < 1.5x"
+    elif sem >= 80:
+        verdict = "*** ĐẠT >80% và thắng đậm ***"
+    elif sem >= 70:
+        verdict = "tốt"
+    else:
+        verdict = ""
+    rs = f"{ratio:.1f}x" if ratio < 900 else "inf"
+    print(f"{ds:8s} {L:>3} {K:>4} {r:>3} {T:>2} {sem:>9.1f}% {rnd:>9.1f}% "
+          f"{rs:>8s} {node:>6.1f}%  {verdict}")
+
+# Trần no-PQ: cho biết PQ đang ăn mất bao nhiêu
+print("\n=== TRẦN no-PQ (PQ đang ăn mất bao nhiêu điểm) ===")
+print(f"{'ds':8s} {'L':>3s} {'T':>2s} {'PQ on':>9s} {'PQ off':>9s} {'mất':>7s}")
+for key in sorted(rows):
+    ds, L, K, r, T, pq, rand = key
+    if not pq or rand:
+        continue
+    k_off = (ds, L, K, r, T, False, False)
+    if k_off in rows:
+        on_ = st.mean([x["recall5"] for x in rows[key]])
+        off = st.mean([x["recall5"] for x in rows[k_off]])
+        print(f"{ds:8s} {L:>3} {T:>2} {on_:>8.1f}% {off:>8.1f}% {off-on_:>6.1f}đ")
