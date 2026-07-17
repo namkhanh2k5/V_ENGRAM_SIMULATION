@@ -278,10 +278,13 @@ def main():
     print(f"  Metadata: {res['metadata_total']:,} bản ({res['metadata_mean_per_node']:.0f}/node, "
           f"Gini={res['metadata_gini']:.3f})")
 
-    out = args.out or (f"result_{args.dataset}_K{args.k_query}_MA{args.meta_anchors}_"
-                       f"{(args.pq_variant or 'pq') if args.use_pq else 'nopq'}"
-                       f"_L{L}_T{args.multi_probe}"
-                       f"{'_RANDOM' if args.random_routing else ''}.json")
+    # BUG CŨ: tên file thiếu seed và nq -> lần chạy sau GHI ĐÈ lần trước.
+    # Hệ quả: Pha 2 chạy 5 seed chỉ giữ lại seed cuối; nq=500 xoá mất nq=200.
+    out = args.out or (f"result_{args.dataset}_L{L}_K{args.k_query}_MA{args.meta_anchors}"
+                       f"_T{args.multi_probe}"
+                       f"_{(args.pq_variant or 'm256') if args.use_pq else 'nopq'}"
+                       f"{'_RANDOM' if args.random_routing else ''}"
+                       f"_s{args.seed}_nq{n_run}.json")
     json.dump(res, open(out, 'w'), indent=2)
     print(f"\n→ Lưu: {out}")
 
