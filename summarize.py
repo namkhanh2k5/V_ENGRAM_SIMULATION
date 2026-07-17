@@ -1,7 +1,14 @@
 """Gộp result_*.json -> bảng mean±std, xuất summary.csv (dán thẳng vào .tex)."""
-import glob, json, csv
+import glob, json, csv, os
 from collections import defaultdict
 import statistics as st
+
+# Lọc: chỉ gộp các lần chạy có >= MIN_NQ query.
+# Vì sao cần: nq=200 và nq=500 KHÔNG so được với nhau. Đo thực tế cùng cấu hình
+# (code L5 T8 m512): nq=200 -> reachable 84.5%, nq=500 -> reachable 75.7%.
+# Reachable không dính PQ, nên 9 điểm chênh đó thuần là nhiễu mẫu nhỏ.
+# Dùng:  MIN_NQ=500 python3 summarize.py
+MIN_NQ = int(os.environ.get('MIN_NQ', '0'))
 
 rows = defaultdict(list)
 for f in glob.glob("result_*.json"):
@@ -10,6 +17,8 @@ for f in glob.glob("result_*.json"):
     # (tên có dạng result_{ds}_K{K}_MA{r}_{pq|m512|nopq}_L{L}_T{T}[_RANDOM].json)
     if "pq_variant" not in r:
         r["pq_variant"] = "m512" if "_m512" in f else "m256"
+    if MIN_NQ and r.get("n_query", 0) < MIN_NQ:
+        continue
     key = (r["dataset"], r.get("num_tables", 5), r["k_query"], r["meta_anchors"],
            r.get("multi_probe", 1), r["use_pq"], r.get("random_routing", False),
            r.get("pq_variant", "m256"))
@@ -36,6 +45,12 @@ for key in sorted(rows):
         "node_pct": ms([x["pct_network_touched"] for x in g]),
         "gini": ms([x["metadata_gini"] for x in g]),
     })
+
+_old = [f for f in glob.glob("result_*.json") if "_s" not in f or "_nq" not in f]
+if _old:
+    print(f"\n*** CẢNH BÁO: {len(_old)} file kết quả CŨ (tên thiếu seed/nq) ***")
+    print("    Chúng bị ghi đè lẫn nhau nên KHÔNG tin được. Xoá đi:")
+    print("    rm -f " + " ".join(_old[:3]) + (" ..." if len(_old) > 3 else ""))
 
 if out:
     with open("summary.csv", "w", newline="") as f:
