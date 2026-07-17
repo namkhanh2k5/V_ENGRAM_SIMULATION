@@ -21,7 +21,8 @@ for f in glob.glob("result_*.json"):
         continue
     key = (r["dataset"], r.get("nodes", 10000), r.get("num_tables", 5), r["k_query"],
            r["meta_anchors"], r.get("multi_probe", 1), r["use_pq"],
-           r.get("random_routing", False), r.get("pq_variant", "m256"))
+           r.get("random_routing", False), r.get("pq_variant", "m256"),
+           r.get("zipf", 0.0), r.get("n_query", 0))
     rows[key].append(r)
 
 def ms(vals):
@@ -31,10 +32,11 @@ def ms(vals):
 
 out = []
 for key in sorted(rows):
-    ds, N, L, K, r, T, pq, rand, pqv = key
+    ds, N, L, K, r, T, pq, rand, pqv, zf, nq = key
     g = rows[key]
     out.append({
         "dataset": ds, "N": N, "L": L, "K": K, "r": r, "T": T, "pq_var": pqv,
+        "zipf": zf, "nq": nq,
         "PQ": "on" if pq else "off", "routing": "random" if rand else "semantic",
         "seeds": len(g),
         "recall@5": ms([x["recall5"] for x in g]),
@@ -77,10 +79,10 @@ print("-"*88)
 
 cand_rows = []
 for key in rows:
-    ds, N, L, K, r, T, pq, rand, pqv = key
-    if rand or not pq:
+    ds, N, L, K, r, T, pq, rand, pqv, zf, nq = key
+    if rand or not pq or zf > 0:      # bảng chính dùng query ĐỀU
         continue
-    k_rnd = (ds, N, L, K, r, T, pq, True, pqv)
+    k_rnd = (ds, N, L, K, r, T, pq, True, pqv, zf, nq)
     if k_rnd not in rows:
         continue
     sem = st.mean([x["recall5"] for x in rows[key]])
@@ -108,11 +110,25 @@ for sem, rnd, ratio, node, ds, N, L, K, r, T, pqv in sorted(cand_rows, reverse=T
 print("\n=== TRẦN no-PQ (PQ đang ăn mất bao nhiêu điểm) ===")
 print(f"{'ds':8s} {'L':>3s} {'T':>2s} {'var':>5s} {'PQ on':>9s} {'PQ off':>9s} {'mất':>7s}")
 for key in sorted(rows):
-    ds, N, L, K, r, T, pq, rand, pqv = key
-    if not pq or rand:
+    ds, N, L, K, r, T, pq, rand, pqv, zf, nq = key
+    if not pq or rand or zf > 0:
         continue
-    k_off = (ds, N, L, K, r, T, False, False, pqv)
+    k_off = (ds, N, L, K, r, T, False, False, pqv, zf, nq)
     if k_off in rows:
         on_ = st.mean([x["recall5"] for x in rows[key]])
         off = st.mean([x["recall5"] for x in rows[k_off]])
         print(f"{ds:8s} {L:>3} {T:>2} {pqv:>5s} {on_:>8.1f}% {off:>8.1f}% {off-on_:>6.1f}đ")
+
+# ===== HOTSPOT TRUY VẤN dưới Zipf: lưu trữ lệch khác truy vấn lệch =====
+_z = [(k, v) for k, v in rows.items() if k[9] > 0 and not k[7]]  # k[9]=zipf, k[7]=random
+if _z:
+    print("\n=== RPC LOAD dưới query Zipf (hotspot TRUY VẤN, khác hotspot lưu trữ) ===")
+    print(f"{'ds':8s} {'N':>6s} {'zipf':>5s} {'n':>2s} {'rpc_mean':>9s} {'rpc_P99':>8s} "
+          f"{'rpc_max':>8s} {'rpc_Gini':>9s} {'meta_Gini':>10s}")
+    for k, g in sorted(_z):
+        print(f"{k[0]:8s} {k[1]:>6} {k[9]:>5.1f} {len(g):>2} "
+              f"{st.mean([x.get('rpc_mean',0) for x in g]):>9.1f} "
+              f"{st.mean([x.get('rpc_p99',0) for x in g]):>8.0f} "
+              f"{st.mean([x.get('rpc_max',0) for x in g]):>8.0f} "
+              f"{st.mean([x.get('rpc_gini',0) for x in g]):>9.3f} "
+              f"{st.mean([x['metadata_gini'] for x in g]):>10.3f}")
