@@ -42,8 +42,9 @@ class VEngramNode:
         if not self.RAM_Index:
             return candidates
             
-        m = 256
-        d_sub = 4
+        # Đọc m, d_sub TỪ codebook thay vì hardcode -> hỗ trợ mọi biến thể PQ
+        # (m=256/d_sub=4 = 256 byte/doc; m=512/d_sub=2 = 512 byte/doc, sai số ~10x nhỏ hơn)
+        m, _, d_sub = codebook.shape
         
         # BƯỚC 1: Cắt Vector Query 1024 chiều ra 256 đoạn
         query_subvectors = np.asarray(query_vector, dtype=np.float32).reshape(m, d_sub)

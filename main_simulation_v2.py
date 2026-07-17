@@ -91,6 +91,11 @@ def main():
     ap.add_argument('--nq', type=int, default=100, help='số query chạy (500 = full)')
     ap.add_argument('--use-pq', dest='use_pq', action='store_true', default=True)
     ap.add_argument('--no-pq', dest='use_pq', action='store_false')
+    ap.add_argument('--pq-variant', default='', metavar='V',
+                    help="Hậu tố file PQ. '' = m=256 mặc định (256 byte/doc); "
+                         "'m512' = dùng *_pq_codes_m512.npy (512 byte/doc, sai số "
+                         "~10x nhỏ hơn). PQ là trục DUY NHẤT không ảnh hưởng tỉ lệ "
+                         "semantic/random, vì cả hai đều dùng chung PQ.")
     ap.add_argument('--num-tables', type=int, default=None, metavar='L',
                     help='L — số bảng chiếu. Mặc định lấy từ routing.py (5).\n'
                          'LƯU Ý: tăng L NHÂN metadata theo L (L*r ban/doc), nên no\n'
@@ -113,11 +118,13 @@ def main():
     print(f"[*] Nạp data: {args.dataset} | PQ={'BẬT' if args.use_pq else 'TẮT (oracle cosine)'}")
     E  = np.load(f'{D}_corpus_embeddings.npy')      # (N,1024) đã normalize
     Qv = np.load(f'{D}_query_embeddings.npy')       # (500,1024) đã normalize
-    codes = np.load(f'{D}_pq_codes.npy')            # (N,256) uint8
-    codebook = np.load(f'{D}_pq_codebook.npy')      # (256,256,4)
+    _sfx = f'_{args.pq_variant}' if args.pq_variant else ''
+    codes = np.load(f'{D}_pq_codes{_sfx}.npy')          # (N, m) uint8
+    codebook = np.load(f'{D}_pq_codebook{_sfx}.npy')    # (m, 256, d_sub)
     gt = json.load(open(f'{D}_ground_truth.json', encoding='utf-8'))
     N_DOCS = len(E)
-    print(f"    corpus={N_DOCS:,} | query={len(gt)} | codebook={codebook.shape}")
+    print(f"    corpus={N_DOCS:,} | query={len(gt)} | codebook={codebook.shape} "
+          f"({codebook.shape[0]} byte/doc)")
 
     # LSH projections — dùng đúng hàm của repo để không lệch với code gốc
     initialize_lsh_projections(args.seed)
@@ -152,7 +159,7 @@ def main():
           f"Gini={gini(mc):.3f} | tổng bản sao={mc.sum():,}")
 
     # -------------------- QUERY -------------------- #
-    m, d_sub = 256, 4
+    m, _, d_sub = codebook.shape        # đọc từ codebook, không hardcode
     n_run = min(args.nq, len(gt))
     reach_hit = ret_hit = fin_hit = 0
     reach_r5 = ret_r5 = 0.0          # Recall@5 tầng 1, tầng 2
@@ -270,7 +277,7 @@ def main():
           f"Gini={res['metadata_gini']:.3f})")
 
     out = args.out or (f"result_{args.dataset}_K{args.k_query}_MA{args.meta_anchors}_"
-                       f"{'pq' if args.use_pq else 'nopq'}"
+                       f"{(args.pq_variant or 'pq') if args.use_pq else 'nopq'}"
                        f"_L{L}_T{args.multi_probe}"
                        f"{'_RANDOM' if args.random_routing else ''}.json")
     json.dump(res, open(out, 'w'), indent=2)
