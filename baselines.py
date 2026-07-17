@@ -26,7 +26,9 @@ import hashlib
 import numpy as np
 
 # ======================= CẤU HÌNH =======================
-CORPUS = "code"               # "code" | "scifact" | "squad"
+import os as _os
+# CORPUS=scifact POOL_PER_TABLE=30 python3 baselines.py
+CORPUS = _os.environ.get("CORPUS", "code")
 
 PATHS = {
     "code": {
@@ -55,7 +57,7 @@ PATHS = {
 # MODEL_NAME bỏ: query embeddings đọc từ file precomputed
 LSH_SEED         = 20235956   # PHẢI trùng DEFAULT_LSH_SEED trong src/routing.py
 NUM_PROJECTIONS  = 5          # L
-POOL_PER_TABLE   = 100        # ngân sách gom mỗi bảng.
+POOL_PER_TABLE   = int(_os.environ.get("POOL_PER_TABLE", "100"))  # ngân sách gom mỗi bảng.
                               # LƯU Ý: phải khớp UNIQUE candidates của V-Engram, không phải
                               # 100/bảng vs ~146 tổng như bản cũ. Đọc mean_candidates từ
                               # result_full_*.json rồi đặt POOL_PER_TABLE = mean/L.

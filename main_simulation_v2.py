@@ -107,6 +107,11 @@ def main():
                          'Tăng node chạm nhưng KHÔNG tăng nhân bản metadata.')
     ap.add_argument('--probe-bits', type=int, default=16, metavar='C',
                     help='Chỉ xét lật bit trong C bit đầu (prefix hiệu dụng)')
+    ap.add_argument('--zipf', type=float, default=0.0, metavar='S',
+                    help='Phân bố query Zipf với tham số s (0 = đều). Đo RPC load\n'
+                         'per node: hotspot lưu trữ khác hotspot TRUY VẤN.')
+    ap.add_argument('--prefix-occupancy', action='store_true',
+                    help='Báo cáo occupancy keyspace tại c=4,8,12,16')
     ap.add_argument('--random-routing', action='store_true',
                     help='BASELINE: chạm cùng số node nhưng chọn NGẪU NHIÊN '
                          '(không dùng semantic key). So với bản thường để biết '
@@ -161,6 +166,16 @@ def main():
     # -------------------- QUERY -------------------- #
     m, _, d_sub = codebook.shape        # đọc từ codebook, không hardcode
     n_run = min(args.nq, len(gt))
+    # Zipf: query i được chọn với xác suất ~ 1/(i+1)^s. Mô phỏng truy vấn thật:
+    # vài chủ đề chiếm phần lớn lưu lượng, phần đuôi hiếm khi được hỏi.
+    if args.zipf > 0:
+        w = np.array([1.0 / (i + 1) ** args.zipf for i in range(len(gt))])
+        w /= w.sum()
+        rng_z = np.random.RandomState(args.seed)
+        q_order = rng_z.choice(len(gt), size=n_run, p=w)
+    else:
+        q_order = np.arange(n_run)
+    node_rpc = np.zeros(args.nodes, dtype=np.int64)   # RPC load per node
     reach_hit = ret_hit = fin_hit = 0
     reach_r5 = ret_r5 = 0.0          # Recall@5 tầng 1, tầng 2
     rec5_sum = rec10_sum = 0.0
@@ -169,7 +184,8 @@ def main():
     rnd_route = random.Random(args.seed + 777)
     print(f"\n[*] Chạy {n_run} query... "
           f"{'[ROUTING NGẪU NHIÊN - baseline]' if args.random_routing else ''}")
-    for qi in range(n_run):
+    for _step, qi in enumerate(q_order):
+        qi = int(qi)
         item = gt[qi]
         gt5  = [r['index'] for r in item['top_5_results']]
         gt10 = [r['index'] for r in item['top_10_results']]
@@ -191,6 +207,8 @@ def main():
                 for qkey in net.probe_keys63(q, proj, args.multi_probe, args.probe_bits):
                     touched.update(int(x) for x in net.knn(qkey, args.k_query))
         touched_list.append(len(touched))
+        for _n in touched:
+            node_rpc[_n] += 1   # mỗi node chạm = 1 ADC RPC
 
         # Tầng 1: reachable — GT có nằm trong RAM của node được ghé không
         reachable_tags = set()
@@ -230,8 +248,8 @@ def main():
         rec5_sum  += len(f5 & set(gt5)) / 5.0
         rec10_sum += len(set(final) & set(gt10)) / 10.0
 
-        if (qi + 1) % 25 == 0:
-            print(f"    {qi+1}/{n_run} | Hit@5={100*fin_hit/(qi+1):.1f}%")
+        if (_step + 1) % 25 == 0:
+            print(f"    {_step+1}/{n_run} | Hit@5={100*fin_hit/(qi+1):.1f}%")
 
     # -------------------- KẾT QUẢ -------------------- #
     res = {
@@ -256,6 +274,11 @@ def main():
         'metadata_total': int(mc.sum()),
         'metadata_mean_per_node': float(mc.mean()),
         'metadata_gini': gini(mc),
+        'zipf': args.zipf,
+        'rpc_gini': gini(node_rpc) if node_rpc.sum() > 0 else 0.0,
+        'rpc_p99': float(np.percentile(node_rpc, 99)),
+        'rpc_max': int(node_rpc.max()),
+        'rpc_mean': float(node_rpc.mean()),
     }
 
     print("\n" + "=" * 62)
@@ -277,6 +300,19 @@ def main():
           f"({res['pct_network_touched']:.1f}% mạng)")
     print(f"  Metadata: {res['metadata_total']:,} bản ({res['metadata_mean_per_node']:.0f}/node, "
           f"Gini={res['metadata_gini']:.3f})")
+    print(f"  RPC load/node (zipf={args.zipf}): mean={res['rpc_mean']:.1f} "
+          f"P99={res['rpc_p99']:.0f} max={res['rpc_max']} Gini={res['rpc_gini']:.3f}")
+    if args.prefix_occupancy:
+        print('  Prefix occupancy (metadata theo c bit đầu của node_id):')
+        for c in (4, 8, 12, 16):
+            b = {}
+            for ni in range(args.nodes):
+                k = int(net.node_ids[ni]) >> (63 - c)
+                b[k] = b.get(k, 0) + len(net.ram[ni])
+            v = np.array(list(b.values()), dtype=float)
+            if v.sum() > 0:
+                print(f'    c={c:2d}: {len(v):5d} subtree | CV={v.std()/v.mean():.2f} '
+                      f'max/mean={v.max()/v.mean():.1f}')
 
     # BUG CŨ: tên file thiếu seed và nq -> lần chạy sau GHI ĐÈ lần trước.
     # Hệ quả: Pha 2 chạy 5 seed chỉ giữ lại seed cuối; nq=500 xoá mất nq=200.
@@ -284,6 +320,7 @@ def main():
                        f"_T{args.multi_probe}"
                        f"_{(args.pq_variant or 'm256') if args.use_pq else 'nopq'}"
                        f"{'_RANDOM' if args.random_routing else ''}"
+                       f"{'_zipf' + str(args.zipf) if args.zipf > 0 else ''}"
                        f"_s{args.seed}_nq{n_run}.json")
     json.dump(res, open(out, 'w'), indent=2)
     print(f"\n→ Lưu: {out}")

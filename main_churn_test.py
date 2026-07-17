@@ -14,18 +14,21 @@ from src.routing import (
 )
 import numpy as np
 
-DATASET = "code"          # code | scifact | squad
+import os as _os
+# Tham số hoá qua biến môi trường để script chạy nhiều cấu hình:
+#   DATASET=scifact NUM_FILES=5183 python3 main_churn_test.py
+DATASET = _os.environ.get("DATASET", "code")          # code | scifact | squad
 EMBEDDINGS_PATH = f"./data/{DATASET}_corpus_embeddings.npy"
 PQ_CODES_PATH = f"./data/{DATASET}_pq_codes.npy"
 
-NUM_NODES = 10000
-NUM_FILES = 20000         # code=20000, scifact=5183, squad=18891
+NUM_NODES = int(_os.environ.get("NUM_NODES", "10000"))
+NUM_FILES = int(_os.environ.get("NUM_FILES", "20000"))  # code=20000, scifact=5183
 SHARDS_PER_FILE = 30
 K_SIZE = 20
 K_REQUIRED = 20
-RECOVERY_SAMPLE = 500
+RECOVERY_SAMPLE = int(_os.environ.get("RECOVERY_SAMPLE", "500"))
 CHURN_STEPS = [0.10, 0.20, 0.30]
-SAMPLE_SEED = 2026
+SAMPLE_SEED = int(_os.environ.get("SAMPLE_SEED", "2026"))
 
 
 def kill_random_nodes(network_nodes, target_ratio, total_nodes):
