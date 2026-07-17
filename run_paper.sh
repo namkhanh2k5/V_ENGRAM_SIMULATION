@@ -16,6 +16,24 @@ PY=python3
 
 # Bỏ qua nếu file kết quả đã có -> ngắt giữa chừng, chạy lại vẫn tiếp tục chỗ dở.
 # Tên file do main_simulation_v2.py sinh; ta dựng lại pattern để kiểm tra.
+# ---- DỌN KẾT QUẢ CŨ ----
+# File cũ có tên thiếu _N (sinh trước bản vá) hoặc thiếu _s/_nq (sinh trước bản vá
+# tên file). Chúng nguy hiểm vì:
+#   1. skip logic tìm tên MỚI -> không nhận ra file cũ -> chạy lại -> 2 file/cấu hình
+#   2. summarize gán file cũ N=10000 mặc định -> gộp với file mới -> n=2 dữ liệu
+#      TRÙNG LẶP -> std sai
+# File cũ thiếu _s/_nq còn tệ hơn: chúng đã bị ghi đè lẫn nhau nên không tin được.
+_old=$(ls result_*.json 2>/dev/null | grep -v "_N[0-9]" || true)
+if [ -n "$_old" ]; then
+    _n=$(echo "$_old" | wc -l)
+    echo "[dọn] Xoá $_n file kết quả cũ (tên thiếu _N):"
+    echo "$_old" | head -3 | sed 's/^/       /'
+    [ "$_n" -gt 3 ] && echo "       ... và $((_n-3)) file nữa"
+    echo "$_old" | xargs rm -f
+fi
+rm -f summary.csv paper_tables.txt bang.txt phase2.txt kq.txt 2>/dev/null
+echo ""
+
 run() {
     local ds="code" L=5 K=20 R=1 T=1 N=10000 seed="" rand="" pq="m512" nq=$NQ
     local args=("$@") i=0
