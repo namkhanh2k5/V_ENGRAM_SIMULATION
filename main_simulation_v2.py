@@ -316,7 +316,9 @@ def main():
 
     # BUG CŨ: tên file thiếu seed và nq -> lần chạy sau GHI ĐÈ lần trước.
     # Hệ quả: Pha 2 chạy 5 seed chỉ giữ lại seed cuối; nq=500 xoá mất nq=200.
-    out = args.out or (f"result_{args.dataset}_L{L}_K{args.k_query}_MA{args.meta_anchors}"
+    # N phải có trong tên: nhóm H quét N ∈ {5k,10k,20k,40k} ở cùng L/K/r/T,
+    # thiếu N thì 4 lần chạy ghi đè lẫn nhau (đúng bug seed/nq trước đó).
+    out = args.out or (f"result_{args.dataset}_N{args.nodes}_L{L}_K{args.k_query}_MA{args.meta_anchors}"
                        f"_T{args.multi_probe}"
                        f"_{(args.pq_variant or 'm256') if args.use_pq else 'nopq'}"
                        f"{'_RANDOM' if args.random_routing else ''}"

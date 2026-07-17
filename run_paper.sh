@@ -33,7 +33,7 @@ run() {
         esac
         i=$((i+1))
     done
-    local f="result_${ds}_L${L}_K${K}_MA${R}_T${T}_${pq}${rand}_s${seed}_nq${nq}.json"
+    local f="result_${ds}_N${N}_L${L}_K${K}_MA${R}_T${T}_${pq}${rand}_s${seed}_nq${nq}.json"
     if [ -f "$f" ]; then echo "  [skip] $f"; return; fi
     $PY main_simulation_v2.py --nodes $N --nq $nq --pq-variant m512 "$@" >/dev/null 2>&1 \
         || echo "  [LỖI] $*"
