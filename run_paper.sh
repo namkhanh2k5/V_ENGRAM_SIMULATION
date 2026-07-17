@@ -6,7 +6,7 @@
 # Sinh số cho: Bảng chính, Bảng r*, probe-vs-widen, Metadata hotspot,
 #              Payload/node-failure, Baseline tập trung, Latency.
 # Bỏ qua file đã có -> ngắt giữa chừng chạy lại vẫn tiếp tục.
-# Ước tính: ~6 giờ. A-D: 256 run × 65s = 4.6h. E: 6 × ~5ph = 30ph.
+# Ước tính: ~7 giờ (thêm nhóm H). A-D: 256 run × 65s = 4.6h. E: 6 × ~5ph = 30ph.
 # F: 8 × ~2ph = 16ph. G: 2 × ~30ph = 1h (SimPy rất chậm).
 # ============================================================================
 set -u
@@ -14,8 +14,30 @@ SEEDS="20235956 1 2 3 4 5 6 7 8 9"
 NQ=500
 PY=python3
 
-run() { $PY main_simulation_v2.py --nodes 10000 --nq $NQ --pq-variant m512 "$@" >/dev/null 2>&1 \
-        || echo "  [LỖI] $*"; }
+# Bỏ qua nếu file kết quả đã có -> ngắt giữa chừng, chạy lại vẫn tiếp tục chỗ dở.
+# Tên file do main_simulation_v2.py sinh; ta dựng lại pattern để kiểm tra.
+run() {
+    local ds="code" L=5 K=20 R=1 T=1 N=10000 seed="" rand="" pq="m512" nq=$NQ
+    local args=("$@") i=0
+    while [ $i -lt ${#args[@]} ]; do
+        case "${args[$i]}" in
+            --dataset) ds="${args[$((i+1))]}" ;;
+            --num-tables) L="${args[$((i+1))]}" ;;
+            --k-query) K="${args[$((i+1))]}" ;;
+            --meta-anchors) R="${args[$((i+1))]}" ;;
+            --multi-probe) T="${args[$((i+1))]}" ;;
+            --nodes) N="${args[$((i+1))]}" ;;
+            --seed) seed="${args[$((i+1))]}" ;;
+            --random-routing) rand="_RANDOM" ;;
+            --no-pq) pq="nopq" ;;
+        esac
+        i=$((i+1))
+    done
+    local f="result_${ds}_L${L}_K${K}_MA${R}_T${T}_${pq}${rand}_s${seed}_nq${nq}.json"
+    if [ -f "$f" ]; then echo "  [skip] $f"; return; fi
+    $PY main_simulation_v2.py --nodes $N --nq $nq --pq-variant m512 "$@" >/dev/null 2>&1 \
+        || echo "  [LỖI] $*"
+}
 
 echo "##### A. BẢNG CHÍNH — cấu hình chốt (L=5 K=20 T=8 r=1) #####"
 for s in $SEEDS; do for ds in code scifact; do
@@ -55,17 +77,27 @@ for s in 20235956 1 2; do for ds in code scifact; do
       --zipf 1.0 --prefix-occupancy > "hotspot_${ds}_s${s}.txt" 2>&1
 done; done
 
+echo "##### H. QUY MÔ MẠNG N — kiểm chứng Phương trình r* #####"
+# P_rand = 1-(1-Lr/N)^(KLT) GIẢM khi N tăng ở L*r cố định, nên tỉ lệ sem/rand
+# phải TĂNG theo N. Đây là phép kiểm chứng trực tiếp lý thuyết, không phải
+# weak scaling (corpus cố định nên object/node giảm — đã ghi trong Threats).
+for s in 20235956 1 2; do for N in 5000 10000 20000 40000; do
+  echo "[H] N=$N s=$s"
+  run --dataset code --seed $s --nodes $N --num-tables 5 --multi-probe 8 --k-query 20 --meta-anchors 1 --use-pq
+  run --dataset code --seed $s --nodes $N --num-tables 5 --multi-probe 8 --k-query 20 --meta-anchors 1 --use-pq --random-routing
+done; done
+
 echo "##### E. PAYLOAD / NODE FAILURE — 3 seed, 2 corpus #####"
 # main_churn_test.py nay đo TÁCH BẠCH 3 tầng: metadata availability / payload
 # decode / end-to-end. Bản cũ tra GLOBAL_METADATA_DHT nên metadata không bao giờ
 # chết -> chỉ đo ngưỡng erasure code (P(Bin(30,0.7)>=20) ~ 0.76 = đúng 76.4% cũ).
 for s in 2026 1 2; do
   echo "[E] code s=$s"
-  DATASET=code NUM_FILES=20000 SAMPLE_SEED=$s $PY main_churn_test.py \
-      > "failure_code_s${s}.txt" 2>&1 || echo "  [LỖI] churn code s=$s"
+  [ -s "failure_code_s${s}.txt" ] || DATASET=code NUM_FILES=20000 SAMPLE_SEED=$s \
+      $PY main_churn_test.py > "failure_code_s${s}.txt" 2>&1 || true
   echo "[E] scifact s=$s"
-  DATASET=scifact NUM_FILES=5183 SAMPLE_SEED=$s $PY main_churn_test.py \
-      > "failure_scifact_s${s}.txt" 2>&1 || echo "  [LỖI] churn scifact s=$s"
+  [ -s "failure_scifact_s${s}.txt" ] || DATASET=scifact NUM_FILES=5183 SAMPLE_SEED=$s \
+      $PY main_churn_test.py > "failure_scifact_s${s}.txt" 2>&1 || true
 done
 
 echo "##### F. BASELINE TẬP TRUNG — HNSW / bucket-LSH / crypto-DHT / random #####"
@@ -73,8 +105,8 @@ echo "##### F. BASELINE TẬP TRUNG — HNSW / bucket-LSH / crypto-DHT / random 
 # trên code = ~4500, /L=5 -> ~900/bảng). Quét vài mức để vẽ đường recall-vs-pool.
 for pool in 30 100 300 900; do for c in code scifact; do
   echo "[F] $c pool=$pool"
-  CORPUS=$c POOL_PER_TABLE=$pool $PY baselines.py \
-      > "baseline_${c}_pool${pool}.txt" 2>&1 || echo "  [LỖI] baseline $c pool=$pool"
+  [ -s "baseline_${c}_pool${pool}.txt" ] || CORPUS=$c POOL_PER_TABLE=$pool \
+      $PY baselines.py > "baseline_${c}_pool${pool}.txt" 2>&1 || true
 done; done
 
 echo "##### G. LATENCY / RPC — SimPy, chỉ 20 query (rất chậm) #####"
@@ -82,9 +114,9 @@ echo "##### G. LATENCY / RPC — SimPy, chỉ 20 query (rất chậm) #####"
 # báo cáo rounds/RPC/latency trung bình cho Table 1.
 for c in code scifact; do
   echo "[G] $c (có thể mất 30+ phút)"
-  $PY main_simulation.py --dataset $c --nodes 10000 --seed 20235956 \
-      --k-query 20 --multi-probe 8 --meta-anchors 1 --nq 20 \
-      > "latency_${c}.txt" 2>&1 || echo "  [LỖI] latency $c"
+  [ -s "latency_${c}.txt" ] || timeout 5400 $PY main_simulation.py --dataset $c \
+      --nodes 10000 --seed 20235956 --k-query 20 --multi-probe 8 --meta-anchors 1 --nq 20 \
+      > "latency_${c}.txt" 2>&1 || echo "  [BỎ QUA] latency $c quá 90 phút"
 done
 
 echo ""; echo "##### TỔNG HỢP #####"
