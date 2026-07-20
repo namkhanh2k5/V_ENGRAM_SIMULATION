@@ -82,17 +82,22 @@ def log(msg): print(msg, flush=True)
 
 # ---------- METRIC: sao y src/evaluation.py ----------
 def success_and_mrr(all_retrieved, gt_sets):
-    """all_retrieved[q] = list index top-5 (theo thứ tự hạng). gt_sets[q] = set top-5 GT."""
-    hit, mrr = 0, 0.0
+    """all_retrieved[q] = list index top-5 (theo thứ tự hạng). gt_sets[q] = set top-5 GT.
+    Trả (Recall@5, Success@5, MRR@5).
+    Recall@5 = trung bình |retrieved[:5] ∩ GT| / |GT| — KHỚP metric bảng chính.
+    Success@5 (Hit@5) giữ để tham chiếu nhưng BÃO HOÀ, không dùng để so cấu hình."""
+    hit, mrr, recall = 0, 0.0, 0.0
     for retrieved, gt in zip(all_retrieved, gt_sets):
-        if set(retrieved) & gt:
+        inter = set(retrieved[:5]) & gt
+        recall += len(inter) / max(1, len(gt))
+        if inter:
             hit += 1
-        for rank, idx in enumerate(retrieved, 1):   # MRR theo hạng đầu tiên trúng
+        for rank, idx in enumerate(retrieved, 1):
             if idx in gt:
                 mrr += 1.0 / rank
                 break
     n = len(all_retrieved)
-    return 100.0 * hit / n, mrr / n
+    return 100.0 * recall / n, 100.0 * hit / n, mrr / n
 
 
 # ---------- PQ: encode + ADC (sao y node.adc_search) ----------
@@ -197,14 +202,14 @@ def main():
     flat = faiss.IndexFlatIP(dim); flat.add(E)
     _, I = flat.search(Qv, 5)
     bf_ret = [[int(i) for i in row] for row in I]
-    bf_s, bf_m = success_and_mrr(bf_ret, gt_sets)
-    log(f"[SANITY] Exact Brute-Force vs GT: Success@5={bf_s:.1f}%  MRR@5={bf_m:.3f}  (mong đợi 100% / 1.000)")
-    if bf_s < 99.0:
+    bf_r, bf_h, bf_m = success_and_mrr(bf_ret, gt_sets)
+    log(f"[SANITY] Brute-Force vs GT: Recall@5={bf_r:.1f}% Success@5={bf_h:.1f}% MRR={bf_m:.3f} (mong đợi ~100%)")
+    if bf_r < 99.0:
         log("    ⚠️  < 100% nghĩa là query encode lại KHÁC lúc tạo GT (sai model/version/normalize). "
             "Số baseline vẫn chạy nhưng nên xem lại tính nhất quán.")
 
     results = {}
-    results["Exact Brute-Force (IndexFlatIP)"] = (bf_s, bf_m, "Centralized reference = Ground Truth")
+    results["Exact Brute-Force (IndexFlatIP)"] = (bf_r, bf_h, bf_m, "Centralized reference = Ground Truth")
 
     # 4) HNSW
     log("[*] Baseline HNSW ...")
@@ -214,9 +219,9 @@ def main():
     hnsw.hnsw.efSearch = HNSW_EF
     _, Ih = hnsw.search(Qv, 5)
     hnsw_ret = [[int(i) for i in row if i >= 0] for row in Ih]
-    s, m = success_and_mrr(hnsw_ret, gt_sets)
-    results[f"FAISS-HNSW (M={HNSW_M}, ef={HNSW_EF})"] = (s, m, "Centralized graph ANN")
-    log(f"    Success@5={s:.1f}%  MRR@5={m:.3f}")
+    s_r, s_h, m = success_and_mrr(hnsw_ret, gt_sets)
+    results[f"FAISS-HNSW (M={HNSW_M}, ef={HNSW_EF})"] = (s_r, s_h, m, "Centralized graph ANN")
+    log(f"    Recall@5={s_r:.1f}%  Success@5={s_h:.1f}%  MRR@5={m:.3f}")
 
     # 5) Chuẩn bị SRP keys (trùng V-Engram) + crypto keys
     initialize_lsh_projections(LSH_SEED)
@@ -239,9 +244,9 @@ def main():
             cand.update(int(i) for i in top)
         pool_sizes.append(len(cand))
         lsh_ret.append(rerank(Qv[q], cand, E, pq_codes, codebook))
-    s, m = success_and_mrr(lsh_ret, gt_sets)
-    results["Centralized Multi-Table LSH"] = (s, m, f"LSH signal ceiling, no DHT hops (pool~{int(np.mean(pool_sizes))})")
-    log(f"    Success@5={s:.1f}%  MRR@5={m:.3f}  pool TB={np.mean(pool_sizes):.0f}")
+    s_r, s_h, m = success_and_mrr(lsh_ret, gt_sets)
+    results["Centralized Multi-Table LSH"] = (s_r, s_h, m, f"LSH ceiling, no DHT hops (pool~{int(np.mean(pool_sizes))})")
+    log(f"    Recall@5={s_r:.1f}%  Success@5={s_h:.1f}%  MRR@5={m:.3f}  pool TB={np.mean(pool_sizes):.0f}")
 
     # 7) Crypto-DHT cùng ngân sách (SÀN có rerank): gom theo XOR trên key ngẫu nhiên
     log("[*] Baseline Crypto-DHT (XOR gather, key SHA-256, cùng ngân sách) ...")
@@ -254,20 +259,20 @@ def main():
             top = np.argpartition(d, POOL_PER_TABLE)[:POOL_PER_TABLE]
             cand.update(int(i) for i in top)
         crypto_ret.append(rerank(Qv[q], cand, E, pq_codes, codebook))
-    s, m = success_and_mrr(crypto_ret, gt_sets)
-    results["Crypto-DHT (same budget + rerank)"] = (s, m, "DHT floor: random keys, semantics removed")
-    log(f"    Success@5={s:.1f}%  MRR@5={m:.3f}")
+    s_r, s_h, m = success_and_mrr(crypto_ret, gt_sets)
+    results["Crypto-DHT (same budget + rerank)"] = (s_r, s_h, m, "DHT floor: random keys, semantics removed")
+    log(f"    Recall@5={s_r:.1f}%  Success@5={s_h:.1f}%  MRR@5={m:.3f}")
 
     # 8) Random-5 (pure chance, KHÔNG rerank) — nguồn của con số ~0.1% cũ
     log("[*] Baseline Random-5 (pure chance) ...")
     rng = np.random.RandomState(RNG_SEED)
     rand_ret = [[int(i) for i in rng.choice(N, size=5, replace=False)] for _ in range(Q)]
-    s, m = success_and_mrr(rand_ret, gt_sets)
-    results["Random-5 (no rerank)"] = (s, m, "Pure chance ~ 1-(1-5/N)^5")
-    log(f"    Success@5={s:.2f}%  MRR@5={m:.3f}")
+    s_r, s_h, m = success_and_mrr(rand_ret, gt_sets)
+    results["Random-5 (no rerank)"] = (s_r, s_h, m, "Pure chance ~ 1-(1-5/N)^5")
+    log(f"    Recall@5={s_r:.2f}%  Success@5={s_h:.2f}%  MRR@5={m:.3f}")
 
     # 9) In bảng + ghi báo cáo
-    header = f"{'Method':40s} {'Success@5':>10s} {'MRR@5':>8s}   Note"
+    header = f"{'Method':40s} {'Recall@5':>10s} {'Hit@5':>8s} {'MRR@5':>8s}   Note"
     lines = [header, "-" * len(header)]
     order = ["Exact Brute-Force (IndexFlatIP)",
              f"FAISS-HNSW (M={HNSW_M}, ef={HNSW_EF})",
@@ -275,10 +280,8 @@ def main():
              "Crypto-DHT (same budget + rerank)",
              "Random-5 (no rerank)"]
     for name in order:
-        s, m, note = results[name]
-        lines.append(f"{name:40s} {s:9.2f}% {m:8.3f}   {note}")
-    lines.append(f"{'V-Engram (P2P, từ comparison_report)':40s} {'~97.2%':>10s} {'~0.97':>8s}   "
-                 f"Distributed rendezvous (chạy từ simulation)")
+        rc, ht, m, note = results[name]
+        lines.append(f"{name:40s} {rc:9.2f}% {ht:7.2f}% {m:8.3f}   {note}")
     table = "\n".join(lines)
 
     log("\n" + "=" * len(header))
