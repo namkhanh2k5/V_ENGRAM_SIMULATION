@@ -83,9 +83,10 @@ print("-"*88)
 cand_rows = []
 for key in rows:
     ds, N, L, K, r, T, pq, mode, pqv, zf, nq = key
-    if rand or not pq or zf > 0:      # bảng chính dùng query ĐỀU
+    if mode != "semantic" or not pq or zf > 0:   # bảng chính dùng query ĐỀU
         continue
-    k_rnd = (ds, N, L, K, r, T, pq, True, pqv, zf, nq)
+    # so semantic với oracle uniform-node sampling (baseline gốc)
+    k_rnd = (ds, N, L, K, r, T, pq, "random_slots", pqv, zf, nq)
     if k_rnd not in rows:
         continue
     sem = st.mean([x["recall5"] for x in rows[key]])
@@ -114,9 +115,9 @@ print("\n=== TRẦN no-PQ (PQ đang ăn mất bao nhiêu điểm) ===")
 print(f"{'ds':8s} {'L':>3s} {'T':>2s} {'var':>5s} {'PQ on':>9s} {'PQ off':>9s} {'mất':>7s}")
 for key in sorted(rows):
     ds, N, L, K, r, T, pq, mode, pqv, zf, nq = key
-    if not pq or rand or zf > 0:
+    if not pq or mode != "semantic" or zf > 0:
         continue
-    k_off = (ds, N, L, K, r, T, False, False, pqv, zf, nq)
+    k_off = (ds, N, L, K, r, T, False, "semantic", pqv, zf, nq)
     if k_off in rows:
         on_ = st.mean([x["recall5"] for x in rows[key]])
         off = st.mean([x["recall5"] for x in rows[k_off]])
