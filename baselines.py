@@ -199,7 +199,7 @@ def main():
     assert Qv.shape[1] == dim, f"query dim ({Qv.shape[1]}) lệch corpus dim ({dim})"
 
     # 3) Sanity: brute-force exact PHẢI = 100% so với GT (nếu không -> lệch model/normalize)
-    flat = faiss.IndexFlatIP(dim); flat.add(E)
+    flat = faiss.IndexFlatIP(dim); flat.add(E)  # type: ignore[attr-defined]  # faiss thiếu stub
     _, I = flat.search(Qv, 5)
     bf_ret = [[int(i) for i in row] for row in I]
     bf_r, bf_h, bf_m = success_and_mrr(bf_ret, gt_sets)
@@ -213,7 +213,7 @@ def main():
 
     # 4) HNSW
     log("[*] Baseline HNSW ...")
-    hnsw = faiss.IndexHNSWFlat(dim, HNSW_M)         # METRIC_L2; với vector chuẩn hoá ~ cosine
+    hnsw = faiss.IndexHNSWFlat(dim, HNSW_M)         # METRIC_L2; với vector chuẩn hoá ~ cosine  # type: ignore[attr-defined]  # faiss thiếu stub
     hnsw.hnsw.efConstruction = HNSW_EF
     hnsw.add(E)
     hnsw.hnsw.efSearch = HNSW_EF

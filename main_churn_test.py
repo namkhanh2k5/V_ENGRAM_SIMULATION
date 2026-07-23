@@ -27,7 +27,8 @@ SHARDS_PER_FILE = 30
 K_SIZE = 20
 K_REQUIRED = 20
 RECOVERY_SAMPLE = int(_os.environ.get("RECOVERY_SAMPLE", "500"))
-CHURN_STEPS = [0.10, 0.20, 0.30]
+CHURN_STEPS = [float(x) for x in
+               _os.environ.get("CHURN_STEPS", "0,0.10,0.20,0.30").split(",")]
 SAMPLE_SEED = int(_os.environ.get("SAMPLE_SEED", "2026"))
 
 

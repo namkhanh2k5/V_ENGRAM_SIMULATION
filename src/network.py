@@ -40,7 +40,9 @@ def _rtt():
 # còn đóng góp gì (mục 3.6 + 4.x ngưỡng r*).
 # Số đo: r=1 -> semantic 43.8% vs random 3.6% (thắng 12.2x)
 #        r=30 -> semantic 48.2% vs random 73.8% (random THẮNG!)
-METADATA_ANCHORS = 1
+import os as _os
+# Mục 16: quét r ∈ {1,2,3} qua biến môi trường thay vì sửa code
+METADATA_ANCHORS = int(_os.environ.get("META_ANCHORS", "1"))
 
 # K — ngân sách node mỗi bảng (số node chạy ADC cho mỗi prefix)
 K_QUERY = 20

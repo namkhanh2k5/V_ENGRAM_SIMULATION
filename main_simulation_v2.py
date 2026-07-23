@@ -19,6 +19,7 @@ Cách chạy:
 """
 import argparse, json, random, time
 import numpy as np
+from typing import Optional
 
 from src.routing import initialize_lsh_projections, generate_multi_semantic_keys
 
@@ -34,6 +35,10 @@ class FastNetwork:
         self.node_ids = np.array([rnd.getrandbits(63) for _ in range(num_nodes)], dtype=np.int64)
         self.num_nodes = num_nodes
         self.ram = [dict() for _ in range(num_nodes)]   # node_idx -> {tag: pq_code}
+        # Mục 16: None = tất cả node còn sống. Khi tắt node, hai mảng này giữ
+        # chỉ số và ID của các node còn lại.
+        self.alive_idx: Optional[np.ndarray] = None
+        self.node_ids_alive: Optional[np.ndarray] = None
 
     @staticmethod
     def key63(vector, proj):
@@ -41,6 +46,16 @@ class FastNetwork:
         return np.int64(int(''.join(map(str, bits)), 2))
 
     def knn(self, key, k):
+        # Nếu đã tắt node (mục 16), chỉ tìm trong tập còn sống: client không thể
+        # định tuyến tới node đã chết, và cũng không "nhìn thấy" chúng.
+        alive, ids_alive = self.alive_idx, self.node_ids_alive
+        if alive is not None and ids_alive is not None:
+            d = np.bitwise_xor(ids_alive, key)
+            k = min(k, len(alive))
+            if k <= 0:
+                return np.array([], dtype=np.int64)
+            loc = np.argpartition(d, k - 1)[:k]
+            return alive[loc]
         d = np.bitwise_xor(self.node_ids, key)
         k = min(k, self.num_nodes)
         idx = np.argpartition(d, k - 1)[:k]
@@ -112,6 +127,11 @@ def main():
                          'per node: hotspot lưu trữ khác hotspot TRUY VẤN.')
     ap.add_argument('--prefix-occupancy', action='store_true',
                     help='Báo cáo occupancy keyspace tại c=4,8,12,16')
+    ap.add_argument('--node-loss', type=float, default=0.0, metavar='F',
+                    help='Tắt F phần node NGAY TRƯỚC khi query (mục 16).\n'
+                         'Node chết: không xuất hiện trong knn, metadata trên đó\n'
+                         'mất theo. Đây là mô hình STATIC FAILURE, không phải\n'
+                         'churn: node không quay lại, không re-anchor, không repair.')
     ap.add_argument('--routing', default=None,
                     choices=['semantic', 'random_slots', 'random_unique', 'random_keys'],
                     help='Chế độ định tuyến (mục 1 nhận xét của thầy):\n'
@@ -200,6 +220,24 @@ def main():
     # --random-routing (cũ) == --routing random_slots
     mode = args.routing or ('random_slots' if args.random_routing else 'semantic')
     args.random_routing = (mode != 'semantic')   # giữ cho các chỗ dùng cờ cũ
+    # ---- MỤC 16: tắt node sau khi ingest, trước khi query ----
+    # Metadata trên node chết mất theo, và node chết không xuất hiện trong knn.
+    # Ingest xảy ra TRƯỚC khi tắt, đúng như thực tế: dữ liệu đã được ghi khi
+    # mạng còn đầy đủ, rồi một phần mạng biến mất.
+    n_dead = 0
+    if args.node_loss > 0:
+        rnd_kill = random.Random(args.seed + 555)
+        n_dead = int(round(args.nodes * args.node_loss))
+        dead = rnd_kill.sample(range(args.nodes), n_dead)
+        alive_mask = np.ones(args.nodes, dtype=bool)
+        alive_mask[dead] = False
+        for di in dead:
+            net.ram[di] = {}                 # metadata trên node chết mất theo
+        net.alive_idx = np.flatnonzero(alive_mask)
+        net.node_ids_alive = net.node_ids[net.alive_idx]
+        print(f"[*] Tắt {n_dead:,}/{args.nodes:,} node ({100*args.node_loss:.0f}%) "
+              f"-> còn {len(net.alive_idx):,}")   # type: ignore[arg-type]
+
     rnd_route = random.Random(args.seed + 777)
     print(f"\n[*] Chạy {n_run} query... "
           f"{'' if mode == 'semantic' else '[BASELINE: ' + mode + ']'}")
@@ -227,7 +265,9 @@ def main():
             # Chạm NHIỀU node unique hơn semantic vì mẫu ngẫu nhiên hiếm khi trùng,
             # trong khi các probe của semantic hội tụ vào vùng chồng lấn.
             n_touch = args.k_query * L * args.multi_probe
-            touched = set(rnd_route.sample(range(args.nodes), min(n_touch, args.nodes)))
+            _al = net.alive_idx
+            pool = _al.tolist() if _al is not None else list(range(args.nodes))
+            touched = set(rnd_route.sample(list(pool), min(n_touch, len(pool))))
 
         elif mode == 'random_unique':
             # Ngân sách UNIQUE-NODE khớp tuyệt đối: đếm semantic chạm bao nhiêu node
@@ -236,8 +276,9 @@ def main():
             for proj in P:
                 for qkey in net.probe_keys63(q, proj, args.multi_probe, args.probe_bits):
                     sem_touch.update(int(x) for x in net.knn(qkey, args.k_query))
-            touched = set(rnd_route.sample(range(args.nodes),
-                                           min(len(sem_touch), args.nodes)))
+            _al = net.alive_idx
+            pool = _al.tolist() if _al is not None else list(range(args.nodes))
+            touched = set(rnd_route.sample(pool, min(len(sem_touch), len(pool))))
 
         elif mode == 'random_keys':
             # Không cần global membership view: chọn L*T KEY ngẫu nhiên trong không
@@ -298,6 +339,7 @@ def main():
         'k_query': args.k_query, 'meta_anchors': args.meta_anchors,
         'random_routing': args.random_routing,
         'routing_mode': mode,
+        'node_loss': args.node_loss,
         'multi_probe': args.multi_probe,
         'num_tables': L,
         'local_topk': args.local_topk, 'use_pq': args.use_pq,
@@ -366,6 +408,7 @@ def main():
                        f"{ {'semantic': '', 'random_slots': '_RANDOM',
                             'random_unique': '_RANDUNIQ',
                             'random_keys': '_RANDKEY'}[mode] }"
+                       f"{'_loss' + str(args.node_loss) if args.node_loss > 0 else ''}"
                        f"{'_zipf' + str(args.zipf) if args.zipf > 0 else ''}"
                        f"_s{args.seed}_nq{n_run}.json")
     json.dump(res, open(out, 'w'), indent=2)
