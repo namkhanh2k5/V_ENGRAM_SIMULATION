@@ -50,8 +50,9 @@ def main():
                     help='Đo với top-k neighbor thật (mặc định 5)')
     args = ap.parse_args()
 
-    D = args.dataset
-    print(f"[*] Nạp dữ liệu {D} ...")
+    # Đường dẫn khớp main_simulation_v2.py: ./data/{dataset}_*
+    D = f'./data/{args.dataset}'
+    print(f"[*] Nạp dữ liệu {args.dataset} từ {D}_* ...")
     E = np.load(f'{D}_corpus_embeddings.npy')       # (N, 1024) đã normalize
     Qv = np.load(f'{D}_query_embeddings.npy')       # (nq, 1024) đã normalize
     gt = json.load(open(f'{D}_ground_truth.json', encoding='utf-8'))
@@ -91,7 +92,7 @@ def main():
 
     from math import comb
     print("\n" + "=" * 72)
-    print(f"PHÂN BỐ SỐ BIT LỆCH — {D}, c={args.c}, {args.seeds} ma trận chiếu")
+    print(f"PHÂN BỐ SỐ BIT LỆCH — {args.dataset}, c={args.c}, {args.seeds} ma trận chiếu")
     print("=" * 72)
     print(f"{'k bit lệch':>11} {'đo được':>10} {'lý thuyết':>10} {'tích luỹ':>10}   ghi chú")
     print("-" * 72)
@@ -136,13 +137,13 @@ def main():
     print("dùng để so sánh TƯƠNG ĐỐI giữa các mức k, không phải dự đoán recall.")
 
     out = {
-        'dataset': D, 'c': args.c, 'seeds': args.seeds, 'topk': args.topk,
+        'dataset': args.dataset, 'c': args.c, 'seeds': args.seeds, 'topk': args.topk,
         'num_pairs': len(pairs), 'mean_angle_deg': float(ang.mean()),
         'p_flip_per_bit': float(p_flip), 'mode_k': int(mode),
         'coverage_k_le_1': float(cov1), 'coverage_k_le_2': float(cov2),
         'coverage_k_le_3': float(cov3), 'distribution': rows,
     }
-    fn = f'bitflips_{D}.json'
+    fn = f'bitflips_{args.dataset}.json'
     json.dump(out, open(fn, 'w'), indent=2)
     print(f"-> Lưu: {fn}")
 
