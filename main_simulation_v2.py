@@ -112,6 +112,22 @@ def main():
                          'per node: hotspot lưu trữ khác hotspot TRUY VẤN.')
     ap.add_argument('--prefix-occupancy', action='store_true',
                     help='Báo cáo occupancy keyspace tại c=4,8,12,16')
+    ap.add_argument('--routing', default=None,
+                    choices=['semantic', 'random_slots', 'random_unique', 'random_keys'],
+                    help='Chế độ định tuyến (mục 1 nhận xét của thầy):\n'
+                         '  semantic      = dùng semantic key (mặc định)\n'
+                         '  random_slots  = chạm L*K*T node ngẫu nhiên UNIQUE.\n'
+                         '                  Đây là "oracle uniform-node sampling":\n'
+                         '                  giả định client chọn được node bất kỳ\n'
+                         '                  dù KHÔNG có global membership view.\n'
+                         '                  (= --random-routing cũ)\n'
+                         '  random_unique = chạm ĐÚNG số node unique mà semantic\n'
+                         '                  chạm cho CHÍNH query đó. Ngân sách node\n'
+                         '                  khớp tuyệt đối.\n'
+                         '  random_keys   = chọn L*T KEY ngẫu nhiên rồi Kademlia\n'
+                         '                  lookup mỗi key lấy K node. Không cần\n'
+                         '                  global view, trả chi phí routing y hệt,\n'
+                         '                  node gom theo cụm như semantic.')
     ap.add_argument('--random-routing', action='store_true',
                     help='BASELINE: chạm cùng số node nhưng chọn NGẪU NHIÊN '
                          '(không dùng semantic key). So với bản thường để biết '
@@ -181,9 +197,12 @@ def main():
     rec5_sum = rec10_sum = 0.0
     uniq_list, touched_list = [], []
 
+    # --random-routing (cũ) == --routing random_slots
+    mode = args.routing or ('random_slots' if args.random_routing else 'semantic')
+    args.random_routing = (mode != 'semantic')   # giữ cho các chỗ dùng cờ cũ
     rnd_route = random.Random(args.seed + 777)
     print(f"\n[*] Chạy {n_run} query... "
-          f"{'[ROUTING NGẪU NHIÊN - baseline]' if args.random_routing else ''}")
+          f"{'' if mode == 'semantic' else '[BASELINE: ' + mode + ']'}")
     for _step, qi in enumerate(q_order):
         qi = int(qi)
         item = gt[qi]
@@ -198,14 +217,36 @@ def main():
 
         # --- Ripple Search: ngân sách THEO TỪNG BẢNG (sửa bug cộng dồn) ---
         touched = set()
-        if args.random_routing:
-            # BASELINE: chạm ĐÚNG cùng số node, nhưng chọn ngẫu nhiên
-            n_touch = args.k_query * L * args.multi_probe
-            touched = set(rnd_route.sample(range(args.nodes), min(n_touch, args.nodes)))
-        else:
+        if mode == 'semantic':
             for proj in P:
                 for qkey in net.probe_keys63(q, proj, args.multi_probe, args.probe_bits):
                     touched.update(int(x) for x in net.knn(qkey, args.k_query))
+
+        elif mode == 'random_slots':
+            # Oracle uniform-node sampling, ngân sách SLOT danh nghĩa L*K*T.
+            # Chạm NHIỀU node unique hơn semantic vì mẫu ngẫu nhiên hiếm khi trùng,
+            # trong khi các probe của semantic hội tụ vào vùng chồng lấn.
+            n_touch = args.k_query * L * args.multi_probe
+            touched = set(rnd_route.sample(range(args.nodes), min(n_touch, args.nodes)))
+
+        elif mode == 'random_unique':
+            # Ngân sách UNIQUE-NODE khớp tuyệt đối: đếm semantic chạm bao nhiêu node
+            # cho CHÍNH query này, rồi lấy đúng bấy nhiêu node ngẫu nhiên.
+            sem_touch = set()
+            for proj in P:
+                for qkey in net.probe_keys63(q, proj, args.multi_probe, args.probe_bits):
+                    sem_touch.update(int(x) for x in net.knn(qkey, args.k_query))
+            touched = set(rnd_route.sample(range(args.nodes),
+                                           min(len(sem_touch), args.nodes)))
+
+        elif mode == 'random_keys':
+            # Không cần global membership view: chọn L*T KEY ngẫu nhiên trong không
+            # gian 63-bit rồi Kademlia lookup mỗi key lấy K node gần nhất. Trả đúng
+            # chi phí routing như semantic, và node gom theo CỤM (XOR-gần nhau) thay
+            # vì rải đều — đây là baseline thực tế nhất.
+            for _ in range(L * args.multi_probe):
+                rkey = np.int64(rnd_route.getrandbits(63))
+                touched.update(int(x) for x in net.knn(rkey, args.k_query))
         touched_list.append(len(touched))
         for _n in touched:
             node_rpc[_n] += 1   # mỗi node chạm = 1 ADC RPC
@@ -256,6 +297,7 @@ def main():
         'dataset': args.dataset, 'nodes': args.nodes, 'seed': args.seed,
         'k_query': args.k_query, 'meta_anchors': args.meta_anchors,
         'random_routing': args.random_routing,
+        'routing_mode': mode,
         'multi_probe': args.multi_probe,
         'num_tables': L,
         'local_topk': args.local_topk, 'use_pq': args.use_pq,
@@ -284,7 +326,7 @@ def main():
     print("\n" + "=" * 62)
     print(f"KẾT QUẢ | {args.dataset} | K={args.k_query} MA={args.meta_anchors} "
           f"L={L} T={args.multi_probe} PQ={'ON' if args.use_pq else 'OFF'}"
-          f"{' [RANDOM]' if args.random_routing else ''}")
+          f"{'' if mode == 'semantic' else ' [' + mode.upper() + ']'}")
     print("=" * 62)
     print(f"  {'':34s}  Hit@5    Recall@5")
     print(f"  Tầng 1 reachable (thuần discovery) : {res['reachable_hit5']:6.1f}%  {res['reachable_recall5']:6.1f}%")
@@ -321,7 +363,9 @@ def main():
     out = args.out or (f"result_{args.dataset}_N{args.nodes}_L{L}_K{args.k_query}_MA{args.meta_anchors}"
                        f"_T{args.multi_probe}"
                        f"_{(args.pq_variant or 'm256') if args.use_pq else 'nopq'}"
-                       f"{'_RANDOM' if args.random_routing else ''}"
+                       f"{ {'semantic': '', 'random_slots': '_RANDOM',
+                            'random_unique': '_RANDUNIQ',
+                            'random_keys': '_RANDKEY'}[mode] }"
                        f"{'_zipf' + str(args.zipf) if args.zipf > 0 else ''}"
                        f"_s{args.seed}_nq{n_run}.json")
     json.dump(res, open(out, 'w'), indent=2)

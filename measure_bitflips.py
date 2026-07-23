@@ -136,12 +136,16 @@ def main():
     print("(b) K=20 node quanh mỗi target nên không cần trúng chính xác. Con số")
     print("dùng để so sánh TƯƠNG ĐỐI giữa các mức k, không phải dự đoán recall.")
 
+    # numpy float32 không JSON hoá được -> ép mọi giá trị về kiểu Python
+    rows = [{k2: (int(v2) if k2 == 'k' else float(v2)) for k2, v2 in r.items()}
+            for r in rows]
     out = {
-        'dataset': args.dataset, 'c': args.c, 'seeds': args.seeds, 'topk': args.topk,
-        'num_pairs': len(pairs), 'mean_angle_deg': float(ang.mean()),
-        'p_flip_per_bit': float(p_flip), 'mode_k': int(mode),
-        'coverage_k_le_1': float(cov1), 'coverage_k_le_2': float(cov2),
-        'coverage_k_le_3': float(cov3), 'distribution': rows,
+        'dataset': args.dataset, 'c': int(args.c), 'seeds': int(args.seeds),
+        'topk': int(args.topk), 'num_pairs': int(len(pairs)),
+        'mean_angle_deg': float(ang.mean()), 'p_flip_per_bit': float(p_flip),
+        'mode_k': int(mode), 'coverage_k_le_1': float(cov1),
+        'coverage_k_le_2': float(cov2), 'coverage_k_le_3': float(cov3),
+        'distribution': rows,
     }
     fn = f'bitflips_{args.dataset}.json'
     json.dump(out, open(fn, 'w'), indent=2)
