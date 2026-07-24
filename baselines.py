@@ -57,7 +57,10 @@ PATHS = {
 # MODEL_NAME bỏ: query embeddings đọc từ file precomputed
 LSH_SEED         = 20235956   # PHẢI trùng DEFAULT_LSH_SEED trong src/routing.py
 NUM_PROJECTIONS  = 5          # L
-POOL_PER_TABLE   = int(_os.environ.get("POOL_PER_TABLE", "100"))  # ngân sách gom mỗi bảng.
+POOL_PER_TABLE   = int(_os.environ.get("POOL_PER_TABLE", "100"))
+# Mục 18: bề rộng bucket để quét, và số ứng viên V-Engram gom được
+BUCKET_WIDTHS      = [int(x) for x in _os.environ.get("BUCKET_WIDTHS", "8,10,12,14,16").split(",")]
+VENGRAM_CANDIDATES = int(_os.environ.get("VENGRAM_CANDIDATES", "4510"))  # ngân sách gom mỗi bảng.
                               # LƯU Ý: phải khớp UNIQUE candidates của V-Engram, không phải
                               # 100/bảng vs ~146 tổng như bản cũ. Đọc mean_candidates từ
                               # result_full_*.json rồi đặt POOL_PER_TABLE = mean/L.
@@ -263,6 +266,62 @@ def main():
     results["Crypto-DHT (same budget + rerank)"] = (s_r, s_h, m, "DHT floor: random keys, semantics removed")
     log(f"    Recall@5={s_r:.1f}%  Success@5={s_h:.1f}%  MRR@5={m:.3f}")
 
+    # 7b) BUCKET-LSH (mục 18): cách kinh điển đặt LSH lên DHT.
+    # Mỗi object lưu dưới HASH của nhãn bucket b-bit. Truy hồi = tra bucket CHÍNH XÁC:
+    # query chỉ tới được object khi b bit đầu TRÙNG KHỚP ở một bảng nào đó, vì băm
+    # nhãn bucket đã phá thứ tự khiến không thể "đi sang bucket kề". Đây chính là
+    # tính KHẢ DUYỆT (navigability) mà V-Engram giữ được còn bucket-LSH thì mất.
+    log("[*] Baseline Bucket-LSH (tra bucket chính xác, quét b) ...")
+    bucket_rows = []
+    for b in BUCKET_WIDTHS:
+        # gom doc theo nhãn bucket b-bit, mỗi bảng một từ điển
+        tables = []
+        for t in range(NUM_PROJECTIONS):
+            d = {}
+            keys = np.packbits(doc_bits[t][:, :b], axis=1).tobytes()
+            step = doc_bits[t][:, :b].shape[1]
+            lab = [tuple(row) for row in doc_bits[t][:, :b]]
+            for i, L_ in enumerate(lab):
+                d.setdefault(L_, []).append(i)
+            tables.append(d)
+        ret, pools, empty = [], [], 0
+        for q in range(Q):
+            cand = set()
+            for t in range(NUM_PROJECTIONS):
+                lab = tuple(q_bits[t][q][:b])
+                cand.update(tables[t].get(lab, ()))
+            pools.append(len(cand))
+            if not cand:
+                empty += 1
+                ret.append([])          # bucket rỗng ở MỌI bảng -> không trả gì
+            else:
+                ret.append(rerank(Qv[q], cand, E, pq_codes, codebook))
+        s_r, s_h, m = success_and_mrr(ret, gt_sets)
+        bucket_rows.append((b, s_r, s_h, float(np.mean(pools)), 100.0 * empty / Q))
+        log(f"    b={b:>2}: Recall@5={s_r:5.1f}%  Hit@5={s_h:5.1f}%  "
+            f"pool TB={np.mean(pools):7.0f}  query bucket rỗng={100.0*empty/Q:.1f}%")
+    # lấy dòng có pool GẦN NHẤT với ngân sách ứng viên của V-Engram để lên bảng chính
+    b_best = min(bucket_rows, key=lambda r: abs(r[3] - VENGRAM_CANDIDATES))
+    results["Bucket-LSH (exact bucket)"] = (
+        b_best[1], b_best[2], 0.0,
+        f"b={b_best[0]}, pool~{b_best[3]:.0f} (gần ngân sách V-Engram)")
+
+    # 7c) RANDOM-C (mục 18): bốc C ứng viên ngẫu nhiên rồi rerank BẰNG CÙNG PQ,
+    # với C = số ứng viên duy nhất mà V-Engram gom được. Tách bạch giá trị của
+    # KHÂU CHỌN ỨNG VIÊN khỏi giá trị của khâu rerank: nếu Random-C gần bằng
+    # V-Engram thì rerank đang làm hết việc, còn semantic key thì không.
+    log(f"[*] Baseline Random-C (C={VENGRAM_CANDIDATES} ứng viên ngẫu nhiên + rerank) ...")
+    rng_c = np.random.RandomState(RNG_SEED + 11)
+    randc_ret = []
+    C = min(VENGRAM_CANDIDATES, N)
+    for q in range(Q):
+        cand = set(int(i) for i in rng_c.choice(N, size=C, replace=False))
+        randc_ret.append(rerank(Qv[q], cand, E, pq_codes, codebook))
+    s_r, s_h, m = success_and_mrr(randc_ret, gt_sets)
+    results["Random-C (+ same rerank)"] = (s_r, s_h, m,
+        f"C={C} ứng viên ngẫu nhiên, rerank giống hệt")
+    log(f"    Recall@5={s_r:.1f}%  Success@5={s_h:.1f}%  MRR@5={m:.3f}")
+
     # 8) Random-5 (pure chance, KHÔNG rerank) — nguồn của con số ~0.1% cũ
     log("[*] Baseline Random-5 (pure chance) ...")
     rng = np.random.RandomState(RNG_SEED)
@@ -272,12 +331,22 @@ def main():
     log(f"    Recall@5={s_r:.2f}%  Success@5={s_h:.2f}%  MRR@5={m:.3f}")
 
     # 9) In bảng + ghi báo cáo
+    # bảng quét bucket-LSH (mục 18)
+    log("")
+    log("=== QUÉT BUCKET-LSH (mục 18): recall đổi theo bề rộng bucket ===")
+    log(f"{'b':>3s} {'Recall@5':>10s} {'Hit@5':>8s} {'pool TB':>9s} {'bucket rỗng':>12s}")
+    for b, sr, sh, pool, emp in bucket_rows:
+        log(f"{b:>3} {sr:>9.1f}% {sh:>7.1f}% {pool:>9.0f} {emp:>11.1f}%")
+    log("")
+
     header = f"{'Method':40s} {'Recall@5':>10s} {'Hit@5':>8s} {'MRR@5':>8s}   Note"
     lines = [header, "-" * len(header)]
     order = ["Exact Brute-Force (IndexFlatIP)",
              f"FAISS-HNSW (M={HNSW_M}, ef={HNSW_EF})",
              "Centralized Multi-Table LSH",
+             "Bucket-LSH (exact bucket)",
              "Crypto-DHT (same budget + rerank)",
+             "Random-C (+ same rerank)",
              "Random-5 (no rerank)"]
     for name in order:
         rc, ht, m, note = results[name]

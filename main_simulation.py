@@ -121,6 +121,52 @@ def run_simulation(env, args, cfg):
         print(f"  MRR@5      : {m.get('mrr_score', 0):.4f}")
     print(f"  Rounds/query   : {np.mean([s['rounds'] for s in all_stats]):.1f}")
     print(f"  RPC/query      : {np.mean([s['rpcs'] for s in all_stats]):.1f}")
+
+    # ===== MỤC 5: BẢNG CHI PHÍ ĐẦY ĐỦ =====
+    def _q(key, p):
+        return np.percentile([s.get(key, 0) for s in all_stats], p)
+
+    def _m(key):
+        return np.mean([s.get(key, 0) for s in all_stats])
+
+    print()
+    print("=" * 78)
+    print("BẢNG CHI PHÍ (mục 5) — tách Discovery / Payload / Total")
+    print("=" * 78)
+    print(f"{'Đại lượng':28s} {'Discovery':>13s} {'Payload':>13s} {'Total':>13s}")
+    print("-" * 78)
+    print(f"{'Routing rounds/query':28s} {_m('disc_rounds'):>13.1f} "
+          f"{_m('pay_rounds'):>13.1f} {_m('disc_rounds')+_m('pay_rounds'):>13.1f}")
+    print(f"{'RPC/query':28s} {_m('disc_rpcs'):>13.1f} "
+          f"{_m('pay_rpcs'):>13.1f} {_m('disc_rpcs')+_m('pay_rpcs'):>13.1f}")
+    print(f"{'Bytes/query':28s} {_m('disc_bytes'):>13,.0f} "
+          f"{_m('pay_bytes'):>13,.0f} {_m('disc_bytes')+_m('pay_bytes'):>13,.0f}")
+    print(f"{'Unique nodes contacted':28s} {_m('contacted_nodes'):>13.1f} "
+          f"{'--':>13s} {_m('contacted_nodes'):>13.1f}")
+    print(f"{'Candidate tags moved':28s} {_m('candidate_tags'):>13.1f} "
+          f"{'--':>13s} {_m('candidate_tags'):>13.1f}")
+    print(f"{'Unique candidates':28s} {_m('unique_candidates'):>13.1f} "
+          f"{'--':>13s} {_m('unique_candidates'):>13.1f}")
+    print("-" * 78)
+    print(f"{'Latency p50 (ms)':28s} {'':>13s} {'':>13s} {_q('latency_ms',50):>13.0f}")
+    print(f"{'Latency p95 (ms)':28s} {'':>13s} {'':>13s} {_q('latency_ms',95):>13.0f}")
+    print(f"{'Latency p99 (ms)':28s} {'':>13s} {'':>13s} {_q('latency_ms',99):>13.0f}")
+    print("=" * 78)
+    print("  Lưu ý: 'rounds' cộng dồn qua L×T lookup CHẠY SONG SONG, nên nó là tổng")
+    print("  công, KHÔNG phải đường tới hạn. Latency mới phản ánh thời gian thực tế.")
+
+    # ===== MỤC 21: % LOOKUP CHẠM R_max =====
+    tot = sum(s.get('lookups_total', 0) for s in all_stats)
+    cap = sum(s.get('lookups_at_cap', 0) for s in all_stats)
+    rmax = all_stats[0].get('r_max', '?') if all_stats else '?'
+    q_any_cap = sum(1 for s in all_stats if s.get('lookups_at_cap', 0) > 0)
+    print()
+    print(f"[MỤC 21] R_max = {rmax}")
+    print(f"  Lookup chạm trần : {cap:,}/{tot:,} ({100.0*cap/max(1,tot):.1f}%)")
+    print(f"  Query có >=1 lookup chạm trần: {q_any_cap}/{len(all_stats)} "
+          f"({100.0*q_any_cap/max(1,len(all_stats)):.1f}%)")
+    print(f"  => Nếu tỉ lệ cao, R_max đang CẮT lookup trước khi hội tụ; recall báo")
+    print(f"     cáo là dưới trần đó, không phải của thuật toán hội tụ đầy đủ.")
     print(f"  Node chạm/query: {np.mean([s['contacted_nodes'] for s in all_stats]):.1f} "
           f"({100*np.mean([s['contacted_nodes'] for s in all_stats])/args.nodes:.1f}% mạng)")
     print(f"  Candidate/query: {np.mean(uniq_cands):.0f} "
@@ -137,6 +183,19 @@ def run_simulation(env, args, cfg):
            "mrr": m.get("mrr_score") if m else None,
            "mean_rounds": float(np.mean([s["rounds"] for s in all_stats])),
            "mean_rpcs": float(np.mean([s["rpcs"] for s in all_stats])),
+           "disc_rounds": float(np.mean([s.get("disc_rounds",0) for s in all_stats])),
+           "disc_rpcs": float(np.mean([s.get("disc_rpcs",0) for s in all_stats])),
+           "disc_bytes": float(np.mean([s.get("disc_bytes",0) for s in all_stats])),
+           "pay_rounds": float(np.mean([s.get("pay_rounds",0) for s in all_stats])),
+           "pay_rpcs": float(np.mean([s.get("pay_rpcs",0) for s in all_stats])),
+           "pay_bytes": float(np.mean([s.get("pay_bytes",0) for s in all_stats])),
+           "candidate_tags": float(np.mean([s.get("candidate_tags",0) for s in all_stats])),
+           "latency_p50": float(np.percentile([s.get("latency_ms",0) for s in all_stats], 50)),
+           "latency_p95": float(np.percentile([s.get("latency_ms",0) for s in all_stats], 95)),
+           "latency_p99": float(np.percentile([s.get("latency_ms",0) for s in all_stats], 99)),
+           "r_max": all_stats[0].get("r_max", 15) if all_stats else 15,
+           "lookups_total": int(sum(s.get("lookups_total",0) for s in all_stats)),
+           "lookups_at_cap": int(sum(s.get("lookups_at_cap",0) for s in all_stats)),
            "mean_contacted": float(np.mean([s["contacted_nodes"] for s in all_stats])),
            "mean_candidates": float(np.mean(uniq_cands)),
            "metadata_gini": gini, "metadata_total": int(meta.sum())}

@@ -33,6 +33,9 @@ def agg(rows, keyfn):
     return g
 
 
+CORPUS = {'code': 20000, 'scifact': 5183, 'squad': 18891}
+
+
 def m(vals):
     return st.mean(vals) if vals else float('nan')
 
@@ -82,7 +85,7 @@ def main():
         eff = r5 / nd if nd > 0 else float('nan')
         delta = f"  (+{r5-prev:.1f}đ)" if prev is not None else ""
         print(f"{T:>3} {len(v):>2} {m([x['reachable_recall5'] for x in v]):>10.1f}% "
-              f"{r5:>10.1f}% {nd:>6.1f}% {m([x['mean_unique_candidates'] for x in v]):>6.1f}% "
+              f"{r5:>10.1f}% {nd:>6.1f}% {m([100*x['mean_unique_candidates']/CORPUS.get(x['dataset'],20000) for x in v]):>6.1f}% "
               f"{eff:>10.1f}{delta}")
         prev = r5
 
@@ -104,7 +107,7 @@ def main():
         eff = r5 / nd if nd > 0 else float('nan')
         delta = f"  (+{r5-prev:.1f}đ)" if prev is not None else ""
         print(f"{K:>3} {len(v):>2} {m([x['reachable_recall5'] for x in v]):>10.1f}% "
-              f"{r5:>10.1f}% {nd:>6.1f}% {m([x['mean_unique_candidates'] for x in v]):>6.1f}% "
+              f"{r5:>10.1f}% {nd:>6.1f}% {m([100*x['mean_unique_candidates']/CORPUS.get(x['dataset'],20000) for x in v]):>6.1f}% "
               f"{eff:>10.1f}{delta}")
         prev = r5
 

@@ -191,6 +191,11 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
     total_hops = 0          # routing rounds
     total_rpcs = 0          # RPC count
     contacted = set()       # node chạy ADC
+    # --- Mục 5: tách chi phí DISCOVERY và PAYLOAD ---
+    disc_rounds = disc_rpcs = disc_bytes = 0
+    pay_rounds = pay_rpcs = pay_bytes = 0
+    lookups_total = lookups_at_cap = 0        # mục 21: % lookup chạm R_max
+    t_query_start = env.now
 
     if random_routing:
         # BASELINE: chạm đúng cùng số node nhưng chọn ngẫu nhiên
@@ -211,6 +216,12 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
                 )
                 total_hops += hops
                 total_rpcs += rpcs
+                disc_rounds += hops
+                disc_rpcs += rpcs
+                disc_bytes += rpcs * 8 * 20        # FIND_NODE trả ~8 contact × 20B
+                lookups_total += 1
+                if hops >= DEFAULT_R_MAX:
+                    lookups_at_cap += 1            # không hội tụ, chạm trần
                 # NGÂN SÁCH THEO TỪNG PREFIX — không cộng dồn qua các bảng
                 for node in nodes:
                     if node.node_id in contacted:
@@ -218,6 +229,8 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
                     contacted.add(node.node_id)
                     yield env.timeout(_rtt())
                     total_rpcs += 1       # ADC request
+                    disc_rpcs += 1
+                    disc_bytes += 512 + LOCAL_TOP_K * 24   # query PQ gửi đi + tag trả về
                     all_candidates.extend(
                         node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K)
                     )
@@ -245,14 +258,19 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         for s_id in range(30):
             p_key = generate_placement_key(tag, s_id)
             bootstrap_node = random.choice(network_nodes)
-            candidate_nodes, _, _ = iterative_find_k_closest_nodes(
+            candidate_nodes, _ph, _pr = iterative_find_k_closest_nodes(
                 p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
             )
+            pay_rounds += _ph
+            pay_rpcs += _pr
+            pay_bytes += _pr * 8 * 20
             for target_node in candidate_nodes:
                 yield env.timeout(_rtt())
                 shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
+                pay_rpcs += 1
                 if shard_data:
                     shards_collected += 1
+                    pay_bytes += 4096 // 20        # một shard RS(30,20) của payload 4KB
                     break
             if shards_collected >= k_required:
                 break
@@ -265,5 +283,14 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         "rpcs": total_rpcs,
         "contacted_nodes": len(contacted),
         "unique_candidates": num_unique_candidates,
+        # --- Mục 5: chi phí tách bạch ---
+        "disc_rounds": disc_rounds, "disc_rpcs": disc_rpcs, "disc_bytes": disc_bytes,
+        "pay_rounds": pay_rounds, "pay_rpcs": pay_rpcs, "pay_bytes": pay_bytes,
+        "candidate_tags": len(all_candidates),
+        "latency_ms": env.now - t_query_start,
+        # --- Mục 21: chạm trần R_max ---
+        "lookups_total": lookups_total,
+        "lookups_at_cap": lookups_at_cap,
+        "r_max": DEFAULT_R_MAX,
     }
     return retrieved_tags, total_hops, num_unique_candidates, stats

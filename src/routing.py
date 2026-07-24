@@ -11,7 +11,9 @@ DEFAULT_LSH_SEED = 20235956
 
 # --- Tham số giao thức, khớp Table 2 trong paper ---
 DEFAULT_ALPHA = 3        # alpha — độ song song của lookup
-DEFAULT_R_MAX = 15       # R_max — trần số vòng mỗi lookup
+import os as _os
+# Mục 21: quét R_max qua biến môi trường
+DEFAULT_R_MAX = int(_os.environ.get("R_MAX", "15"))   # trần số vòng mỗi lookup
 DEFAULT_MULTI_PROBE = 3  # T — số prefix probe mỗi bảng (mục 3.5)
 DEFAULT_PROBE_BITS = 16  # c — số bit đầu được phép lật khi probe
 
