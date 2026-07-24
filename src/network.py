@@ -43,6 +43,8 @@ def _rtt():
 import os as _os
 # Mục 16: quét r ∈ {1,2,3} qua biến môi trường thay vì sửa code
 METADATA_ANCHORS = int(_os.environ.get("META_ANCHORS", "1"))
+# Fetch payload song song (mặc định BẬT). PARALLEL_FETCH=0 để đối chiếu.
+PARALLEL_FETCH = _os.environ.get("PARALLEL_FETCH", "1") != "0"
 
 # K — ngân sách node mỗi bảng (số node chạy ADC cho mỗi prefix)
 K_QUERY = 20
@@ -162,6 +164,29 @@ def data_ingestion_process(
     )
 
 
+def _fetch_one_shard(env, tag, s_id, network_nodes, acc):
+    """Lấy MỘT shard. Viết thành generator riêng để 30 shard đi SONG SONG.
+
+    Ghi chi phí vào dict acc dùng chung (rounds/rpcs/bytes/ok).
+    """
+    p_key = generate_placement_key(tag, s_id)
+    bootstrap_node = random.choice(network_nodes)
+    candidate_nodes, ph, pr = iterative_find_k_closest_nodes(
+        p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
+    )
+    acc["rounds"] += ph
+    acc["rpcs"] += pr
+    acc["bytes"] += pr * 8 * 20
+    for target_node in candidate_nodes:
+        yield env.timeout(_rtt())
+        shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
+        acc["rpcs"] += 1
+        if shard_data:
+            acc["ok"] += 1
+            acc["bytes"] += 4096 // 20
+            return
+
+
 def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5,
                            k_query=None, multi_probe=None, random_routing=False,
                            verbose=True):
@@ -253,27 +278,47 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
     # Bỏ lối tắt tra GLOBAL_METADATA_DHT: trong thí nghiệm churn nó khiến metadata
     # KHÔNG BAO GIỜ chết, nên metadata availability không đo được (mục Threats).
     k_required = 20
-    for rank, (tag, score) in enumerate(reranked_top, 1):
-        shards_collected = 0
-        for s_id in range(30):
-            p_key = generate_placement_key(tag, s_id)
-            bootstrap_node = random.choice(network_nodes)
-            candidate_nodes, _ph, _pr = iterative_find_k_closest_nodes(
-                p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
-            )
-            pay_rounds += _ph
-            pay_rpcs += _pr
-            pay_bytes += _pr * 8 * 20
-            for target_node in candidate_nodes:
-                yield env.timeout(_rtt())
-                shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
-                pay_rpcs += 1
-                if shard_data:
-                    shards_collected += 1
-                    pay_bytes += 4096 // 20        # một shard RS(30,20) của payload 4KB
+    if PARALLEL_FETCH:
+        # SONG SONG: phóng k_required shard cùng lúc, thiếu thì phóng tiếp phần còn
+        # lại. Client thật làm đúng vậy — nó không biết shard nào chết nên gửi hết
+        # rồi lấy 20 cái về trước. Độ trễ khi đó là của lookup CHẬM NHẤT, không
+        # phải tổng của 20-30 lookup nối đuôi.
+        for rank, (tag, score) in enumerate(reranked_top, 1):
+            acc = {"rounds": 0, "rpcs": 0, "bytes": 0, "ok": 0}
+            procs = [env.process(_fetch_one_shard(env, tag, s_id, network_nodes, acc))
+                     for s_id in range(k_required)]
+            yield env.all_of(procs)
+            if acc["ok"] < k_required:          # có shard chết -> bù nốt, vẫn song song
+                procs = [env.process(_fetch_one_shard(env, tag, s_id, network_nodes, acc))
+                         for s_id in range(k_required, 30)]
+                yield env.all_of(procs)
+            pay_rounds += acc["rounds"]
+            pay_rpcs += acc["rpcs"]
+            pay_bytes += acc["bytes"]
+            shards_collected = acc["ok"]
+    else:
+        # TUẦN TỰ: giữ để đối chiếu độ trễ.
+        for rank, (tag, score) in enumerate(reranked_top, 1):
+            shards_collected = 0
+            for s_id in range(30):
+                p_key = generate_placement_key(tag, s_id)
+                bootstrap_node = random.choice(network_nodes)
+                candidate_nodes, _ph, _pr = iterative_find_k_closest_nodes(
+                    p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
+                )
+                pay_rounds += _ph
+                pay_rpcs += _pr
+                pay_bytes += _pr * 8 * 20
+                for target_node in candidate_nodes:
+                    yield env.timeout(_rtt())
+                    shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
+                    pay_rpcs += 1
+                    if shard_data:
+                        shards_collected += 1
+                        pay_bytes += 4096 // 20
+                        break
+                if shards_collected >= k_required:
                     break
-            if shards_collected >= k_required:
-                break
         if verbose:
             status = "THÀNH CÔNG" if shards_collected >= k_required else "THẤT BẠI"
             print(f"  - Top {rank} ({tag}): Khôi phục {status}! ({shards_collected}/30 Shards)")
