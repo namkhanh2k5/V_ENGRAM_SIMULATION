@@ -16,6 +16,18 @@ Sửa so với bản cũ:
 Cách chạy:
   python main_simulation_v2.py --dataset code --seed 20235956 --k-query 300 --meta-anchors 30 --use-pq --nq 100
   python main_simulation_v2.py --dataset code --seed 20235956 --k-query 20  --meta-anchors 1  --no-pq  --nq 100
+
+LƯU Ý VỀ ĐỘ TRUNG THỰC (quan trọng khi đọc số):
+  Bản này KHÔNG đi walk Kademlia lặp. Nó tính XOR tới TOÀN BỘ node rồi lấy K
+  node gần nhất toàn cục (net.knn). Đây là LOOKUP LÝ TƯỞNG HOÁ — giả định client
+  tìm được ngay K node gần nhất tuyệt đối, không tốn vòng nào.
+
+  Kademlia thật đi lặp và chỉ XẤP XỈ tập đó, nên số recall ở đây là CẬN TRÊN.
+  Đối chiếu: main_simulation.py (SimPy, walk thật) cho Recall@5=77% ở cùng cấu
+  hình mà bản này cho 80% — chênh ~3 điểm.
+
+  Hệ quả: không đo được R_max, số vòng, hay RPC ở bản này. Những đại lượng đó
+  phải lấy từ main_simulation.py.
 """
 import argparse, json, random, time
 import numpy as np
