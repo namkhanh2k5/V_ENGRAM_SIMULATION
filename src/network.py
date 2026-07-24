@@ -187,6 +187,21 @@ def _fetch_one_shard(env, tag, s_id, network_nodes, acc):
             return
 
 
+def _fetch_one_object(env, tag, network_nodes, acc, k_required=20):
+    """Lấy payload của MỘT object: phóng k_required shard song song, thiếu thì bù.
+
+    Viết riêng để bản thân các object cũng chạy song song với nhau — client thật
+    không đợi giải mã xong object 1 rồi mới đi tìm object 2.
+    """
+    procs = [env.process(_fetch_one_shard(env, tag, s_id, network_nodes, acc))
+             for s_id in range(k_required)]
+    yield env.all_of(procs)
+    if acc["ok"] < k_required:            # có shard chết -> bù nốt, vẫn song song
+        procs = [env.process(_fetch_one_shard(env, tag, s_id, network_nodes, acc))
+                 for s_id in range(k_required, 30)]
+        yield env.all_of(procs)
+
+
 def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5,
                            k_query=None, multi_probe=None, random_routing=False,
                            verbose=True):
@@ -283,19 +298,18 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         # lại. Client thật làm đúng vậy — nó không biết shard nào chết nên gửi hết
         # rồi lấy 20 cái về trước. Độ trễ khi đó là của lookup CHẬM NHẤT, không
         # phải tổng của 20-30 lookup nối đuôi.
-        for rank, (tag, score) in enumerate(reranked_top, 1):
-            acc = {"rounds": 0, "rpcs": 0, "bytes": 0, "ok": 0}
-            procs = [env.process(_fetch_one_shard(env, tag, s_id, network_nodes, acc))
-                     for s_id in range(k_required)]
-            yield env.all_of(procs)
-            if acc["ok"] < k_required:          # có shard chết -> bù nốt, vẫn song song
-                procs = [env.process(_fetch_one_shard(env, tag, s_id, network_nodes, acc))
-                         for s_id in range(k_required, 30)]
-                yield env.all_of(procs)
-            pay_rounds += acc["rounds"]
-            pay_rpcs += acc["rpcs"]
-            pay_bytes += acc["bytes"]
-            shards_collected = acc["ok"]
+        # Cả 5 object ĐỒNG THỜI, và trong mỗi object thì 20 shard cũng đồng thời.
+        accs = [{"rounds": 0, "rpcs": 0, "bytes": 0, "ok": 0} for _ in reranked_top]
+        objs = [env.process(_fetch_one_object(env, tag, network_nodes, accs[idx],
+                                              k_required))
+                for idx, (tag, score) in enumerate(reranked_top)]
+        if objs:
+            yield env.all_of(objs)
+        for a in accs:
+            pay_rounds += a["rounds"]
+            pay_rpcs += a["rpcs"]
+            pay_bytes += a["bytes"]
+        shards_collected = accs[-1]["ok"] if accs else 0
     else:
         # TUẦN TỰ: giữ để đối chiếu độ trễ.
         for rank, (tag, score) in enumerate(reranked_top, 1):
