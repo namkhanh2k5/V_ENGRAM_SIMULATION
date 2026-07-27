@@ -199,11 +199,17 @@ def main():
     # -------------------- INGESTION: neo metadata -------------------- #
     t0 = time.time()
     print(f"[*] Ingest {N_DOCS:,} doc (MA={args.meta_anchors})...")
+    anchor_counts = []          # mục 13: A đo được cho từng object
     for i in range(N_DOCS):
+        _anchors_this_doc = set()
         for proj in P:
             skey = net.key63(E[i], proj)
             for nidx in net.knn(skey, args.meta_anchors):
                 net.ram[nidx][i] = codes[i]
+                _anchors_this_doc.add(int(nidx))
+        # A của object này: số node PHÂN BIỆT giữ record. Danh nghĩa là L*r, nhưng
+        # nhỏ hơn khi hai khoá ngữ nghĩa cùng rơi vào một node (mục 13).
+        anchor_counts.append(len(_anchors_this_doc))
         if (i + 1) % 5000 == 0:
             print(f"    ... {i+1:,}/{N_DOCS:,}")
     mc = net.metadata_count()
@@ -349,6 +355,9 @@ def main():
     res = {
         'dataset': args.dataset, 'nodes': args.nodes, 'seed': args.seed,
         'k_query': args.k_query, 'meta_anchors': args.meta_anchors,
+        # Mục 13: A và M thực đo, để đối chiếu công thức hypergeometric
+        'A_distinct_anchors': float(np.mean(anchor_counts)) if anchor_counts else 0.0,
+        'A_nominal': L * args.meta_anchors,
         'random_routing': args.random_routing,
         'routing_mode': mode,
         'node_loss': args.node_loss,
@@ -394,6 +403,16 @@ def main():
           f"({100*res['mean_unique_candidates']/N_DOCS:.2f}% corpus)")
     print(f"  Node chạm/query: {res['mean_nodes_touched']:.0f} "
           f"({res['pct_network_touched']:.1f}% mạng)")
+    _A = res['A_distinct_anchors']; _An = res['A_nominal']
+    _M = res['mean_nodes_touched']; _Mn = L * args.k_query * args.multi_probe
+    from math import comb
+    try:
+        _p = 100.0 * (1 - comb(max(0, args.nodes - int(round(_A))), int(round(_M)))
+                      / comb(args.nodes, int(round(_M))))
+    except (ValueError, ZeroDivisionError):
+        _p = float('nan')
+    print(f"  [MỤC 13] A đo={_A:.2f} (danh nghĩa {_An}) | M đo={_M:.0f} "
+          f"(danh nghĩa {_Mn}) -> P_rand hypergeom={_p:.1f}%")
     print(f"  Metadata: {res['metadata_total']:,} bản ({res['metadata_mean_per_node']:.0f}/node, "
           f"Gini={res['metadata_gini']:.3f})")
     print(f"  RPC load/node (zipf={args.zipf}): mean={res['rpc_mean']:.1f} "
