@@ -1,19 +1,16 @@
-# Bỏ qua môi trường ảo (Cực kỳ quan trọng)
-venv/
-env/
-.env
-.vscode/
-
-
-# Bỏ qua các file cache của Python
-__pycache__/
-*.pyc
-
-# Bỏ qua file báo cáo (nếu ngài không muốn push lên)
-# comparison_report.txt
-# Ket qua chay — sinh lai duoc, khong commit
+data/*.npy
+data/*.json
 result_*.json
 summary.csv
 *.log
-data/*.npy
-data/*.json
+muc*.txt
+paper_tables.txt
+hotspot_*.txt
+failure_*.txt
+baseline_*.txt
+latency_*.txt
+bitflips_*.json
+weakscaling*.txt
+__pycache__/
+*.pyc
+venv/

@@ -108,7 +108,11 @@ def gini(x):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', default='code', choices=['code', 'scifact', 'squad'])
+    ap.add_argument('--dataset', default='code',
+                    help="Tên bộ dữ liệu, khớp tiền tố file trong ./data/. "
+                         "Ví dụ: code, scifact, squad, code50k, code100k. "
+                         "Không giới hạn danh sách để thêm corpus weak-scaling "
+                         "mà không phải sửa code.")
     ap.add_argument('--nodes', type=int, default=10000)
     ap.add_argument('--seed', type=int, default=20235956)
     ap.add_argument('--k-query', type=int, default=300, help='số node mỗi bảng ghé (K_QUERY)')
@@ -137,6 +141,10 @@ def main():
     ap.add_argument('--zipf', type=float, default=0.0, metavar='S',
                     help='Phân bố query Zipf với tham số s (0 = đều). Đo RPC load\n'
                          'per node: hotspot lưu trữ khác hotspot TRUY VẤN.')
+    ap.add_argument('--per-table-stats', action='store_true',
+                    help='Mục 2: đo reachable recall CỦA TỪNG BẢNG riêng lẻ và\n'
+                         'tương quan giữa các bảng. Trả lời: các bảng có ĐỘC LẬP\n'
+                         'như Phương trình OR-amplification giả định không?')
     ap.add_argument('--prefix-occupancy', action='store_true',
                     help='Báo cáo occupancy keyspace tại c=4,8,12,16')
     ap.add_argument('--node-loss', type=float, default=0.0, metavar='F',
@@ -199,11 +207,17 @@ def main():
     # -------------------- INGESTION: neo metadata -------------------- #
     t0 = time.time()
     print(f"[*] Ingest {N_DOCS:,} doc (MA={args.meta_anchors})...")
+    anchor_counts = []          # mục 13: A đo được cho từng object
     for i in range(N_DOCS):
+        _anchors_this_doc = set()
         for proj in P:
             skey = net.key63(E[i], proj)
             for nidx in net.knn(skey, args.meta_anchors):
                 net.ram[nidx][i] = codes[i]
+                _anchors_this_doc.add(int(nidx))
+        # A của object này: số node PHÂN BIỆT giữ record. Danh nghĩa là L*r, nhưng
+        # nhỏ hơn khi hai khoá ngữ nghĩa cùng rơi vào một node (mục 13).
+        anchor_counts.append(len(_anchors_this_doc))
         if (i + 1) % 5000 == 0:
             print(f"    ... {i+1:,}/{N_DOCS:,}")
     mc = net.metadata_count()
@@ -225,6 +239,7 @@ def main():
         q_order = np.arange(n_run)
     node_rpc = np.zeros(args.nodes, dtype=np.int64)   # RPC load per node
     reach_hit = ret_hit = fin_hit = 0
+    table_hits = []              # mục 2: [neighbor][table] -> bool
     reach_r5 = ret_r5 = 0.0          # Recall@5 tầng 1, tầng 2
     rec5_sum = rec10_sum = 0.0
     uniq_list, touched_list = [], []
@@ -267,10 +282,15 @@ def main():
 
         # --- Ripple Search: ngân sách THEO TỪNG BẢNG (sửa bug cộng dồn) ---
         touched = set()
+        per_table_touched = []          # mục 2
         if mode == 'semantic':
             for proj in P:
+                _tt = set()
                 for qkey in net.probe_keys63(q, proj, args.multi_probe, args.probe_bits):
-                    touched.update(int(x) for x in net.knn(qkey, args.k_query))
+                    _tt.update(int(x) for x in net.knn(qkey, args.k_query))
+                touched.update(_tt)
+                if args.per_table_stats:
+                    per_table_touched.append(_tt)
 
         elif mode == 'random_slots':
             # Oracle uniform-node sampling, ngân sách SLOT danh nghĩa L*K*T.
@@ -312,6 +332,14 @@ def main():
             reach_hit += 1
         reach_r5 += len(set(gt5) & reachable_tags) / 5.0
 
+        # --- Mục 2: bảng nào tới được neighbor nào ---
+        if args.per_table_stats and per_table_touched:
+            for tag in gt5:
+                row = []
+                for _tt in per_table_touched:
+                    row.append(any(tag in net.ram[ni] for ni in _tt))
+                table_hits.append(row)
+
         # Tầng 2: returned — mỗi node trả local top-k
         cand = {}
         for nidx in touched:
@@ -349,6 +377,9 @@ def main():
     res = {
         'dataset': args.dataset, 'nodes': args.nodes, 'seed': args.seed,
         'k_query': args.k_query, 'meta_anchors': args.meta_anchors,
+        # Mục 13: A và M thực đo, để đối chiếu công thức hypergeometric
+        'A_distinct_anchors': float(np.mean(anchor_counts)) if anchor_counts else 0.0,
+        'A_nominal': L * args.meta_anchors,
         'random_routing': args.random_routing,
         'routing_mode': mode,
         'node_loss': args.node_loss,
@@ -375,6 +406,19 @@ def main():
         'rpc_p99': float(np.percentile(node_rpc, 99)),
         'rpc_max': int(node_rpc.max()),
         'rpc_mean': float(node_rpc.mean()),
+        # --- Mục 17: tải TÍNH TOÁN = số request × số code phải quét mỗi lần ---
+        # Đây mới là đại lượng quyết định nút thắt throughput, không phải số request.
+        'work_gini': gini(node_rpc * np.array([len(r) for r in net.ram], dtype=np.float64)),
+        'work_p99': float(np.percentile(
+            node_rpc * np.array([len(r) for r in net.ram], dtype=np.float64), 99)),
+        'work_max': float((node_rpc * np.array(
+            [len(r) for r in net.ram], dtype=np.float64)).max()),
+        'work_mean': float((node_rpc * np.array(
+            [len(r) for r in net.ram], dtype=np.float64)).mean()),
+        # tương quan giữa "giữ nhiều record" và "nhận nhiều request"
+        'corr_load_store': float(np.corrcoef(
+            node_rpc, np.array([len(r) for r in net.ram], dtype=np.float64))[0, 1])
+            if node_rpc.std() > 0 else 0.0,
     }
 
     print("\n" + "=" * 62)
@@ -394,10 +438,60 @@ def main():
           f"({100*res['mean_unique_candidates']/N_DOCS:.2f}% corpus)")
     print(f"  Node chạm/query: {res['mean_nodes_touched']:.0f} "
           f"({res['pct_network_touched']:.1f}% mạng)")
+    _A = res['A_distinct_anchors']; _An = res['A_nominal']
+    _M = res['mean_nodes_touched']; _Mn = L * args.k_query * args.multi_probe
+    from math import comb
+    try:
+        _p = 100.0 * (1 - comb(max(0, args.nodes - int(round(_A))), int(round(_M)))
+                      / comb(args.nodes, int(round(_M))))
+    except (ValueError, ZeroDivisionError):
+        _p = float('nan')
+    print(f"  [MỤC 13] A đo={_A:.2f} (danh nghĩa {_An}) | M đo={_M:.0f} "
+          f"(danh nghĩa {_Mn}) -> P_rand hypergeom={_p:.1f}%")
     print(f"  Metadata: {res['metadata_total']:,} bản ({res['metadata_mean_per_node']:.0f}/node, "
           f"Gini={res['metadata_gini']:.3f})")
+    print(f"  [MỤC 17] Tải TÍNH TOÁN (request × code phải quét):")
+    print(f"    mean={res['work_mean']:,.0f} P99={res['work_p99']:,.0f} "
+          f"max={res['work_max']:,.0f} Gini={res['work_gini']:.3f}")
+    print(f"    max/mean = {res['work_max']/max(1e-9, res['work_mean']):.0f}x | "
+          f"tương quan (giữ nhiều record ~ nhận nhiều request) = {res['corr_load_store']:+.3f}")
     print(f"  RPC load/node (zipf={args.zipf}): mean={res['rpc_mean']:.1f} "
           f"P99={res['rpc_p99']:.0f} max={res['rpc_max']} Gini={res['rpc_gini']:.3f}")
+    if args.per_table_stats and table_hits:
+        H = np.array(table_hits, dtype=float)       # (n_neighbor, L)
+        p_each = H.mean(axis=0)
+        p_bar = float(p_each.mean())
+        obs_or = float((H.max(axis=1) > 0).mean())
+        pred_or = 1.0 - (1.0 - p_bar) ** H.shape[1]
+        print()
+        print("  === MỤC 2: CÁC BẢNG CÓ ĐỘC LẬP KHÔNG? ===")
+        print("  Reachable recall CỦA TỪNG BẢNG riêng lẻ:")
+        for t, pv in enumerate(p_each):
+            print(f"    bảng {t+1}: {100*pv:5.1f}%")
+        print(f"  Trung bình p = {100*p_bar:.1f}%")
+        print(f"  OR của {H.shape[1]} bảng — ĐO ĐƯỢC : {100*obs_or:.1f}%")
+        print(f"  OR nếu ĐỘC LẬP 1-(1-p)^L         : {100*pred_or:.1f}%")
+        print(f"  => thiếu hụt {100*(pred_or-obs_or):+.1f} điểm")
+        # tương quan từng cặp
+        cs = []
+        for a in range(H.shape[1]):
+            for b in range(a + 1, H.shape[1]):
+                sa, sb = H[:, a].std(), H[:, b].std()
+                if sa > 0 and sb > 0:
+                    cs.append(float(np.corrcoef(H[:, a], H[:, b])[0, 1]))
+        if cs:
+            print(f"  Tương quan cặp bảng: TB={np.mean(cs):+.3f} "
+                  f"min={min(cs):+.3f} max={max(cs):+.3f}")
+            print("  (0 = độc lập hoàn toàn. DƯƠNG = các bảng cùng thành công/thất bại")
+            print("   trên cùng neighbor, nên OR-amplification kém hiệu quả hơn lý thuyết.)")
+        # bao nhiêu neighbor được k bảng tìm thấy
+        k_cnt = H.sum(axis=1).astype(int)
+        print("  Số bảng tìm thấy mỗi neighbor:")
+        for k in range(H.shape[1] + 1):
+            c = int((k_cnt == k).sum())
+            if c:
+                print(f"    {k} bảng: {100.0*c/len(k_cnt):5.1f}%")
+
     if args.prefix_occupancy:
         print('  Prefix occupancy (metadata theo c bit đầu của node_id):')
         for c in (4, 8, 12, 16):
