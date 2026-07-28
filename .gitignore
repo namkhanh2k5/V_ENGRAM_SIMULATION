@@ -15,3 +15,5 @@ __pycache__/
 result_*.json
 summary.csv
 *.log
+data/*.npy
+data/*.json
