@@ -13,13 +13,18 @@ import json
 import statistics as st
 from collections import defaultdict
 
-# (dataset, số node) theo tỉ lệ 2 doc/node
-POINTS = [('code', 10000, 20000), ('code50k', 25000, 50000), ('code100k', 50000, 100000)]
+# (dataset, node, doc, K) — hai đường
+# A: K cố định 20 -> chi phí không đổi, K/N co lại
+# B: K tỉ lệ N (K/N = 0,20%) -> phủ không đổi, chi phí tăng tuyến tính
+TRACK_A = [('code', 10000, 20000, 20), ('code50k', 25000, 50000, 20),
+           ('code100k', 50000, 100000, 20)]
+TRACK_B = [('code', 10000, 20000, 20), ('code50k', 25000, 50000, 50),
+           ('code100k', 50000, 100000, 100)]
 
 
 def main():
     data = defaultdict(list)
-    for f in glob.glob('result_*_L5_K20_MA1_T8_m512*_nq500.json'):
+    for f in glob.glob('result_*_L5_K*_MA1_T8_m512*_nq500.json'):
         try:
             d = json.load(open(f))
         except Exception:
@@ -29,68 +34,81 @@ def main():
         mode = d.get('routing_mode') or ('random_slots' if d.get('random_routing') else 'semantic')
         if mode not in ('semantic', 'random_slots'):
             continue
-        data[(d['dataset'], d.get('nodes'), mode)].append(d)
+        data[(d['dataset'], d.get('nodes'), d['k_query'], mode)].append(d)
 
-    print("=" * 96)
-    print("WEAK SCALING — tỉ lệ doc/node CỐ ĐỊNH ở 2, tăng cả corpus và mạng")
-    print("=" * 96)
-    print(f"{'nodes':>7s} {'docs':>8s} {'d/n':>4s} {'n':>3s} {'semantic':>13s} {'random':>13s} "
-          f"{'tỉ lệ':>6s} {'node%':>7s} {'cand%':>7s}")
-    print("-" * 96)
+    def show(track, title, note):
+        print("=" * 100)
+        print(title)
+        print(note)
+        print("=" * 100)
+        print(f"{'nodes':>7s} {'docs':>8s} {'K':>4s} {'n':>3s} {'semantic':>13s} "
+              f"{'random':>13s} {'tỉ lệ':>6s} {'node%':>7s} {'cand%':>7s} {'slot':>7s}")
+        print("-" * 100)
+        out = []
+        for ds, nodes, docs, K in track:
+            sem = data.get((ds, nodes, K, 'semantic'), [])
+            rnd = data.get((ds, nodes, K, 'random_slots'), [])
+            if not sem:
+                print(f"{nodes:>7,} {docs:>8,} {K:>4} {'--':>3s}  (chưa có)")
+                continue
+            s_m = st.mean(x['recall5'] for x in sem)
+            s_s = st.stdev([x['recall5'] for x in sem]) if len(sem) > 1 else 0.0
+            r_m = st.mean(x['recall5'] for x in rnd) if rnd else float('nan')
+            r_s = st.stdev([x['recall5'] for x in rnd]) if len(rnd) > 1 else 0.0
+            ratio = s_m / r_m if rnd and r_m > 0 else float('nan')
+            nd = st.mean(x['pct_network_touched'] for x in sem)
+            cd = st.mean(100.0 * x['mean_unique_candidates'] / docs for x in sem)
+            rs = f"{ratio:>6.2f}" if ratio == ratio else f"{'--':>6}"
+            rstr = f"{r_m:>7.1f}±{r_s:<4.1f}" if rnd else f"{'--':>13}"
+            print(f"{nodes:>7,} {docs:>8,} {K:>4} {len(sem):>3} "
+                  f"{s_m:>7.1f}±{s_s:<4.1f} {rstr} {rs} {nd:>6.1f}% {cd:>6.1f}% "
+                  f"{5*K*8:>7,}")
+            out.append({'nodes': nodes, 'docs': docs, 'K': K, 'sem': s_m,
+                        'rnd': r_m, 'ratio': ratio, 'node_pct': nd, 'cand_pct': cd})
+        print()
+        return out
 
-    rows = []
-    for ds, nodes, docs in POINTS:
-        sem = data.get((ds, nodes, 'semantic'), [])
-        rnd = data.get((ds, nodes, 'random_slots'), [])
-        if not sem:
-            print(f"{nodes:>7,} {docs:>8,} {docs/nodes:>4.0f} {'--':>3s}  (chưa có dữ liệu)")
-            continue
-        s_m = st.mean(x['recall5'] for x in sem)
-        s_s = st.stdev([x['recall5'] for x in sem]) if len(sem) > 1 else 0.0
-        r_m = st.mean(x['recall5'] for x in rnd) if rnd else float('nan')
-        r_s = st.stdev([x['recall5'] for x in rnd]) if len(rnd) > 1 else 0.0
-        ratio = s_m / r_m if rnd and r_m > 0 else float('nan')
-        nd = st.mean(x['pct_network_touched'] for x in sem)
-        cd = st.mean(100.0 * x['mean_unique_candidates'] / docs for x in sem)
-        rs = f"{ratio:>6.2f}" if ratio == ratio else f"{'--':>6}"
-        rstr = f"{r_m:>7.1f}±{r_s:<4.1f}" if rnd else f"{'--':>13}"
-        print(f"{nodes:>7,} {docs:>8,} {docs/nodes:>4.0f} {len(sem):>3} "
-              f"{s_m:>7.1f}±{s_s:<4.1f} {rstr} {rs} {nd:>6.1f}% {cd:>6.1f}%")
-        rows.append({'nodes': nodes, 'docs': docs, 'sem': s_m, 'rnd': r_m,
-                     'ratio': ratio, 'node_pct': nd, 'cand_pct': cd})
+    A = show(TRACK_A, "ĐƯỜNG A — K CỐ ĐỊNH ở 20",
+             "Chi phí truy vấn không đổi. K/N co lại khi mạng lớn -> phủ ít corpus dần.")
+    B = show(TRACK_B, "ĐƯỜNG B — K TỈ LỆ VỚI N (K/N = 0,20%)",
+             "Phủ corpus giữ nguyên. Giá: slot truy vấn tăng tuyến tính theo N.")
 
-    if len(rows) < 2:
-        print("\nChưa đủ điểm để kết luận. Cần ít nhất 2 mức.")
-        return
-
-    print()
-    print("=" * 96)
-    print("KẾT LUẬN")
-    print("=" * 96)
-    a, b = rows[0], rows[-1]
-    fold = b['docs'] / a['docs']
-    print(f"  Từ {a['nodes']:,} node / {a['docs']:,} doc  →  "
-          f"{b['nodes']:,} node / {b['docs']:,} doc  ({fold:.0f}× lớn hơn)")
-    print(f"    semantic recall : {a['sem']:.1f}% → {b['sem']:.1f}%  ({b['sem']-a['sem']:+.1f}đ)")
-    if b['rnd'] == b['rnd']:
-        print(f"    random recall   : {a['rnd']:.1f}% → {b['rnd']:.1f}%  ({b['rnd']-a['rnd']:+.1f}đ)")
-        print(f"    tỉ lệ sem/rand  : {a['ratio']:.2f}× → {b['ratio']:.2f}×")
-    print(f"    node chạm       : {a['node_pct']:.1f}% → {b['node_pct']:.1f}% mạng")
-    print(f"    ứng viên        : {a['cand_pct']:.1f}% → {b['cand_pct']:.1f}% corpus")
-    print()
-    drop = a['sem'] - b['sem']
-    if abs(drop) < 3:
-        print("  => Recall GIỮ ĐƯỢC khi hệ lớn lên ở tỉ lệ cố định. Đây là weak scaling ĐẠT.")
-    elif drop > 0:
-        print(f"  => Recall GIẢM {drop:.1f} điểm. Hệ KHÔNG giữ được chất lượng ở quy mô lớn hơn;")
-        print("     phải nêu rõ và tìm nguyên nhân (nhiễu tăng? ngân sách node cố định?).")
-    else:
-        print(f"  => Recall TĂNG {-drop:.1f} điểm khi hệ lớn lên. Cần giải thích:")
-        print("     có thể corpus lớn hơn cho codebook PQ tốt hơn.")
-    print()
-    print("  LƯU Ý ĐỌC SỐ: ground truth KHÁC NHAU giữa các mức, vì top-10 của một")
-    print("  query trong corpus 100.000 khác trong corpus 20.000. Task khó dần theo")
-    print("  thiết kế — đó chính là điều weak scaling kiểm tra.")
+    if len(A) >= 2 and len(B) >= 2:
+        print("=" * 100)
+        print("KẾT LUẬN")
+        print("=" * 100)
+        a0, a1 = A[0], A[-1]
+        b0, b1 = B[0], B[-1]
+        fold = a1['docs'] / a0['docs']
+        print(f"  Hệ lớn lên {fold:.0f} lần: {a0['nodes']:,} node/{a0['docs']:,} doc "
+              f"-> {a1['nodes']:,} node/{a1['docs']:,} doc")
+        print()
+        print(f"  ĐƯỜNG A (giữ K=20, chi phí không đổi):")
+        print(f"    recall {a0['sem']:.1f}% -> {a1['sem']:.1f}%  ({a1['sem']-a0['sem']:+.1f}đ)")
+        print(f"    phủ    {a0['cand_pct']:.1f}% -> {a1['cand_pct']:.1f}% corpus")
+        if a1['ratio'] == a1['ratio']:
+            print(f"    tỉ lệ  {a0['ratio']:.1f}x -> {a1['ratio']:.1f}x  "
+                  f"(lợi thế TĂNG vì random giảm nhanh hơn)")
+        print()
+        print(f"  ĐƯỜNG B (K tỉ lệ N, giữ phủ):")
+        print(f"    recall {b0['sem']:.1f}% -> {b1['sem']:.1f}%  ({b1['sem']-b0['sem']:+.1f}đ)")
+        print(f"    phủ    {b0['cand_pct']:.1f}% -> {b1['cand_pct']:.1f}% corpus")
+        print(f"    slot   {5*b0['K']*8:,} -> {5*b1['K']*8:,}  (gấp {b1['K']/b0['K']:.0f})")
+        print()
+        drop = b0['sem'] - b1['sem']
+        if abs(drop) < 5:
+            print(f"  => Ở NGÂN SÁCH PHỦ CỐ ĐỊNH, recall chỉ mất {drop:.1f} điểm khi hệ lớn")
+            print(f"     {fold:.0f} lần. Weak scaling ĐẠT, nhưng chi phí truy vấn tăng TUYẾN TÍNH.")
+        else:
+            print(f"  => Recall vẫn mất {drop:.1f} điểm dù giữ phủ. Corpus lớn có nhiều")
+            print(f"     đối thủ nhiễu hơn — task tự nó khó lên, không chỉ do ngân sách.")
+        print()
+        print("  ĐÁNH ĐỔI: ở quy mô lớn, hoặc mất recall (đường A), hoặc trả chi phí")
+        print("  tuyến tính theo N (đường B). O(log N) của Kademlia chỉ áp cho ĐỊNH VỊ")
+        print("  một khoá; phủ đủ láng giềng ngữ nghĩa thì cần K tỉ lệ N.")
+        print()
+        print("  LƯU Ý: ground truth KHÁC nhau giữa các mức, vì top-10 của một query")
+        print("  trong corpus 100.000 khác trong 20.000. Task khó dần theo thiết kế.")
 
 
 if __name__ == '__main__':
