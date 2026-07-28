@@ -108,7 +108,11 @@ def gini(x):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--dataset', default='code', choices=['code', 'scifact', 'squad'])
+    ap.add_argument('--dataset', default='code',
+                    help="Tên bộ dữ liệu, khớp tiền tố file trong ./data/. "
+                         "Ví dụ: code, scifact, squad, code50k, code100k. "
+                         "Không giới hạn danh sách để thêm corpus weak-scaling "
+                         "mà không phải sửa code.")
     ap.add_argument('--nodes', type=int, default=10000)
     ap.add_argument('--seed', type=int, default=20235956)
     ap.add_argument('--k-query', type=int, default=300, help='số node mỗi bảng ghé (K_QUERY)')

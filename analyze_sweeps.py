@@ -33,7 +33,18 @@ def agg(rows, keyfn):
     return g
 
 
-CORPUS = {'code': 20000, 'scifact': 5183, 'squad': 18891}
+def _load_corpus_sizes():
+    """Đọc kích thước corpus từ data/manifest.json thay vì hardcode."""
+    d = {'code': 20000, 'scifact': 5183, 'squad': 18891}
+    try:
+        for e in json.load(open('data/manifest.json')):
+            d[e['name']] = e['corpus']
+    except Exception:
+        pass
+    return d
+
+
+CORPUS = _load_corpus_sizes()
 
 
 def m(vals):
