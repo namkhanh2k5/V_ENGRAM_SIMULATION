@@ -8,9 +8,9 @@ echo "PHA 2: L=$L T=$T K=$K r=$R | 5 seed × 500 query | code + scifact"
 for s in 20235956 1 2 3 4; do for ds in code scifact; do
     echo "[$ds seed=$s]"
     for extra in "--use-pq" "--no-pq" "--use-pq --random-routing"; do
-        python main_simulation_v2.py --dataset $ds --nodes 10000 --seed $s --nq 500 \
+        python3 main_simulation_v2.py --dataset $ds --nodes 10000 --seed $s --nq 500 \
             --num-tables $L --multi-probe $T --k-query $K --meta-anchors $R $extra \
             >/dev/null 2>&1 || echo "  [LỖI] $ds $s $extra"
     done
 done; done
-echo ""; python summarize.py
+echo ""; python3 summarize.py

@@ -1,0 +1,49 @@
+[*] Nạp data: scifact | PQ=BẬT
+    corpus=5,183 | query=500 | codebook=(512, 256, 2) (512 byte/doc)
+[*] L=5 bảng chiếu, seed=20235956
+[*] Ingest 5,183 doc (MA=1)...
+    ... 5,000/5,183
+✓ Ingest xong (6s). Metadata/node: mean=2.6 P95=9 P99=43 max=891 Gini=0.905 | tổng bản sao=25,894
+
+[*] Chạy 500 query... 
+    25/500 | Hit@5=2500.0%
+    50/500 | Hit@5=57.5%
+    75/500 | Hit@5=535.7%
+    100/500 | Hit@5=833.3%
+    125/500 | Hit@5=6250.0%
+    150/500 | Hit@5=170.5%
+    175/500 | Hit@5=372.3%
+    200/500 | Hit@5=10000.0%
+    225/500 | Hit@5=7500.0%
+    250/500 | Hit@5=25000.0%
+    275/500 | Hit@5=13750.0%
+    300/500 | Hit@5=937.5%
+    325/500 | Hit@5=422.1%
+    350/500 | Hit@5=175.9%
+    375/500 | Hit@5=37500.0%
+    400/500 | Hit@5=13333.3%
+    425/500 | Hit@5=21250.0%
+    450/500 | Hit@5=45000.0%
+    475/500 | Hit@5=98.3%
+    500/500 | Hit@5=617.3%
+
+==============================================================
+KẾT QUẢ | scifact | K=20 MA=1 L=5 T=8 PQ=ON
+==============================================================
+                                      Hit@5    Recall@5
+  Tầng 1 reachable (thuần discovery) :  100.0%    87.2%
+  Tầng 2 returned  (sau node lọc)    :  100.0%    87.2%
+  Tầng 3 final     (sau rerank)      :  100.0%    85.2%
+  --- MẤT Recall@5: do node lọc top-30 = 0.0đ | do global rerank = 1.9đ
+  Recall@10=84.5%
+  Candidate unique/query: 1790 (34.54% corpus)
+  Node chạm/query: 492 (4.9% mạng)
+  Metadata: 25,894 bản (3/node, Gini=0.905)
+  RPC load/node (zipf=1.0): mean=24.6 P99=165 max=257 Gini=0.668
+  Prefix occupancy (metadata theo c bit đầu của node_id):
+    c= 4:    16 subtree | CV=0.84 max/mean=3.2
+    c= 8:   256 subtree | CV=2.11 max/mean=15.1
+    c=12:  3753 subtree | CV=4.60 max/mean=129.1
+    c=16:  9269 subtree | CV=6.75 max/mean=318.9
+
+→ Lưu: result_scifact_N10000_L5_K20_MA1_T8_m512_zipf1.0_s20235956_nq500.json

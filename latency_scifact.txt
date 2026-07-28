@@ -1,19 +1,16 @@
-[*] code: corpus=20,000 | codebook=(256, 256, 4) | query=(500, 1024)
+[*] scifact: corpus=5,183 | codebook=(256, 256, 4) | query=(500, 1024)
 [*] Cấu hình: r=1 K=20 T=8 L=5 seed=20235956
 [*] Đang sinh ra 10,000 Nodes...
 [*] Đan cấu trúc Small-World (Ring-Adjacency: 50 xa + 50 gần)...
 ✓ Mạng lưới sẵn sàng (0.20s)
 
 ============================================================
-GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU CODE (TWO-TIER: METADATA L-replica + PAYLOAD-ONCE)
+GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU SCIFACT (TWO-TIER: METADATA L-replica + PAYLOAD-ONCE)
 ============================================================
-  ... Đã phân bổ 5,000/20,000 files.
-  ... Đã phân bổ 10,000/20,000 files.
-  ... Đã phân bổ 15,000/20,000 files.
-  ... Đã phân bổ 20,000/20,000 files.
-✓ Hoàn tất: 600,000 payload shard (đặt 1 lần) | 100,000 bản sao metadata (nhân L lần).
+  ... Đã phân bổ 5,000/5,183 files.
+✓ Hoàn tất: 155,490 payload shard (đặt 1 lần) | 25,915 bản sao metadata (nhân L lần).
 
-[METADATA LOAD] mean=10.0 P95=39 P99=114 max=1133 Gini=0.758 | tổng=99,987 bản
+[METADATA LOAD] mean=2.6 P95=10 P99=37 max=639 Gini=0.891 | tổng=25,912 bản
 
 ==================================================
 KIỂM THỬ TOÀN VẸN: FILE 'doc_12'
@@ -84,36 +81,6 @@ KIỂM THỬ TOÀN VẸN: FILE 'doc_4096'
     - Số Node đang lưu trữ: 30
     - Danh sách các Node ID lân cận: 26353130, 61250125, 61502922, 20774284, 21255447, 25294338, 25357574, 27903149, 32874905, 38611213, 50280991, 51225196, 59787710, 67027033, 67652214, 70045250, 70885007, 72625987, 73779585, 81589816, 85601290, 10145060, 11579282, 11758850, 12182797, 13427423, 13742352, 13877272, 13974776, 14368988
     -> ✓ TRẠNG THÁI: TOÀN VẸN & PHÂN TÁN AN TOÀN!
-
-==================================================
-KIỂM THỬ TOÀN VẸN: FILE 'doc_8192'
-==================================================
-[*] Kết quả quét toàn mạng:
-    - Tổng số mảnh vỡ tìm thấy: 30/30
-    - Số shard duy nhất: 30/30
-    - Số Node đang lưu trữ: 30
-    - Danh sách các Node ID lân cận: 38261080, 72200722, 76987656, 17547549, 21464825, 28222994, 36021558, 40315204, 53745652, 57093752, 59530002, 72729468, 77486548, 79445236, 95162952, 95992872, 97764832, 10491383, 10769292, 11081551, 11107749, 11659362, 12305460, 12384936, 12529744, 12655615, 12725642, 13088311, 14213754, 14368532
-    -> ✓ TRẠNG THÁI: TOÀN VẸN & PHÂN TÁN AN TOÀN!
-
-==================================================
-KIỂM THỬ TOÀN VẸN: FILE 'doc_12345'
-==================================================
-[*] Kết quả quét toàn mạng:
-    - Tổng số mảnh vỡ tìm thấy: 30/30
-    - Số shard duy nhất: 30/30
-    - Số Node đang lưu trữ: 30
-    - Danh sách các Node ID lân cận: 28010953, 13152901, 13643173, 21709710, 30310197, 34105059, 38065498, 38072980, 41586255, 46464607, 52789757, 59003829, 60644797, 60739487, 67948519, 69883429, 71380519, 72672536, 85123697, 88506019, 92252447, 93602744, 97893782, 98633915, 99032289, 10519854, 10890844, 11556292, 13920693, 14056562
-    -> ✓ TRẠNG THÁI: TOÀN VẸN & PHÂN TÁN AN TOÀN!
-
-==================================================
-KIỂM THỬ TOÀN VẸN: FILE 'doc_19999'
-==================================================
-[*] Kết quả quét toàn mạng:
-    - Tổng số mảnh vỡ tìm thấy: 30/30
-    - Số shard duy nhất: 30/30
-    - Số Node đang lưu trữ: 30
-    - Danh sách các Node ID lân cận: 56610016, 61250125, 24422861, 29521320, 35613003, 39836094, 52427633, 56521707, 58189921, 59016011, 59284990, 68994396, 69301611, 69536019, 72209353, 72276556, 81589816, 81977404, 83197515, 87959006, 97265022, 97297310, 10257542, 10582032, 11217239, 11225007, 11899697, 12229524, 12323092, 12842502
-    -> ✓ TRẠNG THÁI: TOÀN VẸN & PHÂN TÁN AN TOÀN!
     10/20 query xong
     20/20 query xong
 
@@ -122,62 +89,37 @@ GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
 ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
 [1] BÁO CÁO PHÂN BỐ TẢI (Load Distribution):
-    - Trung bình (Mean): 60.0 Shards / Node
-    - Độ lệch chuẩn (Std): 43.7
-    - Node nặng nhất (Max Load): 334 Shards
+    - Trung bình (Mean): 15.5 Shards / Node
+    - Độ lệch chuẩn (Std): 11.9
+    - Node nặng nhất (Max Load): 91 Shards
     -> Nhận xét: Payload đặt 1 lần qua HMAC nên tải không còn nhân theo L.
 
 [2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:
-    - Định tuyến: ~213.8 rounds mỗi truy vấn
-    - Recall@5 : 82.0%   <- METRIC CHÍNH
-    - Recall@10: 78.5%
-    - GT thu hồi: 4.10/5 mỗi query
-    - Hit@5    : 100.0% (bão hoà ở 100% — KHÔNG dùng để so cấu hình)
-    - MRR@5    : 1.000
+    - Định tuyến: ~208.3 rounds mỗi truy vấn
+    - Recall@5 : 72.0%   <- METRIC CHÍNH
+    - Recall@10: 74.0%
+    - GT thu hồi: 3.60/5 mỗi query
+    - Hit@5    : 95.0% (bão hoà ở 100% — KHÔNG dùng để so cấu hình)
+    - MRR@5    : 0.950
 
 [3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):
-    - Tổng thời gian mô phỏng ảo: 1,607,625.44 ms
+    - Tổng thời gian mô phỏng ảo: 1,076,781.99 ms
     - Tỷ lệ tiết kiệm RAM: 16x (4096 bytes Vector -> 256 bytes PQ Code)
 ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
 
 ================================================================
-KẾT QUẢ | code | r=1 K=20 T=8
+KẾT QUẢ | scifact | r=1 K=20 T=8
 ================================================================
-  Hit@5      : 100.0%   (bão hoà — không dùng để so cấu hình)
-  Recall@5   : 82.0%   <- metric chính
-  Recall@10  : 78.5%
-  GT thu hồi : 4.10/5 mỗi query
-  MRR@5      : 1.0000
-  Rounds/query   : 213.8
-  RPC/query      : 1145.2
+  Hit@5      : 95.0%   (bão hoà — không dùng để so cấu hình)
+  Recall@5   : 72.0%   <- metric chính
+  Recall@10  : 74.0%
+  GT thu hồi : 3.60/5 mỗi query
+  MRR@5      : 0.9500
+  Rounds/query   : 208.3
+  RPC/query      : 1133.2
+  Node chạm/query: 508.3 (5.1% mạng)
+  Candidate/query: 1879 (36.25% corpus)
+  Metadata Gini  : 0.891
 
-==============================================================================
-BẢNG CHI PHÍ (mục 5) — tách Discovery / Payload / Total
-==============================================================================
-Đại lượng                        Discovery       Payload         Total
-------------------------------------------------------------------------------
-Routing rounds/query                 213.8        2896.2        3110.0
-RPC/query                           1145.2        8989.5       10134.8
-Bytes/query                        723,206     1,431,401     2,154,607
-Unique nodes contacted               503.7            --         503.7
-Candidate tags moved                5104.3            --        5104.3
-Unique candidates                   4464.9            --        4464.9
-------------------------------------------------------------------------------
-Latency p50 (ms)                                                 26108
-Latency p95 (ms)                                                 47789
-Latency p99 (ms)                                                 57650
-==============================================================================
-  Lưu ý: 'rounds' cộng dồn qua L×T lookup CHẠY SONG SONG, nên nó là tổng
-  công, KHÔNG phải đường tới hạn. Latency mới phản ánh thời gian thực tế.
-
-[MỤC 21] R_max = 15
-  Lookup chạm trần : 0/800 (0.0%)
-  Query có >=1 lookup chạm trần: 0/20 (0.0%)
-  => Nếu tỉ lệ cao, R_max đang CẮT lookup trước khi hội tụ; recall báo
-     cáo là dưới trần đó, không phải của thuật toán hội tụ đầy đủ.
-  Node chạm/query: 503.7 (5.0% mạng)
-  Candidate/query: 4465 (22.32% corpus)
-  Metadata Gini  : 0.758
-
-→ Lưu: result_full_code_r1_K20_T8_s20235956.json
+→ Lưu: result_full_scifact_r1_K20_T8_s20235956.json

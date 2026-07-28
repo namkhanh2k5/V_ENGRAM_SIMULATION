@@ -128,15 +128,15 @@ GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
     -> Nhận xét: Payload đặt 1 lần qua HMAC nên tải không còn nhân theo L.
 
 [2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:
-    - Định tuyến: ~213.8 rounds mỗi truy vấn
-    - Recall@5 : 82.0%   <- METRIC CHÍNH
-    - Recall@10: 78.5%
-    - GT thu hồi: 4.10/5 mỗi query
+    - Định tuyến: ~215.1 rounds mỗi truy vấn
+    - Recall@5 : 77.0%   <- METRIC CHÍNH
+    - Recall@10: 77.5%
+    - GT thu hồi: 3.85/5 mỗi query
     - Hit@5    : 100.0% (bão hoà ở 100% — KHÔNG dùng để so cấu hình)
     - MRR@5    : 1.000
 
 [3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):
-    - Tổng thời gian mô phỏng ảo: 1,607,625.44 ms
+    - Tổng thời gian mô phỏng ảo: 1,868,118.40 ms
     - Tỷ lệ tiết kiệm RAM: 16x (4096 bytes Vector -> 256 bytes PQ Code)
 ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
@@ -145,39 +145,14 @@ GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
 KẾT QUẢ | code | r=1 K=20 T=8
 ================================================================
   Hit@5      : 100.0%   (bão hoà — không dùng để so cấu hình)
-  Recall@5   : 82.0%   <- metric chính
-  Recall@10  : 78.5%
-  GT thu hồi : 4.10/5 mỗi query
+  Recall@5   : 77.0%   <- metric chính
+  Recall@10  : 77.5%
+  GT thu hồi : 3.85/5 mỗi query
   MRR@5      : 1.0000
-  Rounds/query   : 213.8
-  RPC/query      : 1145.2
-
-==============================================================================
-BẢNG CHI PHÍ (mục 5) — tách Discovery / Payload / Total
-==============================================================================
-Đại lượng                        Discovery       Payload         Total
-------------------------------------------------------------------------------
-Routing rounds/query                 213.8        2896.2        3110.0
-RPC/query                           1145.2        8989.5       10134.8
-Bytes/query                        723,206     1,431,401     2,154,607
-Unique nodes contacted               503.7            --         503.7
-Candidate tags moved                5104.3            --        5104.3
-Unique candidates                   4464.9            --        4464.9
-------------------------------------------------------------------------------
-Latency p50 (ms)                                                 26108
-Latency p95 (ms)                                                 47789
-Latency p99 (ms)                                                 57650
-==============================================================================
-  Lưu ý: 'rounds' cộng dồn qua L×T lookup CHẠY SONG SONG, nên nó là tổng
-  công, KHÔNG phải đường tới hạn. Latency mới phản ánh thời gian thực tế.
-
-[MỤC 21] R_max = 15
-  Lookup chạm trần : 0/800 (0.0%)
-  Query có >=1 lookup chạm trần: 0/20 (0.0%)
-  => Nếu tỉ lệ cao, R_max đang CẮT lookup trước khi hội tụ; recall báo
-     cáo là dưới trần đó, không phải của thuật toán hội tụ đầy đủ.
-  Node chạm/query: 503.7 (5.0% mạng)
-  Candidate/query: 4465 (22.32% corpus)
+  Rounds/query   : 215.1
+  RPC/query      : 1150.5
+  Node chạm/query: 505.4 (5.1% mạng)
+  Candidate/query: 4414 (22.07% corpus)
   Metadata Gini  : 0.758
 
 → Lưu: result_full_code_r1_K20_T8_s20235956.json

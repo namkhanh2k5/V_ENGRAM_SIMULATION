@@ -1,0 +1,45 @@
+[*] CORPUS = code | RERANK = adc | L = 5 | POOL/table = 100
+[*] Corpus: 20,000 vectors × 1024 chiều
+[*] Queries: 500
+[*] PQ codes: (20000, 256)
+[*] Nạp query embeddings precomputed ...
+[SANITY] Brute-Force vs GT: Recall@5=100.0% Success@5=100.0% MRR=1.000 (mong đợi ~100%)
+[*] Baseline HNSW ...
+    Recall@5=100.0%  Success@5=100.0%  MRR@5=1.000
+[*] Baseline Centralized Multi-Table LSH (Hamming gather) ...
+    Recall@5=84.9%  Success@5=100.0%  MRR@5=1.000  pool TB=445
+[*] Baseline Crypto-DHT (XOR gather, key SHA-256, cùng ngân sách) ...
+    Recall@5=3.2%  Success@5=15.4%  MRR@5=0.154
+[*] Baseline Bucket-LSH (tra bucket chính xác, quét b) ...
+    b= 8: Recall@5= 44.8%  Hit@5= 90.2%  pool TB=   3320  query bucket rỗng=0.0%
+    b=10: Recall@5= 35.1%  Hit@5= 83.4%  pool TB=   2149  query bucket rỗng=0.0%
+    b=12: Recall@5= 22.0%  Hit@5= 65.0%  pool TB=    981  query bucket rỗng=0.0%
+    b=14: Recall@5= 13.7%  Hit@5= 47.8%  pool TB=    394  query bucket rỗng=0.0%
+    b=16: Recall@5=  8.2%  Hit@5= 32.4%  pool TB=    150  query bucket rỗng=0.0%
+[*] Baseline Random-C (C=4510 ứng viên ngẫu nhiên + rerank) ...
+    Recall@5=22.0%  Success@5=71.0%  MRR@5=0.699
+[*] Baseline Random-5 (pure chance) ...
+    Recall@5=0.00%  Success@5=0.00%  MRR@5=0.000
+
+=== QUÉT BUCKET-LSH (mục 18): recall đổi theo bề rộng bucket ===
+  b   Recall@5    Hit@5   pool TB  bucket rỗng
+  8      44.8%    90.2%      3320         0.0%
+ 10      35.1%    83.4%      2149         0.0%
+ 12      22.0%    65.0%       981         0.0%
+ 14      13.7%    47.8%       394         0.0%
+ 16       8.2%    32.4%       150         0.0%
+
+
+============================================================================
+Method                                     Recall@5    Hit@5    MRR@5   Note
+----------------------------------------------------------------------------
+Exact Brute-Force (IndexFlatIP)             100.00%  100.00%    1.000   Centralized reference = Ground Truth
+FAISS-HNSW (M=32, ef=200)                   100.00%  100.00%    1.000   Centralized graph ANN
+Centralized Multi-Table LSH                  84.92%  100.00%    1.000   LSH ceiling, no DHT hops (pool~444)
+Bucket-LSH (exact bucket)                    44.76%   90.20%    0.000   b=8, pool~3320 (gần ngân sách V-Engram)
+Crypto-DHT (same budget + rerank)             3.24%   15.40%    0.154   DHT floor: random keys, semantics removed
+Random-C (+ same rerank)                     21.96%   71.00%    0.699   C=4510 ứng viên ngẫu nhiên, rerank giống hệt
+Random-5 (no rerank)                          0.00%    0.00%    0.000   Pure chance ~ 1-(1-5/N)^5
+============================================================================
+
+[*] Đã ghi: baseline_report.txt

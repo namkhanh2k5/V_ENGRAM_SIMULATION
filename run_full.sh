@@ -20,7 +20,7 @@ DS=${DS:-code}
 
 run() {
     local desc="$1"; shift
-    python main_simulation_v2.py --dataset $DS --nodes 10000 --seed $SEED --nq $NQ "$@" \
+    python3 main_simulation_v2.py --dataset $DS --nodes 10000 --seed $SEED --nq $NQ "$@" \
         >/dev/null 2>&1 || echo "  [LỖI] $desc"
 }
 
@@ -61,15 +61,15 @@ done
 echo "##### PHA 1F: xác nhận trên scifact #####"
 for L in 5 8; do for T in 3 5; do
     echo "  scifact L=$L T=$T"
-    python main_simulation_v2.py --dataset scifact --nodes 10000 --seed $SEED --nq $NQ \
+    python3 main_simulation_v2.py --dataset scifact --nodes 10000 --seed $SEED --nq $NQ \
         --num-tables $L --multi-probe $T --meta-anchors 1 --k-query 20 --use-pq >/dev/null 2>&1
-    python main_simulation_v2.py --dataset scifact --nodes 10000 --seed $SEED --nq $NQ \
+    python3 main_simulation_v2.py --dataset scifact --nodes 10000 --seed $SEED --nq $NQ \
         --num-tables $L --multi-probe $T --meta-anchors 1 --k-query 20 --use-pq --random-routing >/dev/null 2>&1
 done; done
 
 echo ""
 echo "##### TỔNG HỢP #####"
-python summarize.py
+python3 summarize.py
 echo ""
 echo "ĐỌC BẢNG: chọn cấu hình có Recall@5 cao MÀ tỉ lệ sem/rand còn lớn."
 echo "Rồi chạy PHA 2:  bash run_phase2.sh L T K r"

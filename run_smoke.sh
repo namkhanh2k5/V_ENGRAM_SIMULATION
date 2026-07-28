@@ -7,7 +7,7 @@ for cfg in "20 3" "40 1" "20 3 --random-routing"; do
     set -- $cfg
     K=$1; T=$2; shift 2
     START=$(date +%s)
-    python main_simulation_v2.py --dataset code --nodes 10000 --seed 20235956 \
+    python3 main_simulation_v2.py --dataset code --nodes 10000 --seed 20235956 \
         --k-query $K --meta-anchors 1 --multi-probe $T --nq 100 --use-pq "$@" \
         2>&1 | grep -E "Tầng 3|Node chạm|Candidate"
     echo "    ^ K=$K T=$T $* mất $(( $(date +%s) - START ))s"

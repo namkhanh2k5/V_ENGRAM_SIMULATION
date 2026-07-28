@@ -2,7 +2,7 @@
 [*] Cấu hình: r=1 K=20 T=8 L=5 seed=20235956
 [*] Đang sinh ra 10,000 Nodes...
 [*] Đan cấu trúc Small-World (Ring-Adjacency: 50 xa + 50 gần)...
-✓ Mạng lưới sẵn sàng (0.20s)
+✓ Mạng lưới sẵn sàng (0.23s)
 
 ============================================================
 GIAI ĐOẠN 2: PHÂN BỔ DỮ LIỆU CODE (TWO-TIER: METADATA L-replica + PAYLOAD-ONCE)
@@ -82,7 +82,7 @@ KIỂM THỬ TOÀN VẸN: FILE 'doc_4096'
     - Tổng số mảnh vỡ tìm thấy: 30/30
     - Số shard duy nhất: 30/30
     - Số Node đang lưu trữ: 30
-    - Danh sách các Node ID lân cận: 26353130, 61250125, 61502922, 20774284, 21255447, 25294338, 25357574, 27903149, 32874905, 38611213, 50280991, 51225196, 59787710, 67027033, 67652214, 70045250, 70885007, 72625987, 73779585, 81589816, 85601290, 10145060, 11579282, 11758850, 12182797, 13427423, 13742352, 13877272, 13974776, 14368988
+    - Danh sách các Node ID lân cận: 26353130, 61250125, 61502922, 20774284, 21255447, 25294338, 25357574, 27903149, 32874905, 38611213, 50280991, 51225196, 59787710, 67027033, 67652214, 70045250, 70885007, 72625987, 73779585, 81589816, 85601290, 10145060, 11579282, 11701677, 12182797, 13427423, 13742352, 13877272, 13974776, 14368988
     -> ✓ TRẠNG THÁI: TOÀN VẸN & PHÂN TÁN AN TOÀN!
 
 ==================================================
@@ -128,15 +128,15 @@ GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
     -> Nhận xét: Payload đặt 1 lần qua HMAC nên tải không còn nhân theo L.
 
 [2] BÁO CÁO HIỆU NĂNG ĐỊNH TUYẾN & ĐỘ CHÍNH XÁC:
-    - Định tuyến: ~213.8 rounds mỗi truy vấn
-    - Recall@5 : 82.0%   <- METRIC CHÍNH
-    - Recall@10: 78.5%
-    - GT thu hồi: 4.10/5 mỗi query
+    - Định tuyến: ~214.2 rounds mỗi truy vấn
+    - Recall@5 : 76.0%   <- METRIC CHÍNH
+    - Recall@10: 77.5%
+    - GT thu hồi: 3.80/5 mỗi query
     - Hit@5    : 100.0% (bão hoà ở 100% — KHÔNG dùng để so cấu hình)
     - MRR@5    : 1.000
 
 [3] BÁO CÁO CHI PHÍ TÀI NGUYÊN (Resource Cost):
-    - Tổng thời gian mô phỏng ảo: 1,607,625.44 ms
+    - Tổng thời gian mô phỏng ảo: 1,870,047.08 ms
     - Tỷ lệ tiết kiệm RAM: 16x (4096 bytes Vector -> 256 bytes PQ Code)
 ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
@@ -145,39 +145,39 @@ GIAI ĐOẠN 5: THU HOẠCH SỐ LIỆU VÀ BÁO CÁO (METRICS COLLECTION)
 KẾT QUẢ | code | r=1 K=20 T=8
 ================================================================
   Hit@5      : 100.0%   (bão hoà — không dùng để so cấu hình)
-  Recall@5   : 82.0%   <- metric chính
-  Recall@10  : 78.5%
-  GT thu hồi : 4.10/5 mỗi query
+  Recall@5   : 76.0%   <- metric chính
+  Recall@10  : 77.5%
+  GT thu hồi : 3.80/5 mỗi query
   MRR@5      : 1.0000
-  Rounds/query   : 213.8
-  RPC/query      : 1145.2
+  Rounds/query   : 214.2
+  RPC/query      : 1148.0
 
 ==============================================================================
 BẢNG CHI PHÍ (mục 5) — tách Discovery / Payload / Total
 ==============================================================================
 Đại lượng                        Discovery       Payload         Total
 ------------------------------------------------------------------------------
-Routing rounds/query                 213.8        2896.2        3110.0
-RPC/query                           1145.2        8989.5       10134.8
-Bytes/query                        723,206     1,431,401     2,154,607
-Unique nodes contacted               503.7            --         503.7
-Candidate tags moved                5104.3            --        5104.3
-Unique candidates                   4464.9            --        4464.9
+Routing rounds/query                 214.2        3668.9        3883.1
+RPC/query                           1148.0       11335.0       12483.0
+Bytes/query                        725,530     1,801,872     2,527,402
+Unique nodes contacted               505.4            --         505.4
+Candidate tags moved                5026.9            --        5026.9
+Unique candidates                   4404.2            --        4404.2
 ------------------------------------------------------------------------------
-Latency p50 (ms)                                                 26108
-Latency p95 (ms)                                                 47789
-Latency p99 (ms)                                                 57650
+Latency p50 (ms)                                                 37586
+Latency p95 (ms)                                                 59563
+Latency p99 (ms)                                                 71449
 ==============================================================================
   Lưu ý: 'rounds' cộng dồn qua L×T lookup CHẠY SONG SONG, nên nó là tổng
   công, KHÔNG phải đường tới hạn. Latency mới phản ánh thời gian thực tế.
 
-[MỤC 21] R_max = 15
+[MỤC 21] R_max = 20
   Lookup chạm trần : 0/800 (0.0%)
   Query có >=1 lookup chạm trần: 0/20 (0.0%)
   => Nếu tỉ lệ cao, R_max đang CẮT lookup trước khi hội tụ; recall báo
      cáo là dưới trần đó, không phải của thuật toán hội tụ đầy đủ.
-  Node chạm/query: 503.7 (5.0% mạng)
-  Candidate/query: 4465 (22.32% corpus)
+  Node chạm/query: 505.4 (5.1% mạng)
+  Candidate/query: 4404 (22.02% corpus)
   Metadata Gini  : 0.758
 
 → Lưu: result_full_code_r1_K20_T8_s20235956.json
