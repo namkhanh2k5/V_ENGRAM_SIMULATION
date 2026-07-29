@@ -29,7 +29,9 @@
 # median session = 120 phút (giữa Li et al. 60ph và IPFS ~8 giờ),
 # thời lượng 720 phút = 6 lần thay lượt.
 #
-# Ước tính: 10 cấu hình × 3 seed = 30 lần chạy, ~10 phút mỗi lần = ~5 giờ
+# Ước tính: 10 cấu hình × 3 seed = 30 lần chạy. Chu kỳ sửa dài cần thời
+# lượng dài hơn (>= 3 lần chu kỳ), nên rep=1440 chạy 4320ph mô phỏng.
+# Tổng ~7 giờ.
 # ============================================================================
 set -u
 SEEDS="20235956 1 2"
@@ -43,10 +45,15 @@ PY=python3
 run() {
     local r=$1 rep=$2 seed=$3
     local m=""; [ "$rep" != "0" ] && m="l"
+    # Thời lượng phải >= 3 lần chu kỳ sửa, nếu không sửa chữa chạy quá ít lần
+    # (hoặc không chạy lần nào) và điểm đo vô nghĩa.
+    local dur=$DUR
+    local need=$((rep * 3))
+    [ "$need" -gt "$dur" ] && dur=$need
     local f="churn_${DS}_N${N}_r${r}_ses${SES}_weibull_rep${rep}${m}_s${seed}_nq${NQ}.json"
     if [ -f "$f" ]; then echo "  [skip] r=$r rep=$rep s=$seed"; return; fi
     $PY main_churn_engine.py --dataset $DS --nodes $N --nq $NQ \
-        --median-session $SES --duration $DUR --session-dist weibull \
+        --median-session $SES --duration "$dur" --session-dist weibull \
         --meta-anchors "$r" --repair-interval "$rep" --seed "$seed" \
         >/dev/null 2>&1 || echo "  [LỖI] r=$r rep=$rep s=$seed"
 }
