@@ -1,65 +1,67 @@
 #!/bin/bash
 # ============================================================================
-# THÍ NGHIỆM CHURN — nhân bản hay sửa chữa?
+# THÍ NGHIỆM CHURN — sửa chữa thưa đến đâu thì hỏng?
 #
 #   nohup bash run_churn.sh > churn.log 2>&1 &
 #
-# CÂU HỎI: Mục r* chứng minh nhân bản rộng giết định tuyến ngữ nghĩa. Thứ duy
-# nhất nhân bản mua được là ĐỘ BỀN. Vậy có cách nào mua độ bền mà không phá cơ
-# chế không? Giả thuyết: sửa chữa (tái neo định kỳ) ở r=1.
+# SỬA THIẾT KẾ so với bản trước: bản trước quét median session {240,60,15} phút,
+# nhưng buộc MỌI tham số thời gian (duration, epoch, warmup, repair) vào chính
+# median session. Kết quả là mô phỏng KHÔNG THỨ NGUYÊN — ba mức cho kết quả y
+# hệt vì chúng là MỘT thí nghiệm đo bằng ba đơn vị thời gian khác nhau.
 #
-# BỐN CẤU HÌNH dưới cùng một mô hình churn:
-#   1. r=1,  không sửa        — đối chứng: cho biết churn phá đến đâu
-#   2. r=1,  sửa mỗi median/4 — đề xuất của paper: nhân bản thấp, sửa nhanh
-#   3. r=1,  sửa mỗi median   — sửa thưa hơn, xem ngưỡng nằm đâu
-#   4. r=20, không sửa        — lối IPFS: nhân bản cao, sửa chậm
+# Trục thật sự có ý nghĩa: SỬA CHỮA THƯA HAY DÀY SO VỚI TỐC ĐỘ CHURN.
+# Nên cố định median session và quét chu kỳ sửa chữa theo bội số của nó.
 #
-# QUÉT median session {240, 60, 15} phút:
-#   240ph = 4 giờ   -> gần mạng thật (IPFS: 87,6% session dưới 8 giờ)
-#    60ph = 1 giờ   -> Li et al., IPTPS'04
-#    15ph           -> vùng stress của Bamboo (USENIX'04 quét 1,4-47 phút)
+# Đây cũng là câu hỏi thực tế: IPFS republish mỗi 22 GIỜ trong mạng mà 87,6%
+# session dưới 8 giờ — tức chu kỳ sửa DÀI HƠN session, và họ bù bằng r=20.
+# Câu hỏi của paper: ở r=1, chu kỳ sửa phải ngắn đến mức nào?
 #
-# N = 10.000 node. LƯU Ý: đừng chạy ở quy mô nhỏ hơn — ở 2.000 node, baseline
-# ngẫu nhiên chạm 40% mạng nên tỉ lệ sem/rand bị nén về 1 và mất hết ý nghĩa.
+# BẢY CẤU HÌNH:
+#   r=1 sửa mỗi 15ph  (median/8)  — dày nhất
+#   r=1 sửa mỗi 30ph  (median/4)
+#   r=1 sửa mỗi 60ph  (median/2)
+#   r=1 sửa mỗi 120ph (= median)
+#   r=1 sửa mỗi 240ph (2x median) — thưa như IPFS
+#   r=1 KHÔNG sửa                 — đối chứng dưới
+#   r=20 KHÔNG sửa                — lối IPFS, đối chứng trên
 #
-# Ước tính: 4 cấu hình × 3 session × 3 seed = 36 lần chạy.
-#   r=1  ~5 phút | r=20 ~10 phút  =>  tổng ~4 giờ
+# median session = 120 phút (giữa Li et al. 60ph và IPFS ~8 giờ),
+# thời lượng 720 phút = 6 lần thay lượt.
+#
+# Ước tính: 7 cấu hình × 3 seed = 21 lần chạy, ~10 phút mỗi lần = ~3,5 giờ
 # ============================================================================
 set -u
 SEEDS="20235956 1 2"
 DS=code
 N=10000
 NQ=200
+SES=120           # median session, phút
+DUR=720           # thời lượng = 6 x median
 PY=python3
 
 run() {
-    local ses=$1 r=$2 rep=$3 seed=$4
-    local mode=""
-    [ "$rep" != "0" ] && mode="l"
-    local f="churn_${DS}_N${N}_r${r}_ses${ses}_weibull_rep${rep}${mode}_s${seed}_nq${NQ}.json"
-    if [ -f "$f" ]; then echo "  [skip] ses=$ses r=$r rep=$rep s=$seed"; return; fi
-    # thời lượng = 3 lần median session, đủ để mạng thay lượt vài lần
-    local dur=$((ses * 3))
+    local r=$1 rep=$2 seed=$3
+    local m=""; [ "$rep" != "0" ] && m="l"
+    local f="churn_${DS}_N${N}_r${r}_ses${SES}_weibull_rep${rep}${m}_s${seed}_nq${NQ}.json"
+    if [ -f "$f" ]; then echo "  [skip] r=$r rep=$rep s=$seed"; return; fi
     $PY main_churn_engine.py --dataset $DS --nodes $N --nq $NQ \
-        --median-session "$ses" --duration "$dur" --session-dist weibull \
+        --median-session $SES --duration $DUR --session-dist weibull \
         --meta-anchors "$r" --repair-interval "$rep" --seed "$seed" \
-        >/dev/null 2>&1 || echo "  [LỖI] ses=$ses r=$r rep=$rep s=$seed"
+        >/dev/null 2>&1 || echo "  [LỖI] r=$r rep=$rep s=$seed"
 }
 
-for ses in 240 60 15; do
-    q4=$((ses / 4))
+for s in $SEEDS; do
     echo ""
-    echo "##### median session = ${ses} phút #####"
-    for s in $SEEDS; do
-        echo "[s=$s] r=1 không sửa"        ; run "$ses" 1  0     "$s"
-        echo "[s=$s] r=1 sửa mỗi ${q4}ph"  ; run "$ses" 1  "$q4" "$s"
-        echo "[s=$s] r=1 sửa mỗi ${ses}ph" ; run "$ses" 1  "$ses" "$s"
-        echo "[s=$s] r=20 không sửa"       ; run "$ses" 20 0     "$s"
+    echo "##### seed $s #####"
+    for rep in 15 30 60 120 240; do
+        echo "[s=$s] r=1 sửa mỗi ${rep}ph (median/$((SES/rep)))"
+        run 1 "$rep" "$s"
     done
+    echo "[s=$s] r=1 KHÔNG sửa" ; run 1  0 "$s"
+    echo "[s=$s] r=20 KHÔNG sửa"; run 20 0 "$s"
 done
 
 echo ""
 echo "##### TỔNG HỢP #####"
 $PY analyze_churn.py 2>&1 | tee churn_results.txt
-echo ""
 echo "-> churn_results.txt"
