@@ -27,8 +27,15 @@
 #
 # Mỗi cấu hình chạy CẢ semantic LẪN random để tính tỉ lệ dưới walk thật.
 #
-# SimPy RẤT CHẬM: --nq 20, timeout 2 giờ mỗi lần. 12 lần chạy = 6-20 giờ.
-# Nếu quá lâu, Ctrl+C — 3 cấu hình đầu đã đủ kiểm luận điểm r*.
+# TỐI ƯU: đặt SKIP_PAYLOAD=1, bỏ hẳn tầng payload.
+#   Ingest tốn 5 lookup cho metadata nhưng 30 cho payload shard, nên bỏ payload
+#   nhanh hơn ~7 lần. Phép kiểm này chỉ cần Recall@5, vốn quyết định hoàn toàn ở
+#   tầng discovery — payload chỉ lấy nội dung sau khi đã tìm ra object.
+#   Đo thực tế: code corpus, N=10.000, 5 query -> 99 giây (trước đó vài chục phút).
+#
+# Ước tính: ~3 phút mỗi lần chạy với nq=20.
+#   12 lần chạy (6 cấu hình × 2 chế độ) = KHOẢNG 40 PHÚT.
+# Nếu vẫn muốn dừng sớm, 3 cấu hình đầu đã đủ kiểm luận điểm r*.
 # ============================================================================
 set -u
 PY=python3
@@ -42,7 +49,7 @@ run() {
     if [ -s "$f" ]; then echo "  [skip] $f"; return; fi
     local extra=""; [ "$mode" = "random" ] && extra="--random-routing"
     echo "  chạy L=$L r=$r K=$K T=$T $mode (có thể mất tới 2 giờ)"
-    NUM_TABLES=$L timeout 7200 $PY main_simulation.py --dataset code --nodes 10000 \
+    SKIP_PAYLOAD=1 NUM_TABLES=$L timeout 3600 $PY main_simulation.py --dataset code --nodes 10000 \
         --seed $SEED --k-query "$K" --multi-probe "$T" --meta-anchors "$r" \
         --nq $NQ $extra > "$f" 2>&1 \
         || echo "  [BỎ QUA] L=$L r=$r K=$K T=$T $mode quá 2 giờ"
