@@ -6,7 +6,8 @@ import hmac
 # CẤU HÌNH LSH ĐA VŨ TRỤ (MULTI-INDEX)
 # ============================================================================
 VECTOR_DIM = 1024
-NUM_PROJECTIONS = 5      # L — số bảng chiếu độc lập (paper: Table 2)
+import os as _os
+NUM_PROJECTIONS = int(_os.environ.get("NUM_TABLES", "5"))   # L — bảng chiếu độc lập
 DEFAULT_LSH_SEED = 20235956
 
 # --- Tham số giao thức, khớp Table 2 trong paper ---
