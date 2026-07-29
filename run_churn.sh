@@ -21,14 +21,15 @@
 #   r=1 sửa mỗi 30ph  (median/4)
 #   r=1 sửa mỗi 60ph  (median/2)
 #   r=1 sửa mỗi 120ph (= median)
-#   r=1 sửa mỗi 240ph (2x median) — thưa như IPFS
+#   r=1 sửa mỗi 240/480/960/1440ph (2x/4x/8x/12x median)
+#       1440ph phủ mức IPFS: republish 22 giờ = 11x median 120ph
 #   r=1 KHÔNG sửa                 — đối chứng dưới
 #   r=20 KHÔNG sửa                — lối IPFS, đối chứng trên
 #
 # median session = 120 phút (giữa Li et al. 60ph và IPFS ~8 giờ),
 # thời lượng 720 phút = 6 lần thay lượt.
 #
-# Ước tính: 7 cấu hình × 3 seed = 21 lần chạy, ~10 phút mỗi lần = ~3,5 giờ
+# Ước tính: 10 cấu hình × 3 seed = 30 lần chạy, ~10 phút mỗi lần = ~5 giờ
 # ============================================================================
 set -u
 SEEDS="20235956 1 2"
@@ -53,7 +54,8 @@ run() {
 for s in $SEEDS; do
     echo ""
     echo "##### seed $s #####"
-    for rep in 15 30 60 120 240; do
+    # dải tới 1440ph = 12x median, phủ cả mức IPFS (republish 22 giờ)
+    for rep in 15 30 60 120 240 480 960 1440; do
         echo "[s=$s] r=1 sửa mỗi ${rep}ph (median/$((SES/rep)))"
         run 1 "$rep" "$s"
     done

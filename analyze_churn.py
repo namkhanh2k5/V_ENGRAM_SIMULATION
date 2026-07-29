@@ -25,12 +25,28 @@ def main():
         cfg, hist = d['config'], d['history']
         if not hist or 'random_r5' not in hist[-1]:
             continue
-        ses = cfg['median_session']
-        runs[(cfg['meta_anchors'], cfg['repair_interval'])].append(hist[-1])
+        runs[(cfg['median_session'], cfg['meta_anchors'],
+              cfg['repair_interval'])].append(hist[-1])
 
     if not runs:
         print('Chưa có file churn_*.json hợp lệ.')
         return
+
+    # File từ các lần chạy median session KHÁC NHAU không so được với nhau.
+    # Chọn mức có nhiều dữ liệu nhất, và nói rõ nếu đang bỏ qua mức khác.
+    by_ses = defaultdict(int)
+    for (ms, _, _), v in runs.items():
+        by_ses[ms] += len(v)
+    ses = max(by_ses, key=lambda m: by_ses[m])
+    if len(by_ses) > 1:
+        bỏ = {m: n for m, n in by_ses.items() if m != ses}
+        print(f'*** CẢNH BÁO: có file từ {len(by_ses)} mức median session khác nhau.')
+        print(f'    Dùng {ses:.0f}ph ({by_ses[ses]} lần chạy), BỎ QUA: '
+              + ', '.join(f'{m:.0f}ph ({n})' for m, n in sorted(bỏ.items())))
+        print(f'    Các mức đó thuộc thí nghiệm khác, không so chung được.')
+        print(f'    Xoá bằng: rm -f $(ls churn_*.json | grep -v "_ses{ses:.0f}_")')
+        print()
+    runs = {(r, rep): v for (ms, r, rep), v in runs.items() if ms == ses}
 
     print('=' * 100)
     print(f'CHURN: median session {ses:.0f} phút, Weibull (khớp Stutzbach & Rejaie IMC\'06)')
@@ -56,9 +72,9 @@ def main():
         g = lambda x: st.mean(y[x] for y in v)
         sd = lambda x: st.stdev([y[x] for y in v]) if len(v) > 1 else 0.0
         if rep > 0:
-            mult = ses / rep
-            lbl = f'r={r}, sửa mỗi {rep:.0f}ph (med/{mult:.0f})' if mult >= 1 \
-                else f'r={r}, sửa mỗi {rep:.0f}ph ({1/mult:.0f}x med)'
+            k = rep / ses                      # chu kỳ sửa TÍNH THEO median session
+            lbl = (f'r={r}, sửa mỗi {rep:.0f}ph = {k:.2g}x med' if k >= 1
+                   else f'r={r}, sửa mỗi {rep:.0f}ph = med/{1/k:.0f}')
         else:
             lbl = f'r={r}, KHÔNG sửa'
         row = {'meta': g('meta_avail'), 'sem': g('final_r5'), 'rnd': g('random_r5'),
@@ -82,11 +98,16 @@ def main():
     print('=' * 100)
     if ok:
         loosest = max(ok, key=lambda x: x['rep'])
-        print(f'  Chu kỳ sửa THƯA NHẤT còn giữ availability >= 99%: '
-              f'{loosest["rep"]:.0f} phút = {ses/loosest["rep"]:.2g} lần median session')
+        k = loosest['rep'] / ses
+        print(f'  Chu kỳ sửa THƯA NHẤT đã thử mà còn giữ availability >= 99%: '
+              f'{loosest["rep"]:.0f} phút = {k:.2g} lần median session')
+        if loosest is max(repaired, key=lambda x: x['rep']):
+            print(f'  *** ĐÂY LÀ MỨC THƯA NHẤT TRONG DẢI QUÉT — ngưỡng thật nằm NGOÀI. ***')
+            print(f'      Để so với IPFS (republish mỗi 22 giờ = {1320/ses:.0f}x median),')
+            print(f'      cần quét tới {int(1320)}ph. Thêm: --repair-interval 480, 960, 1440.')
         print(f'    availability {loosest["meta"]:.1f}% | recall {loosest["sem"]:.1f}% | '
               f'tỉ lệ {loosest["ratio"]:.2f}x | {loosest["msg"]:,.0f} message')
-        tight = min(repaired, key=lambda x: x['rep'])
+        tight = min(repaired, key=lambda x: x['rep']) if repaired else loosest
         if tight['rep'] < loosest['rep']:
             print(f'  So với sửa dày nhất ({tight["rep"]:.0f}ph): '
                   f'tiết kiệm {100*(1-loosest["msg"]/max(tight["msg"],1)):.0f}% message, '
@@ -120,11 +141,18 @@ def main():
             print(f'  => r=1+sửa giữ lợi thế cao hơn {best["ratio"]/r20["ratio"]:.1f} lần.')
         if r20['fp'] > 0:
             print(f'     Dấu vết nhỏ hơn {r20["fp"]/max(best["fp"],1e-9):.1f} lần.')
-        print(f'     Cái giá: {best["msg"]:,.0f} message trong 720 phút, '
-              f'{best["msg"]/20000:.1f} msg/doc.')
+        dur = 720.0
+        per_doc = best['msg'] / 20000
+        per_22h = per_doc * 1320 / dur
+        print(f'     Cái giá: {best["msg"]:,.0f} message trong {dur:.0f} phút '
+              f'= {per_doc:.1f} msg/doc.')
         print()
-        print('  Đối chiếu IPFS: 20 bản mỗi doc, republish mỗi 22 giờ')
-        print('  = 20 msg/doc mỗi 22 giờ, trong mạng mà 87,6% session dưới 8 giờ.')
+        print('  ĐỐI CHIẾU IPFS, quy về cùng đơn vị thời gian:')
+        print(f'    V-Engram r=1 + sửa : {per_22h:.1f} msg/doc mỗi 22 giờ')
+        print(f'    IPFS r=20 republish: 20.0 msg/doc mỗi 22 giờ')
+        print(f'    => lưu lượng chênh {100*(per_22h/20-1):+.0f}%, '
+              f'nhưng dấu vết nhỏ hơn {r20["fp"]/max(best["fp"],1e-9):.1f} lần')
+        print(f'       và giữ được lợi thế {best["ratio"]:.2f}x thay vì {r20["ratio"]:.2f}x.')
     if r1no:
         print()
         print(f'  Đối chứng r=1 KHÔNG sửa: availability {r1no["meta"]:.1f}%, '
