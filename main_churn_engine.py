@@ -292,6 +292,18 @@ def main():
         args.epoch = args.median_session / 12.0
     if args.warmup <= 0:
         args.warmup = args.median_session
+    # Thời lượng phải đủ cho VÀI chu kỳ sửa, nếu không hệ chưa vào trạng thái
+    # dừng và số đo phản ánh giai đoạn quá độ. Chu kỳ sửa DÀI HƠN thời lượng thì
+    # sửa chữa không chạy lần nào — điểm đo đó vô nghĩa.
+    need = max(3 * args.median_session, 3 * args.repair_interval)
+    if args.duration < need:
+        print(f'[!] Thời lượng {args.duration:.0f}ph quá ngắn cho chu kỳ sửa '
+              f'{args.repair_interval:.0f}ph. Nâng lên {need:.0f}ph '
+              f'(= 3 lần chu kỳ dài nhất).')
+        args.duration = need
+    # warm-up cũng cần ít nhất một chu kỳ sửa
+    if args.repair_interval > 0 and args.warmup < 2 * args.repair_interval:
+        args.warmup = 2 * args.repair_interval
     n_epoch = max(1, int(round(args.duration / args.epoch)))
     if args.measure_every <= 0:
         args.measure_every = max(1, n_epoch // 6)
@@ -351,10 +363,16 @@ def main():
     if args.warmup > 0:
         nw = max(1, int(round(args.warmup / args.epoch)))
         print(f'[*] Warm-up {args.warmup:.0f}ph ({nw} epoch), không đo ...')
+        wsince = 0.0
         for _ in range(nw):
             net.step(args.epoch)
-            if args.repair_interval > 0:
+            wsince += args.epoch
+            # PHẢI theo đúng chu kỳ. Bản trước sửa MỖI EPOCH trong warm-up, nên
+            # cấu hình "sửa mỗi 1440ph" vẫn được sửa 12 lần trước khi đo — kết
+            # quả trông tốt hơn thực tế.
+            if args.repair_interval > 0 and wsince >= args.repair_interval:
                 repair(net, anchors, keys_per_doc, r, args.ttl, args.repair_mode)
+                wsince = 0.0
         print(f'    {net.total_departures:,} lượt rời mạng trong warm-up')
 
     # ---- vòng chính ----
@@ -398,6 +416,11 @@ def main():
             snapshot(ep, ep * args.epoch)
 
     # ---- tổng kết ----
+    n_repair_rounds = int(args.duration / args.repair_interval) if args.repair_interval > 0 else 0
+    if args.repair_interval > 0 and n_repair_rounds < 3:
+        print(f'\n[!] CẢNH BÁO: sửa chữa chỉ chạy {n_repair_rounds} lần trong '
+              f'thời lượng đo. Chưa đủ để vào trạng thái dừng.')
+
     first, last = hist[0], hist[-1]
     print()
     print('=' * 78)
