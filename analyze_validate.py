@@ -39,8 +39,16 @@ def main():
         rnd = read_recall(f'validate_L{L}_r{r}_K{K}_T{T}_RAND.txt')
         rows.append((cfg, ideal, sem, rnd))
 
+    import glob as _g, re as _re
+    nq = '?'
+    for f in _g.glob('validate_*.txt'):
+        m = _re.search(r'nq[= ]+(\d+)|--nq (\d+)', open(f, errors='ignore').read())
+        if m:
+            nq = m.group(1) or m.group(2)
+            break
     print('=' * 104)
-    print('LÝ TƯỞNG HOÁ vs WALK KADEMLIA THẬT')
+    print(f'LÝ TƯỞNG HOÁ vs WALK KADEMLIA THẬT   (nq={nq})')
+    print('  Lý tưởng: 10 seed × 500 query | Walk thật: 1 seed × nq query')
     print('=' * 104)
     print(f"{'cấu hình':22s} {'semantic':>19s} {'random':>19s} "
           f"{'tỉ lệ lt':>9s} {'tỉ lệ thật':>11s}")
@@ -86,18 +94,31 @@ def main():
     print(f'  Trung bình {sum(vals)/len(vals):+.1f} điểm | '
           f'dải {min(vals):+.1f} đến {max(vals):+.1f} | chênh lệch {spread:.1f} điểm')
     print()
-    if spread < 3.0:
-        print('  => Chênh lệch KHÁ ĐỀU qua các cấu hình. Các so sánh giữa cấu hình')
-        print('     mà sweep báo cáo GIỮ NGUYÊN dưới định tuyến thật; chỉ giá trị')
-        print('     tuyệt đối bị dịch xuống một lượng gần như cố định.')
-    else:
-        print('  => Chênh lệch THAY ĐỔI RÕ theo cấu hình. Các so sánh giữa cấu hình')
-        print('     bị nén hoặc giãn dưới định tuyến thật. Phải nêu rõ trong bài rằng')
-        print('     sweep chỉ cho biết THỨ TỰ, không cho biết độ lớn khác biệt.')
+    # ĐỐI CHỨNG NHIỄU: random_slots bốc node trực tiếp, KHÔNG định tuyến, nên
+    # chênh lệch THẬT của nó phải bằng 0. Mọi lệch quan sát được ở cột random
+    # là nhiễu thuần tuý — và nó cho biết sàn nhiễu của phép đo.
+    rnd_drops = [ideal['rnd'] - rnd for (_, ideal, _, rnd) in rows
+                 if rnd is not None and ideal['rnd'] is not None]
     print()
-    print('  Lưu ý: baseline random_slots bốc node trực tiếp, KHÔNG định tuyến,')
-    print('  nên về nguyên tắc nó không mất gì dưới walk thật. Chênh lệch ở cột')
-    print('  random phản ánh nhiễu của mẫu 20 query, không phải hiệu ứng định tuyến.')
+    if rnd_drops:
+        noise = max(abs(min(rnd_drops)), abs(max(rnd_drops)))
+        print(f'  SÀN NHIỄU (từ cột random, nơi chênh lệch thật = 0):')
+        print(f'    lệch quan sát: ' + ', '.join(f'{d:+.1f}' for d in rnd_drops))
+        print(f'    biên độ nhiễu ~{noise:.1f} điểm')
+        print()
+        if spread <= noise * 1.5:
+            print(f'  => Tản của cột semantic ({spread:.1f}đ) KHÔNG vượt sàn nhiễu.')
+            print(f'     Không phát hiện được suy giảm hệ thống nào do định tuyến thật.')
+            print(f'     NHƯNG phép đo cũng KHÔNG ĐỦ ĐỘ PHÂN GIẢI để loại trừ hiệu ứng')
+            print(f'     cỡ vài điểm. Cần nhiều query hơn nếu muốn kết luận chắc.')
+        else:
+            print(f'  => Tản semantic ({spread:.1f}đ) VƯỢT sàn nhiễu ({noise:.1f}đ).')
+            print(f'     Có dấu hiệu định tuyến thật ảnh hưởng khác nhau theo cấu hình.')
+    if any(d < 0 for _, d in drops):
+        print()
+        print('  *** CẢNH BÁO: có cấu hình mà walk THẬT cho recall CAO HƠN lý tưởng.')
+        print('      Điều đó BẤT KHẢ về cơ chế — walk chỉ xấp xỉ tập K node gần nhất.')
+        print('      Đây là bằng chứng trực tiếp rằng mẫu query quá nhỏ. Tăng --nq.')
 
 
 if __name__ == '__main__':

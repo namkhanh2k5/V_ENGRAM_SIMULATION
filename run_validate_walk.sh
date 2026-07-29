@@ -33,13 +33,20 @@
 #   tầng discovery — payload chỉ lấy nội dung sau khi đã tìm ra object.
 #   Đo thực tế: code corpus, N=10.000, 5 query -> 99 giây (trước đó vài chục phút).
 #
-# Ước tính: ~3 phút mỗi lần chạy với nq=20.
-#   12 lần chạy (6 cấu hình × 2 chế độ) = KHOẢNG 40 PHÚT.
+# SỐ QUERY: 200, KHÔNG phải 20.
+#   Ở nq=20 (20 query x 5 neighbor = 100 phép thử), KTC 95% là ±8-10 ĐIỂM —
+#   không phân giải nổi hiệu ứng định tuyến cỡ 3 điểm cần đo. Lần chạy đầu ở
+#   nq=20 cho chênh lệch từ -8.2 đến +5.3, trong đó có dòng walk thật CAO HƠN
+#   lý tưởng, điều bất khả về mặt cơ chế. Đó là nhiễu, không phải tín hiệu.
+#   nq=200 đưa KTC về khoảng ±2.5 điểm.
+#
+# Ước tính: ~11 phút mỗi lần chạy với nq=200.
+#   12 lần chạy = KHOẢNG 2 GIỜ 15 PHÚT.
 # Nếu vẫn muốn dừng sớm, 3 cấu hình đầu đã đủ kiểm luận điểm r*.
 # ============================================================================
 set -u
 PY=python3
-NQ=20
+NQ=200
 SEED=20235956
 
 run() {
