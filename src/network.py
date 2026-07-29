@@ -45,6 +45,11 @@ import os as _os
 METADATA_ANCHORS = int(_os.environ.get("META_ANCHORS", "1"))
 # Fetch payload song song (mặc định BẬT). PARALLEL_FETCH=0 để đối chiếu.
 PARALLEL_FETCH = _os.environ.get("PARALLEL_FETCH", "1") != "0"
+# Bỏ HOÀN TOÀN tầng payload (ingest + fetch). Chỉ dùng cho thí nghiệm chỉ cần
+# Recall@5, vốn quyết định ở tầng discovery. Ingest tốn 5 lookup cho metadata
+# nhưng 30 cho payload shard, nên bỏ payload nhanh gấp ~7 lần.
+# KHÔNG dùng khi đo chi phí hay độ bền payload — lúc đó payload là trọng tâm.
+SKIP_PAYLOAD = _os.environ.get("SKIP_PAYLOAD", "0") == "1"
 
 # K — ngân sách node mỗi bảng (số node chạy ADC cho mỗi prefix)
 K_QUERY = 20
@@ -133,7 +138,7 @@ def data_ingestion_process(
         # Doc lap ngu nghia -> rai DEU (het semantic hotspot o payload).
         # ============================================================
         nodes_used_for_this_doc = set()
-        for s_id in range(shards_per_file):
+        for s_id in ([] if SKIP_PAYLOAD else range(shards_per_file)):
             p_key = generate_placement_key(tag, s_id)
 
             bootstrap_node = random.choice(network_nodes)
@@ -293,7 +298,9 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
     # Bỏ lối tắt tra GLOBAL_METADATA_DHT: trong thí nghiệm churn nó khiến metadata
     # KHÔNG BAO GIỜ chết, nên metadata availability không đo được (mục Threats).
     k_required = 20
-    if PARALLEL_FETCH:
+    if SKIP_PAYLOAD:
+        shards_collected = 0          # bỏ hẳn tầng payload
+    elif PARALLEL_FETCH:
         # SONG SONG: phóng k_required shard cùng lúc, thiếu thì phóng tiếp phần còn
         # lại. Client thật làm đúng vậy — nó không biết shard nào chết nên gửi hết
         # rồi lấy 20 cái về trước. Độ trễ khi đó là của lookup CHẬM NHẤT, không
