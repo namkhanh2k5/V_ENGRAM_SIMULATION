@@ -63,8 +63,9 @@ def run_simulation(env, args, cfg):
 
     print(f"[*] {args.dataset}: corpus={cfg['n']:,} | codebook={codebook.shape} | "
           f"query={Q.shape}")
+    from src.routing import NUM_PROJECTIONS as _L
     print(f"[*] Cấu hình: r={netmod.METADATA_ANCHORS} K={args.k_query} "
-          f"T={args.multi_probe} L=5 seed={args.seed}"
+          f"T={args.multi_probe} L={_L} seed={args.seed}"
           f"{' [RANDOM ROUTING]' if args.random_routing else ''}")
 
     network_nodes = yield env.process(bootstrap_network(env, args.nodes, K_SIZE))
