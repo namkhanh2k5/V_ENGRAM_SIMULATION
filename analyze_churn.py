@@ -25,8 +25,10 @@ def main():
         cfg, hist = d['config'], d['history']
         if not hist or 'random_r5' not in hist[-1]:
             continue
+        rec = dict(hist[-1])
+        rec['_duration'] = cfg['duration']          # cần để chuẩn hoá lưu lượng
         runs[(cfg['median_session'], cfg['meta_anchors'],
-              cfg['repair_interval'])].append(hist[-1])
+              cfg['repair_interval'])].append(rec)
 
     if not runs:
         print('Chưa có file churn_*.json hợp lệ.')
@@ -53,8 +55,10 @@ def main():
     print('Trục chính: CHU KỲ SỬA CHỮA so với tốc độ churn')
     print('=' * 100)
     print(f"{'cấu hình':26s} {'n':>2s} {'meta':>7s} {'semantic':>10s} {'random':>8s} "
-          f"{'TỈ LỆ':>7s} {'dấu vết':>8s} {'msg sửa':>11s}")
+          f"{'TỈ LỆ':>7s} {'dấu vết':>8s} {'msg/doc/22h':>12s}")
     print('-' * 100)
+    print('  (lưu lượng CHUẨN HOÁ theo thời lượng: chu kỳ sửa dài cần mô phỏng dài,')
+    print('   nên số message THÔ không so trực tiếp được)')
 
     def key_order(k):
         r, rep = k
@@ -77,16 +81,20 @@ def main():
                    else f'r={r}, sửa mỗi {rep:.0f}ph = med/{1/k:.0f}')
         else:
             lbl = f'r={r}, KHÔNG sửa'
+        dur = g('_duration')
         row = {'meta': g('meta_avail'), 'sem': g('final_r5'), 'rnd': g('random_r5'),
                'ratio': g('ratio'), 'fp': g('footprint'), 'msg': g('repair_msgs'),
-               'sem_sd': sd('final_r5'), 'n': len(v), 'rep': rep, 'r': r}
+               'sem_sd': sd('final_r5'), 'n': len(v), 'rep': rep, 'r': r,
+               'dur': dur,
+               # chuẩn hoá: message mỗi doc trong 22 giờ, để so với IPFS
+               'msg22': g('repair_msgs') / 20000 * 1320 / dur if dur > 0 else 0.0}
         rows[k] = row
         mark = '  <- NGẪU NHIÊN THẮNG' if row['ratio'] < 1.0 else ''
         if row['meta'] < 95 and rep > 0:
             mark = '  <- sửa KHÔNG KỊP'
         print(f"{lbl:26s} {row['n']:>2} {row['meta']:>6.1f}% "
               f"{row['sem']:>6.1f}±{row['sem_sd']:<3.0f} {row['rnd']:>7.1f}% "
-              f"{row['ratio']:>6.2f}x {row['fp']:>8.2f} {row['msg']:>11,.0f}{mark}")
+              f"{row['ratio']:>6.2f}x {row['fp']:>8.2f} {row['msg22']:>12.2f}{mark}")
 
     # ---- tìm ngưỡng: chu kỳ sửa THƯA NHẤT còn giữ được availability ----
     repaired = sorted([v for k, v in rows.items() if v['r'] == 1 and v['rep'] > 0],
@@ -110,7 +118,8 @@ def main():
         tight = min(repaired, key=lambda x: x['rep']) if repaired else loosest
         if tight['rep'] < loosest['rep']:
             print(f'  So với sửa dày nhất ({tight["rep"]:.0f}ph): '
-                  f'tiết kiệm {100*(1-loosest["msg"]/max(tight["msg"],1)):.0f}% message, '
+                  f'lưu lượng {tight["msg22"]:.1f} -> {loosest["msg22"]:.1f} msg/doc/22h '
+                  f'(giảm {100*(1-loosest["msg22"]/max(tight["msg22"],1e-9)):.0f}%), '
                   f'tỉ lệ {tight["ratio"]:.2f}x -> {loosest["ratio"]:.2f}x')
     else:
         print('  KHÔNG chu kỳ nào giữ được availability >= 99%. Cần sửa dày hơn nữa.')
@@ -141,17 +150,19 @@ def main():
             print(f'  => r=1+sửa giữ lợi thế cao hơn {best["ratio"]/r20["ratio"]:.1f} lần.')
         if r20['fp'] > 0:
             print(f'     Dấu vết nhỏ hơn {r20["fp"]/max(best["fp"],1e-9):.1f} lần.')
-        dur = 720.0
-        per_doc = best['msg'] / 20000
-        per_22h = per_doc * 1320 / dur
-        print(f'     Cái giá: {best["msg"]:,.0f} message trong {dur:.0f} phút '
-              f'= {per_doc:.1f} msg/doc.')
+        per_22h = best['msg22']
+        print(f'     Cái giá: {best["msg"]:,.0f} message trong {best["dur"]:.0f} phút '
+              f'= {per_22h:.1f} msg/doc mỗi 22 giờ.')
         print()
         print('  ĐỐI CHIẾU IPFS, quy về cùng đơn vị thời gian:')
         print(f'    V-Engram r=1 + sửa : {per_22h:.1f} msg/doc mỗi 22 giờ')
         print(f'    IPFS r=20 republish: 20.0 msg/doc mỗi 22 giờ')
-        print(f'    => lưu lượng chênh {100*(per_22h/20-1):+.0f}%, '
-              f'nhưng dấu vết nhỏ hơn {r20["fp"]/max(best["fp"],1e-9):.1f} lần')
+        if per_22h < 20:
+            print(f'    => lưu lượng ÍT HƠN {20/max(per_22h,1e-9):.1f} lần, '
+                  f'dấu vết nhỏ hơn {r20["fp"]/max(best["fp"],1e-9):.1f} lần')
+        else:
+            print(f'    => lưu lượng chênh {100*(per_22h/20-1):+.0f}%, '
+                  f'dấu vết nhỏ hơn {r20["fp"]/max(best["fp"],1e-9):.1f} lần')
         print(f'       và giữ được lợi thế {best["ratio"]:.2f}x thay vì {r20["ratio"]:.2f}x.')
     if r1no:
         print()
