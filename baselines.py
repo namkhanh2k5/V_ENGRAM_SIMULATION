@@ -64,7 +64,9 @@ VENGRAM_CANDIDATES = int(_os.environ.get("VENGRAM_CANDIDATES", "4510"))  # ngân
                               # LƯU Ý: phải khớp UNIQUE candidates của V-Engram, không phải
                               # 100/bảng vs ~146 tổng như bản cũ. Đọc mean_candidates từ
                               # result_full_*.json rồi đặt POOL_PER_TABLE = mean/L.
-RERANK           = "adc"      # "adc" (giống V-Engram) hoặc "exact" (cosine chính xác)
+# Đọc từ env để chẩn đoán mục 3.2 được: chạy cả hai chế độ cùng P rồi so,
+# xem PQ lấy mất bao nhiêu điểm trên pool của LSH ceiling.
+RERANK           = _os.environ.get("RERANK", "adc")   # "adc" | "exact"
 INDEXED_COUNT    = None       # None = index toàn bộ corpus (khớp main_simulation NUM_FILES).
                               # Đặt 16000 nếu run chính thức dùng 80/20 (nhớ GT phải tính
                               # trên đúng tập index thì mới đạt được).
