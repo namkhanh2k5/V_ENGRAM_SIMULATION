@@ -31,13 +31,16 @@ SWEEP_K = {'K': [10, 20, 40, 80],
 
 # --- Bảng "Recall per Unit of Cost" ---
 # (nhãn, RPC discovery, Recall@5, node% mạng)
+# RPC ĐO ĐƯỢC trong bộ run discovery-only (cả bốn mode cùng một bộ run).
+# Bảng chi phí báo 1.145 cho semantic vì run đó chạy cả payload, làm lệch dòng
+# random 2 RPC. Bốn số dưới đây nhất quán với nhau, đó là điều hình cần.
 COST_POINTS = [
-    ('Semantic',           1145, 80.0, 4.9),
-    ('Random, keyed',      1411, 33.4, 7.7),
+    ('Semantic',           1147, 80.0, 4.9),
+    ('Random, keyed',      1408, 33.4, 7.7),
     ('Random, nominal',     800, 34.5, 8.0),
-    ('Random, eq. unique',  492, 22.1, 4.9),
+    ('Random, eq. unique',  509, 22.1, 4.9),
 ]
-SEM_EFFICIENCY = 80.0 / 1145        # recall trên mỗi RPC, dùng vẽ đường đẳng hiệu suất
+SEM_EFFICIENCY = 80.0 / 1147        # recall trên mỗi RPC, dùng vẽ đường đẳng hiệu suất
 
 # --- Bảng "Factorial sweep L × r", code corpus ---
 FACT_L = [4, 5, 8, 10]
@@ -106,6 +109,19 @@ def check():
     # tỉ lệ 3,6x mà Hình 3 ghi
     r36 = COST_POINTS[0][2] / COST_POINTS[3][2]
     eq('mũi tên 3,6x = semantic / equal-unique', r36, 3.6, tol=0.05)
+
+    # Caption nói baseline nằm ĐÂU so với đường đẳng hiệu suất. Kiểm để caption
+    # không bao giờ mâu thuẫn hình: đã từng ghi sai là "oracles sit above".
+    print()
+    print("=== VỊ TRÍ so với đường đẳng hiệu suất semantic ===")
+    for lbl, rpc, r5, _ in COST_POINTS[1:]:
+        on = SEM_EFFICIENCY * rpc
+        above = r5 > on
+        if above:
+            ok = False
+        print(f"  {'✗ TRÊN' if above else '✓ dưới'} {lbl:20s} y={r5:5.1f} "
+              f"vs đường {on:5.1f}")
+    print("  (caption phải nói CẢ BA nằm dưới; oracle gần đường hơn keyed lookup)")
 
     # mốc crossover: bốn đường phải cắt mốc 1 quanh L·r = 20
     print()
