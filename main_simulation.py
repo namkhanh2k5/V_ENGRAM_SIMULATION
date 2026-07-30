@@ -200,10 +200,14 @@ def run_simulation(env, args, cfg):
            "mean_contacted": float(np.mean([s["contacted_nodes"] for s in all_stats])),
            "mean_candidates": float(np.mean(uniq_cands)),
            "metadata_gini": gini, "metadata_total": int(meta.sum())}
-    from src.routing import DEFAULT_R_MAX as _RMAX
-    fn = args.out or (f"result_full_{args.dataset}_r{netmod.METADATA_ANCHORS}"
-                      f"_K{args.k_query}_T{args.multi_probe}_Rmax{_RMAX}"
-                      f"{'_RANDOM' if args.random_routing else ''}_s{args.seed}.json")
+    from src.routing import DEFAULT_R_MAX as _RMAX, NUM_PROJECTIONS as _L
+    fn = args.out or (f"result_full_{args.dataset}_N{args.nodes}_L{_L}"
+                      f"_r{netmod.METADATA_ANCHORS}_K{args.k_query}_T{args.multi_probe}"
+                      f"_Rmax{_RMAX}"
+                      f"{'_par' if netmod.PARALLEL_FETCH else '_ser'}"
+                      f"{'_nopay' if netmod.SKIP_PAYLOAD else ''}"
+                      f"{'_RANDOM' if args.random_routing else ''}"
+                      f"_s{args.seed}_nq{n_run}.json")
 
 
 if __name__ == "__main__":
