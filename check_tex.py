@@ -176,6 +176,25 @@ def main():
     if warn == e0:
         print("  ✓ mọi caption bảng đều khai số seed")
 
+    # ---- 7. Bảng có số nhân bản sang make_figures.py phải có dòng ĐỒNG BỘ ----
+    print()
+    print("=" * 78)
+    print("7. BẢNG NHÂN BẢN SỐ SANG make_figures.py")
+    print("=" * 78)
+    MIRRORED = ('tab:main_result', 'tab:budget_sweep', 'tab:normalised',
+                'tab:rstar', 'tab:nsweep')
+    e0 = warn
+    for lbl in MIRRORED:
+        i = s.find('\\label{' + lbl + '}')
+        if i < 0:
+            continue
+        beg = s.rfind('\\begin{table}', 0, i)
+        if beg < 0 or 'ĐỒNG BỘ' not in s[max(0, beg-300):beg]:
+            W(f"{lbl}: thiếu dòng comment ĐỒNG BỘ trỏ về make_figures.py — "
+              f"người sửa sau sẽ không biết có hai chỗ phải đổi")
+    if warn == e0:
+        print("  ✓ mọi bảng nhân bản đều có ghi chú đồng bộ")
+
     print()
     print("=" * 78)
     print(f"TỔNG: {err} lỗi, {warn} cảnh báo")

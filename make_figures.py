@@ -4,7 +4,20 @@ SINH BA FIGURE CỦA BÀI: fig_normalised, fig_rstar, fig_nsweep.
 
 VÌ SAO CÓ FILE NÀY: ba hình này trước đây được tạo bằng code chạy rời, không
 commit vào repo. Hệ quả là không ai regenerate được, và không ai kiểm được nhãn
-trong hình có khớp bảng trong bài hay không. File này khép cả hai lỗ hổng.
+trong hình có khớp bảng trong bài hay không.
+
+PHẠM VI — ĐỌC KỸ: file này là NGUỒN DUY NHẤT CHO CÁC HÌNH, không phải nguồn duy
+nhất cho các số. Các hằng số dưới đây là BẢN SAO CHÉP TAY từ Bảng 4, 6, 11, 14,
+17 và 18 trong .tex. Hàm check() chỉ kiểm tính nhất quán GIỮA CÁC BẢN SAO này và
+với công thức — nó KHÔNG đọc .tex. Nếu ai sửa một bảng trong .tex mà quên sửa
+hằng số tương ứng ở đây, check() vẫn báo ĐẠT và hình lệch bảng trong im lặng.
+Đó đúng là lớp lỗi đã mất nhiều vòng để dọn.
+
+=> SỬA BẢNG NÀO THÌ SỬA CẢ ĐÂY. Mỗi bảng liên quan trong .tex có một dòng
+   comment trỏ về file này.
+
+Cách đóng thật sự là sinh luôn thân bảng LaTeX từ cùng bộ hằng số rồi input vào
+.tex, để chỉ còn một chỗ sửa. Chưa làm vì sát hạn nộp.
 
     python3 make_figures.py            # sinh 3 hình
     python3 make_figures.py --check    # chỉ đối chiếu số, không vẽ
@@ -13,7 +26,6 @@ MỌI SỐ ĐỀU KHAI BÁO Ở ĐẦU FILE, kèm chú thích bảng nào trong 
 Sửa bảng thì sửa ở đây, rồi chạy lại — hình và bảng không thể lệch nhau nữa.
 """
 import argparse
-from math import comb
 
 import numpy as np
 
@@ -66,10 +78,19 @@ N_MAIN = 10000
 
 
 def p_rand_hyper(N, A, M):
-    """Eq r*: P_rand = 1 - C(N-A, M)/C(N, M). Dạng hypergeometric, KHÔNG rút gọn."""
+    """Eq r*: P_rand = 1 - C(N-A, M)/C(N, M). Dạng hypergeometric, KHÔNG rút gọn.
+
+    Cài bằng dạng tích prod_{i<A} (N-M-i)/(N-i) thay vì math.comb. Hai dạng
+    tương đương đại số và trùng đến sáu chữ số thập phân, nhưng comb phải dựng
+    số nguyên nghìn chữ số. Đủ nhanh ở độ phân giải hiện tại; sẽ thành nút thắt
+    nếu ai nâng số điểm của đường hoặc quét thêm N.
+    """
     if M <= 0 or M >= N:
         return float('nan')
-    return 100.0 * (1 - comb(N - A, M) / comb(N, M))
+    p = 1.0
+    for i in range(A):
+        p *= (N - M - i) / (N - i)
+    return 100.0 * (1 - p)
 
 
 # ===========================================================================
@@ -169,10 +190,17 @@ def draw():
     # ----- HÌNH 1: recall theo hai thước đo chi phí -----
     fig, axes = plt.subplots(1, 2, figsize=(7.4, 3.2))
     ax = axes[0]
-    ax.plot(SWEEP_T['node_pct'], SWEEP_T['recall'], 'o-', color=COLS[0],
-            lw=1.7, ms=5, label='Semantic, sweep $T$')
-    ax.plot(SWEEP_K['node_pct'], SWEEP_K['recall'], 's-', color=COLS[1],
-            lw=1.7, ms=5, label='Semantic, sweep $K$')
+    # Hai đường semantic dán nhãn INLINE, không vào legend: sáu dòng legend che
+    # đúng đoạn 7,5-11,5% nơi đường Eq.8 gặp hai điểm đo ở 7,7% và 8,0%.
+    ax.plot(SWEEP_T['node_pct'], SWEEP_T['recall'], 'o-', color=COLS[0], lw=1.7, ms=5)
+    ax.plot(SWEEP_K['node_pct'], SWEEP_K['recall'], 's-', color=COLS[1], lw=1.7, ms=5)
+    ax.annotate('sweep $T$', xy=(SWEEP_T['node_pct'][1], SWEEP_T['recall'][1]),
+                xytext=(-4, 7), textcoords='offset points', ha='right',
+                fontsize=7.5, color=COLS[0], fontweight='bold')
+    ax.annotate('sweep $K$', xy=(SWEEP_K['node_pct'][-1], SWEEP_K['recall'][-1]),
+                xytext=(-2, 9), textcoords='offset points', ha='right',
+                fontsize=7.5, color=COLS[1], fontweight='bold')
+    ax.text(0.4, 93, 'Semantic', fontsize=8, fontweight='bold', color='0.25')
     x = np.linspace(0.5, 17, 200)
     ax.plot(x, [p_rand_hyper(N_MAIN, A_MEASURED, int(N_MAIN * xi / 100)) for xi in x],
             '--', color='gray', lw=1.3, label=f'Random (Eq., $A{{=}}{A_MEASURED}$)')
@@ -197,7 +225,10 @@ def draw():
     ax.set_xlabel('Unique nodes contacted (% of overlay)')
     ax.set_ylabel('Recall@5 (%)')
     ax.set_xlim(0, 17); ax.set_ylim(0, 100)
-    ax.legend(fontsize=7, loc='lower right', framealpha=0.92)
+    # legend giờ 4 dòng (Eq + 3 baseline). Góc dưới-phải trống: đường Eq.8 ở
+    # x=11,5% đã lên y=45,7 nên hộp trong y 2-32 không chạm nó.
+    ax.legend(fontsize=6.8, loc='lower right', framealpha=0.92,
+              borderpad=0.4, labelspacing=0.35)
     ax.grid(True, alpha=0.25, lw=0.5)
 
     ax = axes[1]
@@ -248,8 +279,13 @@ def draw():
                 lw=1.7, ms=4.5, label=f'$L={L}$')
     ax.axhline(1.0, color='black', lw=0.9, ls=':', zorder=1)
     ax.axvline(CROSSOVER_LR, color='gray', lw=0.9, ls='--', alpha=0.7, zorder=1)
-    ax.text(CROSSOVER_LR * 1.05, 2.9, f'$L{{\\cdot}}r{{\\approx}}{CROSSOVER_LR}$',
-            fontsize=7.5, ha='left', color='dimgray')
+    # nhãn ở đầu trên bị hộp legend (upper right) che một phần -> xuống chân
+    # y=0.845 ra khỏi legend nhưng rơi đúng dải đường L=4 đi xuống (tại x=37 nó
+    # đã ở y~0.855, trong chiều cao chữ). Vùng trống thật là y 1.8-2.4 ở x~21:
+    # mọi đường ở đó quanh 1.0, legend bắt đầu từ y~2.65.
+    ax.text(CROSSOVER_LR * 1.06, 2.0,
+            f'$L{{\\cdot}}r{{\\approx}}{CROSSOVER_LR}$',
+            fontsize=7.5, ha='left', va='center', color='dimgray')
     ax.set_xscale('log')
     # bỏ tick 16: trên thang log nó chồng lên 20
     ax.set_xticks([4, 8, 20, 40, 100])
@@ -292,13 +328,21 @@ def draw():
     ax2.set_ylabel('Ratio', color=COLS[1])
     ax2.tick_params(axis='y', labelcolor=COLS[1])
     ax2.set_ylim(0, max(ratio) * 1.2)
-    ls = l1 + l2 + l3
-    # Line2D.get_label() được khai là trả về object trong type stub, nên
-    # list comprehension cho list[object] chứ không phải list[str]. Ép str.
-    # 'center right' che đúng chỗ đường ratio đi qua giữa 10k và 20k.
-    # Góc dưới-trái trống hoàn toàn.
-    ax1.legend(ls, [str(x.get_label()) for x in ls], fontsize=8,
-               loc='lower left', framealpha=0.9)
+    # KHÔNG dùng hộp legend. Với hai trục y và ba đường, mọi góc đều có dữ liệu
+    # đi qua: 'center right' che đường ratio giữa 10k-20k, còn 'lower left' che
+    # điểm ratio ở 5k (1,5 trên trục phải = 21,4 trên thang trục trái, đúng
+    # trong hộp), mà 1,5 là đầu mút caption dẫn. Nhãn cạnh đường thì không che.
+    ax1.annotate('Semantic', xy=(Ns[1], s_n[1]), xytext=(0, 9),
+                 textcoords='offset points', ha='center', fontsize=8,
+                 color=COLS[0], fontweight='bold')
+    # Neo ở Ns[2] chứ không Ns[1]: ở 10k chữ căn giữa có mép phải chạm x~11,5k
+    # nơi đường đỏ còn ở y~32, sát đỉnh chữ. Ở 20k phía dưới đường trống hẳn.
+    ax1.annotate('Random', xy=(Ns[2], r_n[2]), xytext=(0, -14),
+                 textcoords='offset points', ha='center', fontsize=8,
+                 color=COLS[3], fontweight='bold')
+    ax2.annotate('Ratio (sem/rand)', xy=(Ns[2], ratio[2]), xytext=(-8, 10),
+                 textcoords='offset points', ha='right', fontsize=8,
+                 color=COLS[1], fontweight='bold')
     ax1.grid(True, alpha=0.25, lw=0.5)
     plt.tight_layout()
     plt.savefig('fig_nsweep.pdf', bbox_inches='tight')
