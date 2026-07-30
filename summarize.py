@@ -11,10 +11,20 @@ import statistics as st
 MIN_NQ = int(os.environ.get('MIN_NQ', '0'))
 
 rows = defaultdict(list)
+_skipped = []
 for f in glob.glob("result_*.json"):
-    r = json.load(open(f))
+    try:
+        r = json.load(open(f))
+    except Exception as e:
+        _skipped.append((f, f"không đọc được: {e}")); continue
+    # main_simulation.py (SimPy) cũng ghi ra result_full_*.json nhưng SCHEMA
+    # KHÁC — không có meta_anchors, use_pq. Trước đây nó lọt qua bộ lọc file cũ
+    # nên gây KeyError. Bỏ qua mọi file thiếu khoá bắt buộc thay vì crash.
+    _need = ("dataset", "k_query", "meta_anchors", "use_pq")
+    _miss = [k for k in _need if k not in r]
+    if _miss:
+        _skipped.append((f, "thiếu " + ", ".join(_miss))); continue
     # File chạy trước bản vá không có trường pq_variant -> suy từ TÊN FILE
-    # (tên có dạng result_{ds}_K{K}_MA{r}_{pq|m512|nopq}_L{L}_T{T}[_RANDOM].json)
     if "pq_variant" not in r:
         r["pq_variant"] = "m512" if "_m512" in f else "m256"
     if MIN_NQ and r.get("n_query", 0) < MIN_NQ:
@@ -50,6 +60,14 @@ for key in sorted(rows):
         "node_pct": ms([x["pct_network_touched"] for x in g]),
         "gini": ms([x["metadata_gini"] for x in g]),
     })
+
+if _skipped:
+    print(f"[i] Bỏ qua {len(_skipped)} file schema khác (không phải lỗi):")
+    for f, why in _skipped[:6]:
+        print(f"      {f}  —  {why}")
+    if len(_skipped) > 6:
+        print(f"      ... và {len(_skipped)-6} file nữa")
+    print()
 
 _old = [f for f in glob.glob("result_*.json") if "_s" not in f or "_nq" not in f]
 if _old:
