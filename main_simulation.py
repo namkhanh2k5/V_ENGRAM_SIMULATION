@@ -206,7 +206,7 @@ def run_simulation(env, args, cfg):
                       f"_Rmax{_RMAX}"
                       f"{'_par' if netmod.PARALLEL_FETCH else '_ser'}"
                       f"{'_nopay' if netmod.SKIP_PAYLOAD else ''}"
-                      f"{'_RANDOM' if args.random_routing else ''}"
+                      f"_{netmod.ROUTING_MODE if netmod.ROUTING_MODE != 'auto' else ('random_slots' if args.random_routing else 'semantic')}"
                       f"_s{args.seed}_nq{n_run}.json")
 
 
