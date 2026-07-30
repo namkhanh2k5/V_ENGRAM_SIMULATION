@@ -30,9 +30,11 @@ def read(mode):
         'file': f,
         'recall': g(r'Recall@5\s*:\s*([\d.]+)%'),
         'rpc_total': g(r'RPC/query\s*:\s*([\d,.]+)'),
-        'disc_rpc': g(r'RPCs\s+([\d,]+)'),
-        'nodes': g(r'Unique nodes contacted\s+([\d,]+)'),
-        'rounds': g(r'Routing rounds\s+([\d,]+)'),
+        'disc_rpc': g(r'RPCs?(?:/query)?\s+([\d,.]+)'),
+        'nodes': g(r'Unique nodes contacted\s+([\d,.]+)'),
+        # log in "Routing rounds/query   213.8  2896.2  3110.0" — phải cho
+        # khớp cả '/query' và số thập phân, không chỉ \s+ và số nguyên
+        'rounds': g(r'Routing rounds(?:/query)?\s+([\d,.]+)'),
     }
 
 
