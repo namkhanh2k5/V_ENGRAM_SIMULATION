@@ -203,7 +203,9 @@ def draw():
     for i, L in enumerate(FACT_L):
         ax.plot(FACT_R, sem[i], 'o-', color=COLS[i], lw=1.7, ms=4.5, label=f'$L={L}$')
         ax.plot(FACT_R, rnd[i], 's--', color=COLS[i], lw=1.2, ms=3.8, alpha=0.6)
-    ax.set_xscale('log'); ax.set_xticks(FACT_R); ax.set_xticklabels(FACT_R)
+    ax.set_xscale('log'); ax.set_xticks(FACT_R)
+    # set_xticklabels đòi chuỗi, FACT_R là số nguyên -> ép str
+    ax.set_xticklabels([str(r) for r in FACT_R])
     ax.minorticks_off()
     ax.set_xlabel('Replication factor $r$'); ax.set_ylabel('Recall@5 (%)')
     # nới trần để chú thích không đè lên đường L=8, L=10
@@ -257,7 +259,9 @@ def draw():
     ax2.tick_params(axis='y', labelcolor=COLS[1])
     ax2.set_ylim(0, max(ratio) * 1.2)
     ls = l1 + l2 + l3
-    ax1.legend(ls, [x.get_label() for x in ls], fontsize=8,
+    # Line2D.get_label() được khai là trả về object trong type stub, nên
+    # list comprehension cho list[object] chứ không phải list[str]. Ép str.
+    ax1.legend(ls, [str(x.get_label()) for x in ls], fontsize=8,
                loc='center right', framealpha=0.9)
     ax1.grid(True, alpha=0.25, lw=0.5)
     plt.tight_layout()
