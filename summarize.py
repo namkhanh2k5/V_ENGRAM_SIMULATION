@@ -33,7 +33,11 @@ for f in glob.glob("result_*.json"):
            r["meta_anchors"], r.get("multi_probe", 1), r["use_pq"],
            r.get("routing_mode") or ("random_slots" if r.get("random_routing") else "semantic"),
            r.get("pq_variant", "m256"),
-           r.get("zipf", 0.0), r.get("n_query", 0))
+           r.get("zipf", 0.0), r.get("n_query", 0),
+           # node_loss PHẢI có trong khoá. Thiếu nó thì các run mục 16 (tắt
+           # 10/20/30% node) bị gộp với run lành, và recall cấu hình chốt tụt
+           # từ 80.0 xuống 76.8 vì lấy trung bình cả bốn mức hỏng.
+           r.get("node_loss", 0.0))
     rows[key].append(r)
 
 def ms(vals):
@@ -43,12 +47,12 @@ def ms(vals):
 
 out = []
 for key in sorted(rows):
-    ds, N, L, K, r, T, pq, mode, pqv, zf, nq = key
+    ds, N, L, K, r, T, pq, mode, pqv, zf, nq, loss = key
     g = rows[key]
     out.append({
         "dataset": ds, "N": N, "L": L, "K": K, "r": r, "T": T, "pq_var": pqv,
         "mode": mode,
-        "zipf": zf, "nq": nq,
+        "zipf": zf, "nq": nq, "loss": loss,
         "PQ": "on" if pq else "off", "routing": {"semantic": "semantic", "random_slots": "rnd-slot",
                      "random_unique": "rnd-uniq", "random_keys": "rnd-key"}.get(mode, mode),
         "seeds": len(g),
@@ -80,12 +84,12 @@ if out:
         w = csv.DictWriter(f, fieldnames=list(out[0]))
         w.writeheader(); w.writerows(out)
 
-hdr = f"{'ds':8s} {'N':>6s} {'L':>3s} {'K':>4s} {'r':>3s} {'T':>2s} {'PQ':>3s} {'var':>5s} {'routing':>9s} {'n':>2s} " \
+hdr = f"{'ds':8s} {'N':>6s} {'L':>3s} {'K':>4s} {'r':>3s} {'T':>2s} {'PQ':>3s} {'var':>5s} {'routing':>9s} {'loss':>5s} {'n':>2s} " \
       f"{'R@5':>12s} {'reach':>12s} {'cand%':>9s} {'node%':>9s}"
 print("\n" + hdr); print("-"*len(hdr))
 for o in out:
     print(f"{o['dataset']:8s} {o['N']:>6} {o['L']:>3} {o['K']:>4} {o['r']:>3} {o['T']:>2} {o['PQ']:>3s} "
-          f"{o['pq_var']:>5s} {o['routing']:>9s} {o['seeds']:>2} {o['recall@5']:>12s} "
+          f"{o['pq_var']:>5s} {o['routing']:>9s} {100*o['loss']:>4.0f}% {o['seeds']:>2} {o['recall@5']:>12s} "
           f"{o['reachable_r@5']:>12s} {o['cand_pct']:>9s} {o['node_pct']:>9s}")
 print(f"\n-> summary.csv ({len(out)} cấu hình)")
 
@@ -100,11 +104,11 @@ print("-"*88)
 
 cand_rows = []
 for key in rows:
-    ds, N, L, K, r, T, pq, mode, pqv, zf, nq = key
-    if mode != "semantic" or not pq or zf > 0:   # bảng chính dùng query ĐỀU
+    ds, N, L, K, r, T, pq, mode, pqv, zf, nq, loss = key
+    if mode != "semantic" or not pq or zf > 0 or loss > 0:  # chỉ query ĐỀU, mạng LÀNH
         continue
     # so semantic với oracle uniform-node sampling (baseline gốc)
-    k_rnd = (ds, N, L, K, r, T, pq, "random_slots", pqv, zf, nq)
+    k_rnd = (ds, N, L, K, r, T, pq, "random_slots", pqv, zf, nq, loss)
     if k_rnd not in rows:
         continue
     sem = st.mean([x["recall5"] for x in rows[key]])
@@ -132,17 +136,17 @@ for sem, rnd, ratio, node, ds, N, L, K, r, T, pqv in sorted(cand_rows, reverse=T
 print("\n=== TRẦN no-PQ (PQ đang ăn mất bao nhiêu điểm) ===")
 print(f"{'ds':8s} {'L':>3s} {'T':>2s} {'var':>5s} {'PQ on':>9s} {'PQ off':>9s} {'mất':>7s}")
 for key in sorted(rows):
-    ds, N, L, K, r, T, pq, mode, pqv, zf, nq = key
-    if not pq or mode != "semantic" or zf > 0:
+    ds, N, L, K, r, T, pq, mode, pqv, zf, nq, loss = key
+    if not pq or mode != "semantic" or zf > 0 or loss > 0:
         continue
-    k_off = (ds, N, L, K, r, T, False, "semantic", pqv, zf, nq)
+    k_off = (ds, N, L, K, r, T, False, "semantic", pqv, zf, nq, loss)
     if k_off in rows:
         on_ = st.mean([x["recall5"] for x in rows[key]])
         off = st.mean([x["recall5"] for x in rows[k_off]])
         print(f"{ds:8s} {L:>3} {T:>2} {pqv:>5s} {on_:>8.1f}% {off:>8.1f}% {off-on_:>6.1f}đ")
 
 # ===== HOTSPOT TRUY VẤN dưới Zipf: lưu trữ lệch khác truy vấn lệch =====
-_z = [(k, v) for k, v in rows.items() if k[9] > 0 and k[7] == "semantic"]  # k[9]=zipf, k[7]=random
+_z = [(k, v) for k, v in rows.items() if k[9] > 0 and k[7] == "semantic" and k[11] == 0]  # k[9]=zipf, k[7]=random
 if _z:
     print("\n=== RPC LOAD dưới query Zipf (hotspot TRUY VẤN, khác hotspot lưu trữ) ===")
     print(f"{'ds':8s} {'N':>6s} {'zipf':>5s} {'n':>2s} {'rpc_mean':>9s} {'rpc_P99':>8s} "
