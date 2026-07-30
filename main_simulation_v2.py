@@ -401,6 +401,10 @@ def main():
         'metadata_total': int(mc.sum()),
         'metadata_mean_per_node': float(mc.mean()),
         'metadata_gini': gini(mc),
+        # Mục 2.4: cần metadata_max để tính tỉ số max/mean qua nhiều seed.
+        # Thiếu field này thì aggregate_hotspot.py không kiểm được số 220x.
+        'metadata_max': int(mc.max()),
+        'metadata_p99': float(np.percentile(mc, 99)),
         'zipf': args.zipf,
         'rpc_gini': gini(node_rpc) if node_rpc.sum() > 0 else 0.0,
         'rpc_p99': float(np.percentile(node_rpc, 99)),
