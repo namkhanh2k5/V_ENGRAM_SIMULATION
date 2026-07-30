@@ -51,7 +51,14 @@ def main():
         print('(chạy nhóm A của run_paper.sh hoặc run_baselines_muc1.sh trước)')
         return
 
-    CORPUS = {'code': 20000, 'scifact': 5183, 'squad': 18891}
+    # Đọc từ manifest nếu có, để code50k/code100k không bị gán nhầm 20.000
+    CORPUS = {'code': 20000, 'scifact': 5183, 'squad': 18891,
+              'code50k': 50000, 'code100k': 100000}
+    try:
+        for e in json.load(open('data/manifest.json')):
+            CORPUS[e['name']] = e['corpus']
+    except Exception:
+        pass
 
     for (ds, N), runs in sorted(groups.items()):
         n_docs = CORPUS.get(ds, 20000)
