@@ -176,9 +176,18 @@ def draw():
     x = np.linspace(0.5, 17, 200)
     ax.plot(x, [p_rand_hyper(N_MAIN, A_MEASURED, int(N_MAIN * xi / 100)) for xi in x],
             '--', color='gray', lw=1.3, label=f'Random (Eq., $A{{=}}{A_MEASURED}$)')
-    rnd_pts = [(nd, r5) for lbl, _, r5, nd in COST_POINTS if lbl != 'Semantic']
-    ax.plot([p[0] for p in rnd_pts], [p[1] for p in rnd_pts], 'D',
-            color=COLS[3], ms=5.5, label='Random (measured)', zorder=5)
+    # Ba baseline: keyed ở 7,7% và nominal ở 8,0% chỉ cách 0,3 điểm, nếu dùng
+    # chung một marker thì render ra như MỘT hình thoi dày và người đọc đối
+    # chiếu bảng sẽ tìm ba điểm mà chỉ thấy hai. Dùng marker riêng như panel phải.
+    _mk = {'Random, keyed': ('D', COLS[3]), 'Random, nominal': ('s', COLS[2]),
+           'Random, eq. unique': ('^', '#9467bd')}
+    for lbl, _, r5, nd in COST_POINTS:
+        if lbl == 'Semantic':
+            continue
+        mk, c = _mk[lbl]
+        ax.plot(nd, r5, mk, color=c, ms=6, zorder=5,
+                markeredgecolor='white', markeredgewidth=0.5,
+                label=lbl.replace('Random, ', 'Random: '))
     sem_nd, sem_r5 = COST_POINTS[0][3], COST_POINTS[0][2]
     eq_r5 = COST_POINTS[3][2]
     ax.annotate('', xy=(sem_nd, sem_r5), xytext=(sem_nd, eq_r5),
@@ -248,7 +257,14 @@ def draw():
     ax.minorticks_off()
     ax.set_xlabel('Metadata footprint $L \\cdot r$')
     ax.set_ylabel('Semantic / random ratio')
-    ax.set_ylim(0.7, 3.35)
+    # Vùng DƯỚI 1.0 là phát hiện trung tâm của panel — 8 trong 20 điểm nằm ở
+    # 0,83-0,99. Với tick mặc định (1.0, 1.5, ...) cả vùng đó bị nén sát đáy và
+    # không đọc được. Đặt tick thưa dần: dày ở dưới, thưa ở trên.
+    ax.set_ylim(0.8, 3.2)
+    ax.set_yticks([0.8, 0.9, 1.0, 1.5, 2.0, 2.5, 3.0])
+    ax.set_yticklabels(['0.8', '0.9', '1.0', '1.5', '2.0', '2.5', '3.0'])
+    # tô nhẹ vùng dưới unity để mắt bắt được ngay
+    ax.axhspan(0.8, 1.0, color='#d62728', alpha=0.055, zorder=0)
     ax.legend(fontsize=7.5, loc='upper right', ncol=2, framealpha=0.9)
     ax.grid(True, alpha=0.25, lw=0.5)
     plt.tight_layout()
@@ -267,7 +283,9 @@ def draw():
     ax1.xaxis.set_minor_locator(mt.NullLocator())
     ax1.xaxis.set_major_formatter(mt.FixedFormatter(
         [f'{n//1000}k' for n in Ns]))
-    ax1.set_ylim(0, 95)
+    # điểm cao nhất là 85,7 nên tick phải tới 100, không dừng ở 80
+    ax1.set_ylim(0, 100)
+    ax1.set_yticks([0, 20, 40, 60, 80, 100])
     ax2 = ax1.twinx()
     l3 = ax2.plot(Ns, ratio, '^--', color=COLS[1], lw=1.3, ms=6,
                   label='Ratio (sem/rand)')
@@ -277,8 +295,10 @@ def draw():
     ls = l1 + l2 + l3
     # Line2D.get_label() được khai là trả về object trong type stub, nên
     # list comprehension cho list[object] chứ không phải list[str]. Ép str.
+    # 'center right' che đúng chỗ đường ratio đi qua giữa 10k và 20k.
+    # Góc dưới-trái trống hoàn toàn.
     ax1.legend(ls, [str(x.get_label()) for x in ls], fontsize=8,
-               loc='center right', framealpha=0.9)
+               loc='lower left', framealpha=0.9)
     ax1.grid(True, alpha=0.25, lw=0.5)
     plt.tight_layout()
     plt.savefig('fig_nsweep.pdf', bbox_inches='tight')
