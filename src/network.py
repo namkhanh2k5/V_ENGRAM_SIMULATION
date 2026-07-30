@@ -50,6 +50,12 @@ PARALLEL_FETCH = _os.environ.get("PARALLEL_FETCH", "1") != "0"
 # nhưng 30 cho payload shard, nên bỏ payload nhanh gấp ~7 lần.
 # KHÔNG dùng khi đo chi phí hay độ bền payload — lúc đó payload là trọng tâm.
 SKIP_PAYLOAD = _os.environ.get("SKIP_PAYLOAD", "0") == "1"
+# Chế độ định tuyến cho baseline. 'auto' = theo cờ --random-routing (tương thích cũ).
+#   semantic      : dùng semantic key
+#   random_slots  : oracle, bốc L*K*T node, KHÔNG định tuyến
+#   random_unique : oracle, bốc đúng MATCH_UNIQUE_NODES node
+#   keyed_lookup  : L*T khoá ngẫu nhiên + lookup Kademlia thật (THỰC THI ĐƯỢC)
+ROUTING_MODE = _os.environ.get("ROUTING_MODE", "auto")
 
 # K — ngân sách node mỗi bảng (số node chạy ADC cho mỗi prefix)
 K_QUERY = 20
@@ -242,13 +248,57 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
     lookups_total = lookups_at_cap = 0        # mục 21: % lookup chạm R_max
     t_query_start = env.now
 
-    if random_routing:
-        # BASELINE: chạm đúng cùng số node nhưng chọn ngẫu nhiên
-        n_touch = min(k_query * NUM_PROJECTIONS * multi_probe, len(network_nodes))
+    _mode = ROUTING_MODE if ROUTING_MODE != 'auto' else (
+        'random_slots' if random_routing else 'semantic')
+
+    if _mode in ('random_slots', 'random_unique'):
+        # BASELINE ORACLE: bốc node trực tiếp, KHÔNG định tuyến. Không có lookup
+        # nào, nên chi phí RPC đúng bằng số lần gọi ADC.
+        #
+        # Bản trước KHÔNG đếm disc_rpcs ở nhánh này, nên đo ra 0 RPC và làm
+        # phép so per-RPC vô nghĩa. Đây là chỗ khiến bài phải SUY RA thay vì đo.
+        if _mode == 'random_unique':
+            # khớp đúng số node PHÂN BIỆT mà semantic chạm: cần biết trước, nên
+            # lấy từ env (do lần chạy semantic cùng cấu hình cung cấp)
+            n_touch = int(_os.environ.get('MATCH_UNIQUE_NODES', k_query * NUM_PROJECTIONS))
+        else:
+            n_touch = k_query * NUM_PROJECTIONS * multi_probe
+        n_touch = min(n_touch, len(network_nodes))
         for node in random.sample(network_nodes, n_touch):
             contacted.add(node.node_id)
             yield env.timeout(_rtt())
+            total_rpcs += 1                    # một ADC request mỗi node
+            disc_rpcs += 1
+            disc_bytes += 512 + LOCAL_TOP_K * 24
             all_candidates.extend(node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K))
+
+    elif _mode == 'keyed_lookup':
+        # BASELINE THỰC THI ĐƯỢC: bốc L*T KHOÁ ngẫu nhiên rồi chạy đúng lookup
+        # Kademlia lặp như semantic. Không cần global membership view, và trả
+        # ĐÚNG chi phí routing — đây là baseline mà mục 4.12 phải suy ra chi phí,
+        # giờ đo trực tiếp.
+        for _ in range(NUM_PROJECTIONS * multi_probe):
+            r_key = random.getrandbits(160)
+            bootstrap_node = random.choice(network_nodes)
+            nodes, hops, rpcs = iterative_find_k_closest_nodes(
+                r_key, bootstrap_node, alpha=DEFAULT_ALPHA,
+                k=k_query, max_rounds=DEFAULT_R_MAX
+            )
+            total_hops += hops; total_rpcs += rpcs
+            disc_rounds += hops; disc_rpcs += rpcs
+            disc_bytes += rpcs * 8 * 20
+            lookups_total += 1
+            if hops >= DEFAULT_R_MAX:
+                lookups_at_cap += 1
+            for node in nodes:
+                if node.node_id in contacted:
+                    continue
+                contacted.add(node.node_id)
+                yield env.timeout(_rtt())
+                total_rpcs += 1; disc_rpcs += 1
+                disc_bytes += 512 + LOCAL_TOP_K * 24
+                all_candidates.extend(
+                    node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K))
     else:
         for t in range(NUM_PROJECTIONS):
             # Multi-probe: T prefix cho bảng này (gốc + T-1 biến thể lật bit yếu)
@@ -358,5 +408,6 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         "lookups_total": lookups_total,
         "lookups_at_cap": lookups_at_cap,
         "r_max": DEFAULT_R_MAX,
+        "routing_mode": _mode,
     }
     return retrieved_tags, total_hops, num_unique_candidates, stats
