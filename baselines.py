@@ -55,7 +55,10 @@ PATHS = {
 }[CORPUS]
 
 # MODEL_NAME bỏ: query embeddings đọc từ file precomputed
-LSH_SEED         = 20235956   # PHẢI trùng DEFAULT_LSH_SEED trong src/routing.py
+# PHẢI trùng DEFAULT_LSH_SEED trong src/routing.py để so cùng ma trận chiếu.
+# Đổi được qua env cho MC8: LSH ceiling và bucket-LSH phụ thuộc ma trận chiếu,
+# nên đa seed phải đổi CẢ seed này, không chỉ RNG_SEED.
+LSH_SEED         = int(_os.environ.get("LSH_SEED", "20235956"))
 NUM_PROJECTIONS  = 5          # L
 POOL_PER_TABLE   = int(_os.environ.get("POOL_PER_TABLE", "100"))
 # Mục 18: bề rộng bucket để quét, và số ứng viên V-Engram gom được
@@ -73,7 +76,9 @@ INDEXED_COUNT    = None       # None = index toàn bộ corpus (khớp main_simu
 HNSW_M, HNSW_EF  = 32, 200
 PQ_M, PQ_DSUB    = 256, 4     # 256 subquantizer × 4 chiều = 1024 (khớp node.adc_search)
 REPORT_PATH      = "baseline_report.txt"
-RNG_SEED         = 42         # cho random-5
+# MC8: baseline hiện chỉ 1 seed. Cho seed đọc từ env để chạy đa seed —
+# nếu hardcode thì 5 lần chạy cho kết quả y hệt.
+RNG_SEED         = int(_os.environ.get("RNG_SEED", "42"))
 # ========================================================
 
 import faiss
