@@ -179,6 +179,7 @@ def run_simulation(env, args, cfg):
            "multi_probe": args.multi_probe, "random_routing": args.random_routing,
            "n_query": n_run,
            # --- MC10: chẩn đoán đặt/lấy payload ---
+           "parallel_adc": netmod.PARALLEL_ADC,
            "placement_mode": netmod.PLACEMENT_MODE,
            "placement_k": netmod.PLACEMENT_K,
            "fetch_top": netmod.FETCH_TOP,
@@ -214,6 +215,7 @@ def run_simulation(env, args, cfg):
                       f"_r{netmod.METADATA_ANCHORS}_K{args.k_query}_T{args.multi_probe}"
                       f"_Rmax{_RMAX}"
                       f"{'_par' if netmod.PARALLEL_FETCH else '_ser'}"
+                      f"{'_padc' if netmod.PARALLEL_ADC else '_sadc'}"
                       f"{'_nopay' if netmod.SKIP_PAYLOAD else ''}"
                       f"_{netmod.ROUTING_MODE if netmod.ROUTING_MODE != 'auto' else ('random_slots' if args.random_routing else 'semantic')}"
                       f"_{netmod.PLACEMENT_MODE}{netmod.PLACEMENT_K}"

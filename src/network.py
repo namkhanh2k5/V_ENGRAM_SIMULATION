@@ -69,6 +69,9 @@ ROUTING_MODE = _os.environ.get("ROUTING_MODE", "auto")
 #     Đánh đổi: ~4% object có hai shard cùng node (C(30,2)/N), node đó chết thì
 #     mất 2 shard thay vì 1. RS(30,20) chịu được 10 nên vẫn dư biên.
 PLACEMENT_MODE = _os.environ.get("PLACEMENT_MODE", "scan")
+# Gửi ADC request song song tới các node đã chọn (mặc định BẬT).
+# PARALLEL_ADC=0 để đối chiếu với hành vi tuần tự cũ.
+PARALLEL_ADC = _os.environ.get("PARALLEL_ADC", "1") != "0"
 # Số ứng viên xin mỗi lần lookup placement key. Ở chế độ deterministic có thể
 # hạ mạnh vì không phải dò.
 PLACEMENT_K = int(_os.environ.get("PLACEMENT_K", str(PLACEMENT_CANDIDATES)))
@@ -244,6 +247,44 @@ def _fetch_one_object(env, tag, network_nodes, acc: Dict[str, Any], k_required=2
         yield env.all_of(procs)
 
 
+def _adc_seq(env, nodes, query_vector, codebook, acc):
+    """Bản TUẦN TỰ, giữ để đối chiếu. Đặt PARALLEL_ADC=0 để dùng."""
+    for node in nodes:
+        yield env.timeout(_rtt())
+        acc["rpcs"] += 1
+        acc["bytes"] += 512 + LOCAL_TOP_K * 24
+        acc["cands"].extend(node.adc_search(query_vector, codebook,
+                                            top_k=LOCAL_TOP_K))
+
+
+def _adc_all(env, nodes, query_vector, codebook, acc):
+    """Gọi ADC trên tập node, song song hoặc tuần tự tuỳ PARALLEL_ADC."""
+    if not nodes:
+        return
+    if PARALLEL_ADC:
+        yield env.all_of([env.process(_adc_one(env, nd, query_vector, codebook, acc))
+                          for nd in nodes])
+    else:
+        yield env.process(_adc_seq(env, nodes, query_vector, codebook, acc))
+
+
+def _adc_one(env, node, query_vector, codebook, acc):
+    """Gọi ADC trên MỘT node. Viết thành generator để các node chạy SONG SONG.
+
+    VÌ SAO CẦN: bản trước duyệt tuần tự và yield env.timeout(_rtt()) từng node.
+    Với 488 node phân biệt và RTT 50 ms, riêng vòng này đã là 24.400 ms — chiếm
+    ~91% p50 đo được (26.800 ms). Con số latency vì thế đo CÁCH MÔ PHỎNG XẾP
+    HÀNG chứ không đo giao thức: client thật gửi 488 ADC request song song, y
+    như nó gửi lookup song song.
+
+    Đường tới hạn thật: vài vòng lookup + MỘT RTT cho ADC, cỡ vài trăm ms.
+    """
+    yield env.timeout(_rtt())
+    acc["rpcs"] += 1
+    acc["bytes"] += 512 + LOCAL_TOP_K * 24
+    acc["cands"].extend(node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K))
+
+
 def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=5,
                            k_query=None, multi_probe=None, random_routing=False,
                            verbose=True):
@@ -297,13 +338,13 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         else:
             n_touch = k_query * NUM_PROJECTIONS * multi_probe
         n_touch = min(n_touch, len(network_nodes))
-        for node in random.sample(network_nodes, n_touch):
+        _sel = random.sample(network_nodes, n_touch)
+        for node in _sel:
             contacted.add(node.node_id)
-            yield env.timeout(_rtt())
-            total_rpcs += 1                    # một ADC request mỗi node
-            disc_rpcs += 1
-            disc_bytes += 512 + LOCAL_TOP_K * 24
-            all_candidates.extend(node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K))
+        _acc = {"rpcs": 0, "bytes": 0, "cands": []}
+        yield env.process(_adc_all(env, _sel, query_vector, codebook, _acc))
+        total_rpcs += _acc["rpcs"]; disc_rpcs += _acc["rpcs"]
+        disc_bytes += _acc["bytes"]; all_candidates.extend(_acc["cands"])
 
     elif _mode == 'keyed_lookup':
         # BASELINE THỰC THI ĐƯỢC: bốc L*T KHOÁ ngẫu nhiên rồi chạy đúng lookup
@@ -323,15 +364,14 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
             lookups_total += 1
             if hops >= DEFAULT_R_MAX:
                 lookups_at_cap += 1
-            for node in nodes:
-                if node.node_id in contacted:
-                    continue
-                contacted.add(node.node_id)
-                yield env.timeout(_rtt())
-                total_rpcs += 1; disc_rpcs += 1
-                disc_bytes += 512 + LOCAL_TOP_K * 24
-                all_candidates.extend(
-                    node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K))
+            _new = [nd for nd in nodes if nd.node_id not in contacted]
+            for nd in _new:
+                contacted.add(nd.node_id)
+            if _new:
+                _acc = {"rpcs": 0, "bytes": 0, "cands": []}
+                yield env.process(_adc_all(env, _new, query_vector, codebook, _acc))
+                total_rpcs += _acc["rpcs"]; disc_rpcs += _acc["rpcs"]
+                disc_bytes += _acc["bytes"]; all_candidates.extend(_acc["cands"])
     else:
         for t in range(NUM_PROJECTIONS):
             # Multi-probe: T prefix cho bảng này (gốc + T-1 biến thể lật bit yếu)
@@ -350,18 +390,18 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
                 lookups_total += 1
                 if hops >= DEFAULT_R_MAX:
                     lookups_at_cap += 1            # không hội tụ, chạm trần
-                # NGÂN SÁCH THEO TỪNG PREFIX — không cộng dồn qua các bảng
-                for node in nodes:
-                    if node.node_id in contacted:
-                        continue          # node đã chạy ADC cho prefix khác
-                    contacted.add(node.node_id)
-                    yield env.timeout(_rtt())
-                    total_rpcs += 1       # ADC request
-                    disc_rpcs += 1
-                    disc_bytes += 512 + LOCAL_TOP_K * 24   # query PQ gửi đi + tag trả về
-                    all_candidates.extend(
-                        node.adc_search(query_vector, codebook, top_k=LOCAL_TOP_K)
-                    )
+                # NGÂN SÁCH THEO TỪNG PREFIX — không cộng dồn qua các bảng.
+                # Node đã chạy ADC cho prefix khác thì bỏ qua (dedup toàn cục).
+                _new = [nd for nd in nodes if nd.node_id not in contacted]
+                for nd in _new:
+                    contacted.add(nd.node_id)
+                if _new:
+                    _acc = {"rpcs": 0, "bytes": 0, "cands": []}
+                    yield env.process(_adc_all(env, _new, query_vector,
+                                                    codebook, _acc))
+                    total_rpcs += _acc["rpcs"]; disc_rpcs += _acc["rpcs"]
+                    disc_bytes += _acc["bytes"]
+                    all_candidates.extend(_acc["cands"])
 
     # --- Merge: giữ khoảng cách nhỏ nhất cho mỗi tag, dedup giữa các bảng ---
     unique_candidates = {}
@@ -452,6 +492,7 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         "lookups_at_cap": lookups_at_cap,
         "r_max": DEFAULT_R_MAX,
         # --- MC10: chẩn đoán payload ---
+        "parallel_adc": PARALLEL_ADC,
         "placement_mode": PLACEMENT_MODE,
         "placement_k": PLACEMENT_K,
         "probe_depth_mean": (sum(probe_depths)/len(probe_depths)) if probe_depths else 0.0,
