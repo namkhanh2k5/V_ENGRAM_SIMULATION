@@ -178,6 +178,15 @@ def run_simulation(env, args, cfg):
            "r": netmod.METADATA_ANCHORS, "k_query": args.k_query,
            "multi_probe": args.multi_probe, "random_routing": args.random_routing,
            "n_query": n_run,
+           # --- MC10: chẩn đoán đặt/lấy payload ---
+           "placement_mode": netmod.PLACEMENT_MODE,
+           "placement_k": netmod.PLACEMENT_K,
+           "fetch_top": netmod.FETCH_TOP,
+           "probe_depth_mean": float(np.mean([s.get("probe_depth_mean",0) for s in all_stats])) if all_stats else 0.0,
+           "probe_depth_p95": float(np.mean([s.get("probe_depth_p95",0) for s in all_stats])) if all_stats else 0.0,
+           "probe_depth_max": max([s.get("probe_depth_max",0) for s in all_stats], default=0),
+           "shards_found": int(sum(s.get("shards_found",0) for s in all_stats)),
+           "shard_misses": int(sum(s.get("shard_misses",0) for s in all_stats)),
            "hit_at_5": m.get("hit_at_5") if m else None,
            "recall_at_5": m.get("recall_at_5") if m else None,
            "recall_at_10": m.get("recall_at_10") if m else None,
@@ -207,7 +216,15 @@ def run_simulation(env, args, cfg):
                       f"{'_par' if netmod.PARALLEL_FETCH else '_ser'}"
                       f"{'_nopay' if netmod.SKIP_PAYLOAD else ''}"
                       f"_{netmod.ROUTING_MODE if netmod.ROUTING_MODE != 'auto' else ('random_slots' if args.random_routing else 'semantic')}"
+                      f"_{netmod.PLACEMENT_MODE}{netmod.PLACEMENT_K}"
+                      f"{'_top' + str(netmod.FETCH_TOP) if netmod.FETCH_TOP else ''}"
                       f"_s{args.seed}_nq{n_run}.json")
+    # BUG cũ: bản vá tên file trước đây tính fn rồi BỎ ĐÓ, không ghi gì.
+    # Mọi run SimPy từ đó tới nay không sinh file JSON nào.
+    import json as _json
+    with open(fn, "w") as _f:
+        _json.dump(out, _f, indent=2, default=float)
+    print(f"\n-> Lưu: {fn}")
 
 
 if __name__ == "__main__":

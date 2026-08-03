@@ -1,4 +1,5 @@
 import random
+from typing import Any, Dict, List
 import time
 import numpy as np
 from src.node import VEngramNode
@@ -56,6 +57,23 @@ SKIP_PAYLOAD = _os.environ.get("SKIP_PAYLOAD", "0") == "1"
 #   random_unique : oracle, bốc đúng MATCH_UNIQUE_NODES node
 #   keyed_lookup  : L*T khoá ngẫu nhiên + lookup Kademlia thật (THỰC THI ĐƯỢC)
 ROUTING_MODE = _os.environ.get("ROUTING_MODE", "auto")
+
+# --- MC10: chế độ đặt payload shard ---
+#   scan (mặc định, hành vi cũ): đi dọc danh sách ứng viên, đặt vào node đầu
+#     tiên chưa giữ shard khác của cùng doc (anti-affinity). Vì thứ tự danh sách
+#     lúc GHI và lúc ĐỌC khác nhau (lookup xấp xỉ, bootstrap ngẫu nhiên), client
+#     đọc không biết node nào giữ shard, nên phải xin PLACEMENT_CANDIDATES=300
+#     ứng viên rồi dò dần. Đó là nguồn của 89% RPC.
+#   deterministic: bỏ anti-affinity, luôn đặt vào node GẦN NHẤT với placement key.
+#     Đọc chỉ cần xin ít ứng viên vì node gần nhất là tất định theo khoá.
+#     Đánh đổi: ~4% object có hai shard cùng node (C(30,2)/N), node đó chết thì
+#     mất 2 shard thay vì 1. RS(30,20) chịu được 10 nên vẫn dư biên.
+PLACEMENT_MODE = _os.environ.get("PLACEMENT_MODE", "scan")
+# Số ứng viên xin mỗi lần lookup placement key. Ở chế độ deterministic có thể
+# hạ mạnh vì không phải dò.
+PLACEMENT_K = int(_os.environ.get("PLACEMENT_K", str(PLACEMENT_CANDIDATES)))
+# Số object fetch payload. Mặc định lấy hết top-k trả về; đặt 1 để chỉ lấy cái đầu.
+FETCH_TOP = int(_os.environ.get("FETCH_TOP", "0"))   # 0 = lấy hết
 
 # K — ngân sách node mỗi bảng (số node chạy ADC cho mỗi prefix)
 K_QUERY = 20
@@ -149,21 +167,30 @@ def data_ingestion_process(
 
             bootstrap_node = random.choice(network_nodes)
             candidates, _, _ = iterative_find_k_closest_nodes(
-                p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
+                p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_K
             )
             if not candidates:
                 candidates = [bootstrap_node]
 
-            # Dat tren node gan nhat con cho & chua giu shard khac cua doc nay (anti-affinity)
-            for target in candidates:
-                if (
-                    len(target.SSD_Storage) < MAX_SHARDS_PER_NODE
-                    and target.node_id not in nodes_used_for_this_doc
-                ):
+            if PLACEMENT_MODE == "deterministic":
+                # Luôn node GẦN NHẤT, không anti-affinity. Vị trí trở thành hàm
+                # của khoá, nên client đọc tính lại được mà không phải dò.
+                target = candidates[0]
+                if len(target.SSD_Storage) < MAX_SHARDS_PER_NODE:
                     target.store_payload_shard(tag, s_id, {"shard_id": f"{s_id}", "is_aes": True})
                     total_shards += 1
                     nodes_used_for_this_doc.add(target.node_id)
-                    break
+            else:
+                # scan: node gần nhất còn chỗ VÀ chưa giữ shard khác của doc này
+                for target in candidates:
+                    if (
+                        len(target.SSD_Storage) < MAX_SHARDS_PER_NODE
+                        and target.node_id not in nodes_used_for_this_doc
+                    ):
+                        target.store_payload_shard(tag, s_id, {"shard_id": f"{s_id}", "is_aes": True})
+                        total_shards += 1
+                        nodes_used_for_this_doc.add(target.node_id)
+                        break
 
         yield env.timeout(_rtt())
         if (i + 1) % 5000 == 0:
@@ -175,7 +202,7 @@ def data_ingestion_process(
     )
 
 
-def _fetch_one_shard(env, tag, s_id, network_nodes, acc):
+def _fetch_one_shard(env, tag, s_id, network_nodes, acc: Dict[str, Any]):
     """Lấy MỘT shard. Viết thành generator riêng để 30 shard đi SONG SONG.
 
     Ghi chi phí vào dict acc dùng chung (rounds/rpcs/bytes/ok).
@@ -183,22 +210,26 @@ def _fetch_one_shard(env, tag, s_id, network_nodes, acc):
     p_key = generate_placement_key(tag, s_id)
     bootstrap_node = random.choice(network_nodes)
     candidate_nodes, ph, pr = iterative_find_k_closest_nodes(
-        p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_CANDIDATES
+        p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_K
     )
     acc["rounds"] += ph
     acc["rpcs"] += pr
     acc["bytes"] += pr * 8 * 20
-    for target_node in candidate_nodes:
+    for depth, target_node in enumerate(candidate_nodes, 1):
         yield env.timeout(_rtt())
         shard_data = yield env.process(target_node.get_shard(f"{tag}_shard_{s_id}"))
         acc["rpcs"] += 1
         if shard_data:
             acc["ok"] += 1
             acc["bytes"] += 4096 // 20
+            # MC10: dò tới ứng viên thứ mấy mới thấy. =1 nghĩa là tất định.
+            acc.setdefault("depths", []).append(depth)
             return
+    acc.setdefault("misses", 0)
+    acc["misses"] += 1
 
 
-def _fetch_one_object(env, tag, network_nodes, acc, k_required=20):
+def _fetch_one_object(env, tag, network_nodes, acc: Dict[str, Any], k_required=20):
     """Lấy payload của MỘT object: phóng k_required shard song song, thiếu thì bù.
 
     Viết riêng để bản thân các object cũng chạy song song với nhau — client thật
@@ -246,6 +277,8 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
     disc_rounds = disc_rpcs = disc_bytes = 0
     pay_rounds = pay_rpcs = pay_bytes = 0
     lookups_total = lookups_at_cap = 0        # mục 21: % lookup chạm R_max
+    probe_depths: List[int] = []              # MC10: dò tới ứng viên thứ mấy
+    shard_misses = 0                          # MC10: shard không tìm thấy
     t_query_start = env.now
 
     _mode = ROUTING_MODE if ROUTING_MODE != 'auto' else (
@@ -356,16 +389,26 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         # rồi lấy 20 cái về trước. Độ trễ khi đó là của lookup CHẬM NHẤT, không
         # phải tổng của 20-30 lookup nối đuôi.
         # Cả 5 object ĐỒNG THỜI, và trong mỗi object thì 20 shard cũng đồng thời.
-        accs = [{"rounds": 0, "rpcs": 0, "bytes": 0, "ok": 0} for _ in reranked_top]
+        # FETCH_TOP=1: chỉ lấy payload của kết quả đầu, không lấy cả top-k.
+        # Đây là điều một hệ RAG thật thường làm — trả danh sách ID rồi lấy nội
+        # dung theo nhu cầu, chứ không lấy sẵn hết.
+        _targets = reranked_top[:FETCH_TOP] if FETCH_TOP > 0 else reranked_top
+        # Kiểu hỗn hợp: rounds/rpcs/bytes/ok là int, depths là list, misses là int.
+        # Không khai báo thì bộ kiểm kiểu suy ra dict[str, int] và báo lỗi ở chỗ
+        # a.get("depths", []) vì nó tưởng giá trị trả về là int.
+        accs: List[Dict[str, Any]] = [
+            {"rounds": 0, "rpcs": 0, "bytes": 0, "ok": 0} for _ in _targets]
         objs = [env.process(_fetch_one_object(env, tag, network_nodes, accs[idx],
                                               k_required))
-                for idx, (tag, score) in enumerate(reranked_top)]
+                for idx, (tag, score) in enumerate(_targets)]
         if objs:
             yield env.all_of(objs)
         for a in accs:
             pay_rounds += a["rounds"]
             pay_rpcs += a["rpcs"]
             pay_bytes += a["bytes"]
+            probe_depths.extend(list(a.get("depths") or []))
+            shard_misses += int(a.get("misses") or 0)
         shards_collected = accs[-1]["ok"] if accs else 0
     else:
         # TUẦN TỰ: giữ để đối chiếu độ trễ.
@@ -408,6 +451,15 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         "lookups_total": lookups_total,
         "lookups_at_cap": lookups_at_cap,
         "r_max": DEFAULT_R_MAX,
+        # --- MC10: chẩn đoán payload ---
+        "placement_mode": PLACEMENT_MODE,
+        "placement_k": PLACEMENT_K,
+        "probe_depth_mean": (sum(probe_depths)/len(probe_depths)) if probe_depths else 0.0,
+        "probe_depth_max": max(probe_depths) if probe_depths else 0,
+        "probe_depth_p95": (sorted(probe_depths)[int(0.95*len(probe_depths))]
+                            if probe_depths else 0),
+        "shards_found": len(probe_depths),
+        "shard_misses": shard_misses,
         "routing_mode": _mode,
     }
     return retrieved_tags, total_hops, num_unique_candidates, stats
