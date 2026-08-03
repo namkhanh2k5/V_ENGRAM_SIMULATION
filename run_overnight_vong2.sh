@@ -3,7 +3,7 @@
 # CHẠY QUA ĐÊM — ba việc dài nhất trong 15 mục
 #
 #   nproc                          # xem có bao nhiêu core
-#   tmux new -s overnight
+#   tmux new -s v2run          # tên khác 'overnight' đã dùng lần trước
 #   source venv/bin/activate
 #   PARALLEL=4 bash run_overnight_vong2.sh 2>&1 | tee overnight2.log
 #   # Ctrl+B rồi D
