@@ -153,7 +153,8 @@ def main():
                          'mất theo. Đây là mô hình STATIC FAILURE, không phải\n'
                          'churn: node không quay lại, không re-anchor, không repair.')
     ap.add_argument('--routing', default=None,
-                    choices=['semantic', 'random_slots', 'random_unique', 'random_keys'],
+                    choices=['semantic', 'random_slots', 'random_unique', 'random_keys',
+                             'random_equalcand'],
                     help='Chế độ định tuyến (mục 1 nhận xét của thầy):\n'
                          '  semantic      = dùng semantic key (mặc định)\n'
                          '  random_slots  = chạm L*K*T node ngẫu nhiên UNIQUE.\n'
@@ -165,6 +166,8 @@ def main():
                          '                  chạm cho CHÍNH query đó. Ngân sách node\n'
                          '                  khớp tuyệt đối.\n'
                          '  random_keys   = chọn L*T KEY ngẫu nhiên rồi Kademlia\n'
+                         '  random_equalcand = bốc node tới khi đủ SỐ ỨNG VIÊN\n'
+                         '                     mà semantic gom được (khớp compute)\n'
                          '                  lookup mỗi key lấy K node. Không cần\n'
                          '                  global view, trả chi phí routing y hệt,\n'
                          '                  node gom theo cụm như semantic.')
@@ -311,6 +314,33 @@ def main():
             _al = net.alive_idx
             pool = _al.tolist() if _al is not None else list(range(args.nodes))
             touched = set(rnd_route.sample(pool, min(len(sem_touch), len(pool))))
+
+        elif mode == 'random_equalcand':
+            # MC7: các baseline hiện khớp SỐ NODE, nhưng node semantic chọn giữ
+            # nhiều record hơn (22,5% corpus so với 14,4% ở cùng 4,9% node), nên
+            # semantic được nhiều ADC computation hơn ở cùng số node. Câu "differs
+            # only in which nodes they choose" vì thế không đúng.
+            #
+            # Baseline này khớp NGÂN SÁCH TÍNH TOÁN: bốc node ngẫu nhiên cho tới
+            # khi gom đủ SỐ ỨNG VIÊN mà semantic gom được cho chính query này.
+            sem_touch = set()
+            for proj in P:
+                for qkey in net.probe_keys63(q, proj, args.multi_probe, args.probe_bits):
+                    sem_touch.update(int(x) for x in net.knn(qkey, args.k_query))
+            sem_cands = set()
+            for nidx in sem_touch:
+                sem_cands.update(net.ram[nidx].keys())
+            budget = len(sem_cands)
+
+            _al = net.alive_idx
+            pool = _al.tolist() if _al is not None else list(range(args.nodes))
+            rnd_route.shuffle(pool)
+            got = set()
+            for nidx in pool:
+                if len(got) >= budget:
+                    break
+                touched.add(nidx)
+                got.update(net.ram[nidx].keys())
 
         elif mode == 'random_keys':
             # Không cần global membership view: chọn L*T KEY ngẫu nhiên trong không
@@ -517,7 +547,8 @@ def main():
                        f"_{(args.pq_variant or 'm256') if args.use_pq else 'nopq'}"
                        f"{ {'semantic': '', 'random_slots': '_RANDOM',
                             'random_unique': '_RANDUNIQ',
-                            'random_keys': '_RANDKEY'}[mode] }"
+                            'random_keys': '_RANDKEY',
+                            'random_equalcand': '_RANDCAND'}[mode] }"
                        f"{'_loss' + str(args.node_loss) if args.node_loss > 0 else ''}"
                        f"{'_zipf' + str(args.zipf) if args.zipf > 0 else ''}"
                        f"_s{args.seed}_nq{n_run}.json")
