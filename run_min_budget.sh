@@ -158,11 +158,27 @@ if len(ths) >= 2:
     ratios = [rep / ses for ses, (rep, _) in ths.items()]
     msgs = [m for _, (_, m) in ths.items()]
     if max(ratios) - min(ratios) < 0.6:
+        k = st.mean(ratios)
         print()
-        print(f'  => Tỉ số chu kỳ/median gần như HẰNG SỐ ({st.mean(ratios):.1f}x).')
-        print(f'     Quy tắc: đặt chu kỳ sửa bằng ~{st.mean(ratios):.0f} lần median session.')
-        print(f'     Và ngân sách tối thiểu KHÔNG phụ thuộc tốc độ churn '
-              f'({min(msgs):.1f}-{max(msgs):.1f} msg).')
+        print(f'  => Tỉ số chu kỳ/median gần như HẰNG SỐ ({k:.1f}x).')
+        print(f'     Quy tắc: đặt chu kỳ sửa bằng ~{k:.0f} lần median session.')
+        # BUG cũ: chỗ này từng in "ngân sách KHÔNG phụ thuộc churn" trong khi
+        # chính bảng ở trên cho 27,5 / 13,8 / 6,9 — chênh bốn lần.
+        print()
+        print(f'     Ngân sách tối thiểu thì TỈ LỆ NGHỊCH với median session:')
+        print(f'       msg = L*r * 1320/(k*median) = {5*1320/k:.0f}/median')
+        for ses, (rep, m) in sorted(ths.items()):
+            print(f'         median {ses:>4.0f}ph -> công thức {5*1320/k/ses:>5.1f}, '
+                  f'đo {m:>5.1f}')
+        print(f'     Churn nhanh gấp đôi thì tốn gấp đôi.')
+        # cảnh báo artifact lưới quét
+        _capped = [ses for ses in ths
+                   if max(k2[1] / ses for k2 in g if k2[0] == ses) <= ths[ses][0] / ses + 0.1]
+        if _capped:
+            print()
+            print(f'     *** CẢNH BÁO: ở median {_capped} lưới quét DỪNG đúng tại')
+            print(f'         chu kỳ được chọn, nên đó là mức CAO NHẤT ĐÃ THỬ chứ')
+            print(f'         chưa phải ngưỡng đo được. Quét thêm 5x-8x median. ***')
     else:
         print()
         print(f'  => Tỉ số đổi từ {min(ratios):.1f}x tới {max(ratios):.1f}x — không hằng số.')
@@ -170,3 +186,22 @@ if len(ths) >= 2:
 else:
     print('  chưa đủ mức median để rút quy tắc')
 EOF
+
+# ---------------------------------------------------------------------------
+# C. LẤP CHỖ TRỐNG — quét 5x đến 8x median ở hai mức churn ngoài
+#
+# Lượt trước dừng đúng ở 4x cho median 60 và 240, nên "4x" là mức cao nhất đã
+# thử chứ chưa phải ngưỡng. Ở median 120 thì biết 4x đạt và 8x hỏng, ngưỡng
+# nằm giữa. Quét 5x, 6x, 7x ở cả ba mức để kẹp thật.
+# ---------------------------------------------------------------------------
+echo ""
+echo "########## C. KẸP NGƯỠNG THẬT: 5x - 7x median ##########"
+for s in $SEEDS; do
+    for m in 60 120 240; do
+        for k in 5 6 7; do
+            run "$m" $((m*k)) "$s" & wait_slot
+        done
+    done
+done
+wait
+echo "  -> chạy lại phần tổng hợp ở trên để thấy ngưỡng mới"
