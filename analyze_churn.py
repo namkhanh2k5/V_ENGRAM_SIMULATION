@@ -87,9 +87,11 @@ def main():
         g = lambda x: st.mean(y[x] for y in v)
         sd = lambda x: st.stdev([y[x] for y in v]) if len(v) > 1 else 0.0
         if rep > 0:
-            k = rep / ses                      # chu kỳ sửa TÍNH THEO median session
-            lbl = (f'r={r}, sửa mỗi {rep:.0f}ph = {k:.2g}x med' if k >= 1
-                   else f'r={r}, sửa mỗi {rep:.0f}ph = med/{1/k:.0f}')
+            # BUG cũ: biến này từng đặt tên 'k', ghi đè khoá vòng lặp cũng tên 'k',
+            # nên rows[k] về sau dùng khoá float thay vì tuple (r, rep).
+            mult = rep / ses                   # chu kỳ sửa TÍNH THEO median session
+            lbl = (f'r={r}, sửa mỗi {rep:.0f}ph = {mult:.2g}x med' if mult >= 1
+                   else f'r={r}, sửa mỗi {rep:.0f}ph = med/{1/mult:.0f}')
         else:
             lbl = f'r={r}, KHÔNG sửa'
         dur = g('_duration')
