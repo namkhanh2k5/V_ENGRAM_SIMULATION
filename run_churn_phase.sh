@@ -32,7 +32,19 @@ SEEDS="20235956 1 2"
 
 grep -q "phase" main_churn_engine.py || {
     echo "main_churn_engine.py chưa có đo theo pha — tải bản mới rồi chạy lại"; exit 1; }
-echo "✓ engine có đo theo pha"
+grep -q "keep-alive vẫn tốn một message" main_churn_engine.py || {
+    echo "main_churn_engine.py chưa vá bug lazy+TTL — tải bản mới rồi chạy lại"
+    echo "  (bản cũ bỏ qua doc khoẻ nên TTL hết hạn, availability không đơn điệu)"
+    exit 1; }
+echo "✓ engine có đo theo pha VÀ đã vá bug lazy+TTL"
+
+# Bug lazy+TTL làm mọi số cũ sai, kể cả file đã có phase. Xoá hết r=1.
+mkdir -p backup_churn_buggy
+_n=$(ls churn_code_N${N}_r1_ses120_*_nq200.json 2>/dev/null | wc -l)
+[ "$_n" -gt 0 ] && {
+    echo "Sao lưu $_n file r=1 (chạy bằng engine có bug) rồi xoá"
+    mv churn_code_N${N}_r1_ses120_*_nq200.json backup_churn_buggy/ 2>/dev/null
+}
 
 # Sao lưu rồi xoá file cũ của r=1: chúng thiếu trường phase nên không dùng được,
 # mà tên file lại trùng nên sẽ khiến script skip.

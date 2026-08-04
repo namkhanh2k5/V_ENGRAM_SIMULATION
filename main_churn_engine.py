@@ -153,10 +153,19 @@ class ChurnNetwork:
 def repair(net, anchors, keys_per_doc, r, ttl, mode='lazy'):
     """Tái neo record về node còn sống.
 
-    lazy    — chỉ sửa doc có ÍT HƠN r anchor còn sống. Rẻ, và là điều một hệ
-              thật làm nếu có cách phát hiện. Chi phí báo cáo là số message ghi.
-    blanket — republish TẤT CẢ, đúng lối IPFS (republish mỗi 22 giờ bất kể).
-              Đắt hơn nhiều, nhưng không cần cơ chế phát hiện.
+    lazy    — chỉ GHI LẠI doc thiếu anchor, nhưng vẫn GIA HẠN TTL cho doc khoẻ.
+              Gia hạn là một message keep-alive, rẻ hơn ghi lại toàn bộ record.
+    blanket — ghi lại TẤT CẢ, đúng lối IPFS (republish mỗi 22 giờ bất kể).
+
+    BUG ĐÃ SỬA: bản trước, lazy BỎ QUA hẳn doc khoẻ, nên TTL của chúng không
+    được gia hạn và hết hạn dù mọi anchor còn sống. Vòng đời thành: ghi ở t=0,
+    bỏ qua ở t=1 và t=2 chu kỳ, HẾT HẠN ở t=2,2 chu kỳ, ghi lại ở t=3. Tức chết
+    27% thời gian bất kể chu kỳ sửa dày hay thưa — đúng con số đo được ở
+    rep=30 (72,3%) và rep=60 (77,2%). Nó cũng làm availability KHÔNG ĐƠN ĐIỆU
+    theo chu kỳ sửa, điều bất khả về mặt vật lý.
+
+    Không hệ thật nào hành xử vậy: gia hạn hạn dùng của một bản sao còn sống là
+    việc phải làm, và IPFS republish tất cả chính vì thế.
     """
     n_repaired = 0
     msgs = 0
@@ -164,6 +173,11 @@ def repair(net, anchors, keys_per_doc, r, ttl, mode='lazy'):
     for tag, cur in anchors.items():
         alive = [ni for ni in cur if tag in net.ram[ni]]
         if mode == 'lazy' and len(alive) >= len(keys_per_doc[tag]) * r:
+            # Đủ anchor: không cần ghi lại record, nhưng PHẢI gia hạn TTL,
+            # nếu không nó hết hạn và bản sao khoẻ bị xoá oan.
+            for ni in alive:
+                net.ram[ni][tag] = exp
+                msgs += 1                 # keep-alive vẫn tốn một message
             continue
         new_set = []
         for skey in keys_per_doc[tag]:
