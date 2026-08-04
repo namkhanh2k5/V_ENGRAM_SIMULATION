@@ -23,8 +23,8 @@
 #           gần như là max, không dùng được.
 #
 # Ước tính với PARALLEL=4:
-#   A. churn theo pha (MC3+MC12)   3 rep x 3 seed x 2 r  ~1,5 giờ
-#   B. churn r=4 cho IPFS (MC4)    3 rep x 3 seed        ~0,7 giờ
+#   A. churn theo pha (MC3+MC12)   3 rep x 3 seed        ~1,5 giờ
+#   B. churn cho MC4               3 cấu hình x 3 seed   ~1,2 giờ
 #   C. baseline equal-cand (MC7)   2 corpus x 5 seed     ~0,3 giờ
 #   D. latency 500q x 5 seed (MC9) 5 lần                 ~2,5 giờ
 #   TỔNG ~5 giờ
@@ -57,14 +57,21 @@ run_churn() {
     $PY main_churn_engine.py --dataset code --nodes $N --nq 200 \
         --median-session 120 --duration "$dur" --session-dist weibull \
         --meta-anchors "$r" --repair-interval "$rep" --seed "$seed" \
-        >/dev/null 2>&1 || echo "  [LỖI] r=$r rep=$rep s=$seed"
+        > "churnlog_r${r}_rep${rep}_s${seed}.txt" 2>&1 \
+        || echo "  [LỖI] r=$r rep=$rep s=$seed"
 }
 for s in 20235956 1 2; do
     for rep in 60 240 960; do
         run_churn 1 "$rep" "$s" & wait_slot          # đề xuất của bài
     done
-    run_churn 4  0 "$s" & wait_slot                  # MC4: L*r=20, KHỚP IPFS
-    run_churn 20 0 "$s" & wait_slot                  # giữ để đối chiếu
+    # MC4 — ba cấu hình để so IPFS cho đúng:
+    #   r=4 + repair 1320ph = ĐÚNG cấu hình IPFS (20 bản, republish 22 giờ)
+    #   r=4 không sửa       = cùng số bản nhưng bỏ repair, tách ảnh hưởng repair
+    #   r=20 không sửa      = cấu hình cũ trong bài, giữ để đối chiếu
+    #                         (đây là L*r = 100 vị trí, KHÔNG phải 20 bản như IPFS)
+    run_churn 4 1320 "$s" & wait_slot
+    run_churn 4    0 "$s" & wait_slot
+    run_churn 20   0 "$s" & wait_slot
 done
 wait
 $PY analyze_churn.py > churn_results_v2.txt 2>&1
