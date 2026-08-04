@@ -32,6 +32,20 @@ export PLACEMENT_K=20
 export FETCH_TOP=1
 export PARALLEL_ADC=1
 
+# Kiểm công cụ phân tích TRƯỚC khi chạy tám tiếng. Lần trước script chạy xong
+# cả ba phần rồi mới hỏng ở bước tổng hợp vì thiếu hai file này — dữ liệu không
+# mất, nhưng không ai biết cho tới lúc xem kết quả.
+_missing=""
+for f in analyze_mc1.py analyze_mc13.py main_simulation.py main_simulation_v2.py baselines.py; do
+    [ -f "$f" ] || _missing="$_missing $f"
+done
+if [ -n "$_missing" ]; then
+    echo "THIẾU FILE:$_missing"
+    echo "Tải về rồi chạy lại. Dừng ở đây thay vì chạy 8 tiếng rồi mới hỏng."
+    exit 1
+fi
+echo "✓ đủ công cụ phân tích"
+
 echo "PARALLEL=$PARALLEL | nproc=$(nproc 2>/dev/null || echo '?')"
 echo "Cấu hình payload: $PLACEMENT_MODE k=$PLACEMENT_K top=$FETCH_TOP, ADC song song"
 echo ""
