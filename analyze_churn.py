@@ -27,6 +27,17 @@ def main():
             continue
         rec = dict(hist[-1])
         rec['_duration'] = cfg['duration']          # cần để chuẩn hoá lưu lượng
+        # MC3: hist[-1] là MỘT pha cụ thể trong chu kỳ sửa chữa, không đại diện.
+        # Giữ cả loạt để báo min/mean, vì min mới là con số deployment phải chịu.
+        _m = [h for h in hist if h.get('epoch', 0) > 0]
+        for key, out in [('meta_physical', 'phys'), ('meta_routable', 'route')]:
+            v = [h[key] for h in _m if key in h]
+            if v:
+                rec[out + '_mean'] = sum(v) / len(v)
+                rec[out + '_min'] = min(v)
+        v = [h['final_r5'] for h in _m if 'final_r5' in h]
+        if v:
+            rec['r5_min'] = min(v)
         runs[(cfg['median_session'], cfg['meta_anchors'],
               cfg['repair_interval'])].append(rec)
 
@@ -83,6 +94,11 @@ def main():
             lbl = f'r={r}, KHÔNG sửa'
         dur = g('_duration')
         row = {'meta': g('meta_avail'), 'sem': g('final_r5'), 'rnd': g('random_r5'),
+               'phys_mean': g('phys_mean') if any('phys_mean' in x for x in v) else None,
+               'phys_min': (min(x['phys_min'] for x in v if 'phys_min' in x)
+                            if any('phys_min' in x for x in v) else None),
+               'route_min': (min(x['route_min'] for x in v if 'route_min' in x)
+                             if any('route_min' in x for x in v) else None),
                'ratio': g('ratio'), 'fp': g('footprint'), 'msg': g('repair_msgs'),
                'sem_sd': sd('final_r5'), 'n': len(v), 'rep': rep, 'r': r,
                'dur': dur,
@@ -96,10 +112,41 @@ def main():
               f"{row['sem']:>6.1f}±{row['sem_sd']:<3.0f} {row['rnd']:>7.1f}% "
               f"{row['ratio']:>6.2f}x {row['fp']:>8.2f} {row['msg22']:>12.2f}{mark}")
 
+    # ---- MC3 + MC12: availability theo pha, và tách physical/routable ----
+    has_phase = any(r.get('phys_min') is not None for r in rows.values())
+    if has_phase:
+        print()
+        print('=' * 100)
+        print('MC3 + MC12 — AVAILABILITY ĐO TẠI PHA NGẪU NHIÊN, TÁCH HAI ĐẠI LƯỢNG')
+        print('=' * 100)
+        print('  Bản trước chỉ đo ở mốc epoch, mà mốc đó luôn trùng lúc vừa repair,')
+        print('  nên availability luôn 100%. Đo tại pha ngẫu nhiên cho biết con số')
+        print('  một truy vấn đến bất kỳ lúc nào sẽ gặp.')
+        print()
+        print(f"  {'cấu hình':26s} {'phys mean':>10s} {'phys MIN':>9s} "
+              f"{'route MIN':>10s} {'R@5 min':>8s}")
+        print('  ' + '-' * 70)
+        for k in sorted(rows, key=key_order):
+            r = rows[k]
+            if r.get('phys_min') is None:
+                continue
+            lbl = (f"r={r['r']}, sửa mỗi {r['rep']:.0f}ph" if r['rep'] > 0
+                   else f"r={r['r']}, KHÔNG sửa")
+            rmin = min(x['r5_min'] for x in runs[k] if 'r5_min' in x) \
+                if any('r5_min' in x for x in runs[k]) else float('nan')
+            print(f"  {lbl:26s} {r['phys_mean']:>9.1f}% {r['phys_min']:>8.1f}% "
+                  f"{r['route_min']:>9.1f}% {rmin:>7.1f}%")
+        print()
+        print('  phys  = anchor còn giữ record (repair kiểm soát cái này)')
+        print('  route = client ĐỊNH TUYẾN tới được (người dùng thấy cái này)')
+        print('  Hai cột lệch nhau nghĩa là record còn sống nhưng lookup không tới.')
+
     # ---- tìm ngưỡng: chu kỳ sửa THƯA NHẤT còn giữ được availability ----
     repaired = sorted([v for k, v in rows.items() if v['r'] == 1 and v['rep'] > 0],
                       key=lambda x: x['rep'])
-    ok = [v for v in repaired if v['meta'] >= 99.0]
+    # dùng MIN theo pha nếu có, vì giá trị cuối là một pha may mắn
+    ok = [v for v in repaired
+          if (v['phys_min'] if v.get('phys_min') is not None else v['meta']) >= 99.0]
     print()
     print('=' * 100)
     print('NGƯỠNG SỬA CHỮA')
