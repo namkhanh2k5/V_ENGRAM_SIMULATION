@@ -384,14 +384,47 @@ def main():
     dep0 = net.total_departures
     msg0 = net.repair_msgs
 
-    def snapshot(ep, t):
+    def snapshot(ep, t, phase=None):
+        """Chụp trạng thái. phase = vị trí trong chu kỳ sửa chữa, 0..1.
+
+        MC3: bản trước chỉ chụp ở mốc epoch, mà epoch = median/12 còn mọi repair
+        interval là bội số nguyên của epoch, nên snapshot CUỐI luôn rơi đúng lúc
+        vừa repair xong. analyze_churn báo cáo hist[-1], tức con số ĐẸP NHẤT.
+        Giờ chụp ở pha ngẫu nhiên trong chu kỳ, đúng như query đến bất kỳ lúc nào.
+
+        MC12: tách ba đại lượng vốn bị gộp làm một.
+          physical  — còn node nào giữ record không (repair kiểm soát cái này)
+          routable  — client ĐỊNH TUYẾN tới được không (người dùng thấy cái này)
+          e2e       — truy vấn có trả về đúng object không
+        """
+        # physical: anchor còn giữ record
         alive_meta = sum(1 for tag in anchors
                          if any(tag in net.ram[ni] for ni in anchors[tag]))
+        # routable: đi từ semantic key, xem có chạm node nào đang giữ record không.
+        # Lấy mẫu để khỏi tốn: 500 doc ngẫu nhiên là đủ hẹp khoảng tin cậy.
+        _rs = random.Random(args.seed + 991 + ep)
+        _sample = _rs.sample(range(N_DOCS), min(500, N_DOCS))
+        _reach = 0
+        for tag in _sample:
+            found = False
+            for skey in keys_per_doc[tag]:
+                for ni in net.knn(skey, args.k_query):
+                    if tag in net.ram[int(ni)]:
+                        found = True
+                        break
+                if found:
+                    break
+            _reach += found
+        routable = 100.0 * _reach / len(_sample)
         rr, fr, tc, rand = measure_recall(net, P, Qv, gt, codes, codebook,
                                           args, n_query, rnd_route)
         meta_per_node = float(np.mean([len(x) for x in net.ram]))
         row = {'epoch': ep, 't_min': round(t, 1),
-               'meta_avail': 100.0 * alive_meta / N_DOCS,
+               'phase': phase,
+               # MC12: ba đại lượng khác nhau, KHÔNG so chéo được
+               'meta_physical': 100.0 * alive_meta / N_DOCS,
+               'meta_routable': routable,
+               'meta_avail': 100.0 * alive_meta / N_DOCS,   # tương thích cũ
                'reach_r5': rr, 'final_r5': fr, 'random_r5': rand,
                'ratio': (fr / rand) if rand > 0 else float('nan'),
                'nodes_touched': tc,
@@ -399,27 +432,69 @@ def main():
                'departures': net.total_departures - dep0,
                'repair_msgs': net.repair_msgs - msg0}
         hist.append(row)
-        print(f'    t={t:>6.0f}ph | meta {row["meta_avail"]:5.1f}% | '
+        print(f'    t={t:>6.0f}ph{"" if phase is None else f" pha{phase:.2f}"} | '
+              f'phys {row["meta_physical"]:5.1f}% route {row["meta_routable"]:5.1f}% | '
               f'sem {fr:5.1f}% rnd {rand:5.1f}% = {row["ratio"]:4.2f}x | '
               f'vết {row["footprint"]:5.2f} | msg {row["repair_msgs"]:>8,}')
         return row
 
     print(f'    {"":8s} {"":13s} {"":22s} {"":14s}')
-    snapshot(0, 0.0)
+    # MC3: chọn TRƯỚC các epoch sẽ đo, rải đều theo PHA trong chu kỳ sửa chữa,
+    # thay vì đo ở mốc cố định. Nếu đo ở mốc thì mọi lần đo đều rơi ngay sau
+    # repair và availability luôn đẹp nhất.
+    _rs_meas = random.Random(args.seed + 4242)
+    _per_cycle = max(1, int(round(args.repair_interval / args.epoch))) \
+        if args.repair_interval > 0 else 1
+    _meas_eps = set()
+    for _k in range(max(6, n_epoch // args.measure_every)):
+        # rải đều qua thời gian, mỗi lần lệch pha ngẫu nhiên trong chu kỳ
+        _base = int((_k + 1) * n_epoch / max(6, n_epoch // args.measure_every))
+        _off = _rs_meas.randrange(_per_cycle) if _per_cycle > 1 else 0
+        _e = min(n_epoch, max(1, _base - _off))
+        _meas_eps.add(_e)
+    _meas_eps.add(n_epoch)
+
+    snapshot(0, 0.0, phase=0.0)
     for ep in range(1, n_epoch + 1):
         net.step(args.epoch)
         since_repair += args.epoch
+        _just_repaired = False
         if args.repair_interval > 0 and since_repair >= args.repair_interval:
             repair(net, anchors, keys_per_doc, r, args.ttl, args.repair_mode)
             since_repair = 0.0
-        if ep % args.measure_every == 0 or ep == n_epoch:
-            snapshot(ep, ep * args.epoch)
+            _just_repaired = True
+        if ep in _meas_eps:
+            # pha = đã trôi bao nhiêu phần của chu kỳ kể từ lần sửa gần nhất.
+            # 0 = vừa sửa xong (trường hợp tốt nhất), gần 1 = sắp tới lần sửa
+            # tiếp (trường hợp xấu nhất).
+            ph = 0.0 if _just_repaired else (
+                since_repair / args.repair_interval if args.repair_interval > 0 else 1.0)
+            snapshot(ep, ep * args.epoch, phase=min(1.0, ph))
 
     # ---- tổng kết ----
     n_repair_rounds = int(args.duration / args.repair_interval) if args.repair_interval > 0 else 0
     if args.repair_interval > 0 and n_repair_rounds < 3:
         print(f'\n[!] CẢNH BÁO: sửa chữa chỉ chạy {n_repair_rounds} lần trong '
               f'thời lượng đo. Chưa đủ để vào trạng thái dừng.')
+
+    # MC3: báo cáo TOÀN BỘ các lần đo, không chỉ lần cuối. Lần cuối là một pha
+    # cụ thể trong chu kỳ, không đại diện.
+    _m = [h for h in hist if h['epoch'] > 0]
+    if _m:
+        import statistics as _st
+        print()
+        print('  MC3 — availability theo PHA trong chu kỳ sửa chữa:')
+        print(f"    {'pha':>5s} {'physical':>9s} {'routable':>9s} {'R@5':>7s}")
+        for h in sorted(_m, key=lambda x: x.get('phase') or 0):
+            ph = h.get('phase')
+            print(f"    {('%.2f' % ph) if ph is not None else '  ?':>5s} "
+                  f"{h['meta_physical']:>8.1f}% {h['meta_routable']:>8.1f}% "
+                  f"{h['final_r5']:>6.1f}%")
+        for k, lbl in [('meta_physical', 'physical'), ('meta_routable', 'routable')]:
+            v = [h[k] for h in _m]
+            print(f'    {lbl:9s}: mean {_st.mean(v):.1f}%  min {min(v):.1f}%  '
+                  f'max {max(v):.1f}%')
+        print('    (min là con số một deployment phải chịu được, không phải mean)')
 
     first, last = hist[0], hist[-1]
     print()
