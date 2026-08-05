@@ -67,8 +67,14 @@ echo "########## QUÉT SHAPE x TỈ SỐ ##########"
 echo "  median cố định $MED phút; tỉ số 2x, 3x, 4x, 5x"
 for s in $SEEDS; do
     for k in 0.3 0.5 0.7 1.0; do
-        for mult in 2 3 4 5; do
-            run "$k" $((MED*mult)) "$s" & wait_slot
+        # Shape đuôi nhẹ hỏng ngay ở 2x, nên chúng cần dải NHỎ hơn.
+        # Dùng phần mười của median để quét được 0,5x và 1,5x.
+        case "$k" in
+            0.7|1.0) MULTS="5 10 15 20 30 40" ;;   # 0,5x 1x 1,5x 2x 3x 4x
+            *)       MULTS="20 30 40 50" ;;        # 2x 3x 4x 5x
+        esac
+        for m10 in $MULTS; do
+            run "$k" $((MED*m10/10)) "$s" & wait_slot
         done
     done
     echo "  xong seed $s"
@@ -110,7 +116,7 @@ else:
     mults = sorted({m for _, m in g})
     print('AVAILABILITY MIN theo (hình dạng, tỉ số chu kỳ/median)')
     print()
-    print(f"{'shape k':>9s} " + ' '.join(f'{m:>7.0f}x' for m in mults) + '   ngưỡng')
+    print(f"{'shape k':>9s} " + ' '.join(f'{m:>6.1f}x' for m in mults) + '  ngưỡng')
     print('-' * (12 + 8 * len(mults) + 10))
     thresholds = {}
     for k in shapes:
@@ -126,11 +132,20 @@ else:
         thresholds[k] = thr
         note = {0.5: '  <- bài dùng', 1.0: '  <- giả định mũ'}.get(k, '')
         print(f'{k:>9.1f} ' + ' '.join(cells) +
-              f"   {thr if thr else '<2':>4}x{note}")
+              f"  {(f'{thr:.1f}' if thr else '<' + f'{min(mults):.1f}'):>5s}x{note}")
 
     print()
     vals = [t for t in thresholds.values() if t]
-    if len(vals) >= 2:
+    _out = [k for k, t in thresholds.items() if not t]
+    if _out:
+        # BUG cũ: chỗ này chỉ đếm shape CÓ ngưỡng trong dải rồi in "4x tới 5x",
+        # bỏ qua hẳn hai shape mà ngay tỉ số nhỏ nhất cũng đã hỏng. Mức phụ
+        # thuộc vì thế bị báo cáo nhỏ hơn thực tế rất nhiều.
+        print(f'  *** {len(_out)} hình dạng (k = {_out}) KHÔNG đạt 99% ngay ở tỉ số')
+        print(f'      nhỏ nhất đã quét. Ngưỡng của chúng nằm DƯỚI dải, chưa kẹp.')
+        print(f'      Quét thêm 0,5x / 1x / 1,5x cho các k đó.')
+        print()
+    if len(vals) >= 2 and not _out:
         if max(vals) == min(vals):
             print(f'  => NGƯỠNG KHÔNG PHỤ THUỘC HÌNH DẠNG: {max(vals):.0f}x ở mọi k.')
             print('     Quy tắc "chu kỳ = 4x median" bền qua cả phân bố mũ, tức nó')
