@@ -117,6 +117,11 @@ def main():
     ap.add_argument('--seed', type=int, default=20235956)
     ap.add_argument('--k-query', type=int, default=300, help='số node mỗi bảng ghé (K_QUERY)')
     ap.add_argument('--meta-anchors', type=int, default=30, help='số node neo metadata (MA)')
+    ap.add_argument('--table-pool', type=int, default=0, metavar='M',
+                    help='rút M ma trận chiếu rồi giữ L tốt nhất (0 = tắt). '
+                         'Chọn theo tỉ lệ trùng prefix trên tập hiệu chuẩn riêng.')
+    ap.add_argument('--calib-queries', type=int, default=100,
+                    help='số query CUỐI dùng để hiệu chuẩn, tách khỏi tập đánh giá')
     ap.add_argument('--local-topk', type=int, default=30, help='mỗi node trả top-k')
     ap.add_argument('--target-k', type=int, default=10, help='top-k cuối trả về client')
     ap.add_argument('--nq', type=int, default=100, help='số query chạy (500 = full)')
@@ -195,13 +200,74 @@ def main():
     from src.routing import PROJECTION_MATRICES as _P
     if args.num_tables is None:
         P = _P
-    elif args.num_tables <= len(_P):
+    elif args.num_tables <= len(_P) and args.table_pool <= args.num_tables:
         P = _P[:args.num_tables]
     else:
+        # Nhánh này giờ cũng chạy khi BẬT over-draw ở L nhỏ: cần rút thêm ma
+        # trận ngoài PROJECTION_MATRICES sẵn có để có pool mà chọn.
+        # (bản trước chỉ vào đây khi L > len(_P), nên --table-pool bị bỏ qua
+        #  im lặng ở cấu hình chốt L=5 — đúng loại lỗi khó thấy nhất.)
         # cần nhiều bảng hơn mặc định -> sinh lại bằng cùng seed, cùng phân phối Achlioptas
         rng = np.random.RandomState(args.seed)
-        P = [rng.choice([0, 1, -1], size=(E.shape[1], 160), p=[2/3, 1/6, 1/6])
-             for _ in range(args.num_tables)]
+        n_draw = max(args.num_tables, args.table_pool)
+        _pool = [rng.choice([0, 1, -1], size=(E.shape[1], 160), p=[2/3, 1/6, 1/6])
+                 for _ in range(n_draw)]
+        if n_draw > args.num_tables:
+            # OVER-DRAW AND SELECT: rút nhiều ma trận hơn cần, giữ những cái có
+            # tỉ lệ trùng prefix cao nhất trên một tập query HIỆU CHUẨN TÁCH RIÊNG.
+            #
+            # Vì sao đáng: p_l đo được dao động 18,1% tới 46,4% trong MỘT lượt rút,
+            # nên L ma trận ngẫu nhiên là một mẫu tuỳ tiện từ phân bố rộng. Chọn
+            # không đổi giao thức, không làm khoá phụ thuộc dữ liệu (ma trận vẫn
+            # ngẫu nhiên, chỉ là chọn ra tập con), và miễn phí ở thời điểm truy vấn.
+            #
+            # PHẢI tách tập hiệu chuẩn khỏi tập đánh giá, nếu không là chọn trên
+            # chính dữ liệu test và con số thu được sẽ lạc quan giả.
+            # Tập đánh giá là n_run query ĐẦU (dòng n_run = min(args.nq, len(gt))).
+            # Tập hiệu chuẩn lấy từ CUỐI. Phải kiểm không chồng lấn, nếu không
+            # là chọn ma trận trên chính dữ liệu test.
+            n_cal = args.calib_queries
+            _eval_n = min(args.nq, len(gt))
+            if _eval_n + n_cal > len(gt):
+                n_cal = len(gt) - _eval_n
+                print(f"[!] Chỉ còn {n_cal} query cho hiệu chuẩn sau khi chừa "
+                      f"{_eval_n} query đánh giá.")
+            if n_cal < 20:
+                raise SystemExit(
+                    f"Không đủ query để hiệu chuẩn: cần >=20, còn {n_cal}. "
+                    f"Giảm --nq hoặc dùng corpus có nhiều query hơn.")
+            cal_q = Qv[-n_cal:]                      # LẤY TỪ CUỐI
+            cal_gt = gt[-n_cal:]
+            # Tiêu chí: SỐ BIT KHỚP TRUNG BÌNH trong c bit đầu, giữa sketch của
+            # query và sketch của láng giềng thật.
+            #
+            # Không dùng "trùng prefix chính xác" vì ở c=16 tỉ lệ đó chỉ 0,1-3%,
+            # quá thưa để phân biệt mười hai ma trận với vài trăm mẫu. Số bit
+            # khớp là đại lượng mượt, cùng chiều với xác suất trùng, và còn phản
+            # ánh được multi-probe: probe lật một bit yếu cứu được trường hợp
+            # lệch đúng một bit, nên ma trận có nhiều bit khớp hơn cũng dễ được
+            # multi-probe cứu hơn.
+            c = args.probe_bits
+            _cal_idx = [r['index'] for g_ in cal_gt for r in g_['top_5_results'][:5]]
+            _cal_qi = [qi for qi in range(n_cal) for _ in cal_gt[qi]['top_5_results'][:5]]
+            _Eq = cal_q[_cal_qi]                      # (n_pairs, d)
+            _En = E[_cal_idx]                         # (n_pairs, d)
+            scores = []
+            for pm in _pool:
+                bq = (_Eq @ pm[:, :c]) > 0            # (n_pairs, c)
+                bn = (_En @ pm[:, :c]) > 0
+                scores.append(float((bq == bn).mean()))
+            order = sorted(range(n_draw), key=lambda i: -scores[i])
+            keep = order[:args.num_tables]
+            P = [_pool[i] for i in keep]
+            print(f"[*] Over-draw {n_draw} -> giữ {args.num_tables} "
+                  f"(hiệu chuẩn trên {n_cal} query cuối, TÁCH khỏi tập đánh giá)")
+            print(f"    bit khớp (%) : " +
+                  " ".join(f"{100*x:.1f}" for x in sorted(scores, reverse=True)))
+            print(f"    giữ lại      : " +
+                  " ".join(f"{100*scores[i]:.1f}" for i in keep))
+        else:
+            P = _pool[:args.num_tables]
     L = len(P)
     print(f"[*] L={L} bảng chiếu, seed={args.seed}")
 
@@ -415,7 +481,7 @@ def main():
         'node_loss': args.node_loss,
         'multi_probe': args.multi_probe,
         'num_tables': L,
-        'local_topk': args.local_topk, 'use_pq': args.use_pq,
+        'local_topk': args.local_topk, 'table_pool': args.table_pool, 'use_pq': args.use_pq,
         'pq_variant': args.pq_variant or 'm256',
         'n_query': n_run,
         'reachable_hit5': 100 * reach_hit / n_run,
@@ -555,6 +621,7 @@ def main():
                        # nếu không bốn lần chạy khác κ sẽ đè lên nhau. Đây đúng
                        # lớp bug đã gặp nhiều lần trong dự án.
                        f"{'_LT' + str(args.local_topk) if args.local_topk != 30 else ''}"
+                       f"{'_POOL' + str(args.table_pool) if args.table_pool > 0 else ''}"
                        f"_s{args.seed}_nq{n_run}.json")
     json.dump(res, open(out, 'w'), indent=2)
     print(f"\n→ Lưu: {out}")
