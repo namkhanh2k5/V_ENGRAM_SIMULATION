@@ -551,6 +551,10 @@ def main():
                             'random_equalcand': '_RANDCAND'}[mode] }"
                        f"{'_loss' + str(args.node_loss) if args.node_loss > 0 else ''}"
                        f"{'_zipf' + str(args.zipf) if args.zipf > 0 else ''}"
+                       # local_topk là tham số sweep -> PHẢI có trong tên file,
+                       # nếu không bốn lần chạy khác κ sẽ đè lên nhau. Đây đúng
+                       # lớp bug đã gặp nhiều lần trong dự án.
+                       f"{'_LT' + str(args.local_topk) if args.local_topk != 30 else ''}"
                        f"_s{args.seed}_nq{n_run}.json")
     json.dump(res, open(out, 'w'), indent=2)
     print(f"\n→ Lưu: {out}")
