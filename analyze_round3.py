@@ -102,13 +102,17 @@ if diag:
             v = diag.get((sr, fs), [])
             if not v:
                 print(f'{sr:9s} {fs:8s} {"(chưa chạy)":>12s}'); continue
-            a = lambda k: st.mean(x[k] for x in v if x.get(k) is not None)
+            # st.mean gãy trên generator rỗng. Trả nan khi không trường nào
+            # có khoá đó — đúng lớp lỗi đã gặp ở analyze_axes.py.
+            def a(k, _v=v):
+                xs = [x[k] for x in _v if x.get(k) is not None]
+                return st.mean(xs) if xs else float('nan')
+
             res[(sr, fs)] = {'r': a('recall_at_5'), 'j': a('jaccard_mean'),
-                             'c': a('mean_unique_candidates') if any(
-                                 x.get('mean_unique_candidates') for x in v) else float('nan'),
+                             'c': a('mean_unique_candidates'),
                              'x': a('xor_rank_mean')}
             print(f"{sr:9s} {fs:8s} {len(v):>2} {a('recall_at_5'):>8.1f}% "
-                  f"{(a('reachable_recall5') if any(x.get('reachable_recall5') for x in v) else float('nan')):>6.1f}% "
+                  f"{a('reachable_recall5'):>6.1f}% "
                   f"{a('disc_rpcs'):>7.0f} {res[(sr,fs)]['c']:>9.0f} "
                   f"{res[(sr,fs)]['j']:>7.3f} {res[(sr,fs)]['x']:>9.1f}")
 
@@ -127,7 +131,12 @@ if diag:
         print('  GIẢ THUYẾT CỦA THẦY: Ripple Search hiện tại cho Jaccard THẤP HƠN')
         print('  (đa dạng cao hơn) + nhiều ứng viên hơn + reachable recall cao hơn.')
         print()
-        js = sorted((res[k]['j'], res[k]['r'], f'{k[0]}/{k[1]}') for k in res)
+        import math
+        js = sorted((res[k]['j'], res[k]['r'], f'{k[0]}/{k[1]}') for k in res
+                    if not math.isnan(res[k]['j']) and not math.isnan(res[k]['r']))
+        if len(js) < 2:
+            print('    (chưa đủ dữ liệu Jaccard để so)')
+            js = [(0, 0, '-'), (0, 0, '-')]
         lo_j, lo_r, lo_l = js[0]
         hi_j, hi_r, hi_l = js[-1]
         print(f"    Jaccard thấp nhất : {lo_l:14s} {lo_j:.3f}  ->  recall {lo_r:.1f}%")
@@ -144,7 +153,8 @@ if diag:
         else:
             print('    => Recall gần như không phụ thuộc Jaccard. Chưa kết luận được.')
 
-        xs = sorted((res[k]['x'], res[k]['r'], f'{k[0]}/{k[1]}') for k in res)
+        xs = sorted((res[k]['x'], res[k]['r'], f'{k[0]}/{k[1]}') for k in res
+                    if not math.isnan(res[k]['x']))
         print()
         print('    XOR rank trung bình (thấp = gần tập XOR-gần nhất toàn cục):')
         for x, r, lbl in xs:
