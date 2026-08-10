@@ -4,6 +4,7 @@ import time
 import numpy as np
 from src.node import VEngramNode
 from src.routing import (
+    MEASURE_OVERLAP,
     generate_multi_semantic_keys,
     generate_probe_keys,
     generate_placement_key,
@@ -57,6 +58,9 @@ SKIP_PAYLOAD = _os.environ.get("SKIP_PAYLOAD", "0") == "1"
 #   random_unique : oracle, bốc đúng MATCH_UNIQUE_NODES node
 #   keyed_lookup  : L*T khoá ngẫu nhiên + lookup Kademlia thật (THỰC THI ĐƯỢC)
 ROUTING_MODE = _os.environ.get("ROUTING_MODE", "auto")
+# Chẩn đoán mỗi truy vấn: peer set của từng probe và thứ hạng XOR, để tính
+# Jaccard giữa các probe và độ đa dạng ứng viên.
+_PROBE_DIAG = []
 
 # --- MC10: chế độ đặt payload shard ---
 #   scan (mặc định, hành vi cũ): đi dọc danh sách ứng viên, đặt vào node đầu
@@ -373,35 +377,57 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
                 total_rpcs += _acc["rpcs"]; disc_rpcs += _acc["rpcs"]
                 disc_bytes += _acc["bytes"]; all_candidates.extend(_acc["cands"])
     else:
-        for t in range(NUM_PROJECTIONS):
-            # Multi-probe: T prefix cho bảng này (gốc + T-1 biến thể lật bit yếu)
-            for p_key in generate_probe_keys(query_vector, t, T=multi_probe,
-                                             c=DEFAULT_PROBE_BITS):
-                bootstrap_node = random.choice(network_nodes)
-                nodes, hops, rpcs = iterative_find_k_closest_nodes(
-                    p_key, bootstrap_node, alpha=DEFAULT_ALPHA,
-                    k=k_query, max_rounds=DEFAULT_R_MAX
-                )
-                total_hops += hops
-                total_rpcs += rpcs
-                disc_rounds += hops
-                disc_rpcs += rpcs
-                disc_bytes += rpcs * 8 * 20        # FIND_NODE trả ~8 contact × 20B
-                lookups_total += 1
-                if hops >= DEFAULT_R_MAX:
-                    lookups_at_cap += 1            # không hội tụ, chạm trần
-                # NGÂN SÁCH THEO TỪNG PREFIX — không cộng dồn qua các bảng.
-                # Node đã chạy ADC cho prefix khác thì bỏ qua (dedup toàn cục).
-                _new = [nd for nd in nodes if nd.node_id not in contacted]
-                for nd in _new:
-                    contacted.add(nd.node_id)
-                if _new:
-                    _acc = {"rpcs": 0, "bytes": 0, "cands": []}
-                    yield env.process(_adc_all(env, _new, query_vector,
-                                                    codebook, _acc))
-                    total_rpcs += _acc["rpcs"]; disc_rpcs += _acc["rpcs"]
-                    disc_bytes += _acc["bytes"]
-                    all_candidates.extend(_acc["cands"])
+        # ==================================================================
+        # 40 PROBE SONG SONG, VÀ LOOKUP TIÊU THỜI GIAN MÔ PHỎNG.
+        #
+        # Bản trước sai hai chỗ. iterative_find_k_closest_nodes gọi KHÔNG có
+        # yield, nên số vòng định tuyến — thứ tốn RTT nhiều nhất trên mạng thật
+        # — không vào độ trễ. Và lời gọi ADC nằm TRONG vòng lặp probe, nên L*T
+        # probe nối đuôi nhau, đường tới hạn thành 40 x RTT trong khi bài mô tả
+        # chúng issue concurrently.
+        #
+        # Giờ mỗi probe là một tiến trình riêng: tiêu hops x RTT cho định tuyến
+        # rồi một RTT cho ADC. Đường tới hạn = probe CHẬM NHẤT.
+        # ==================================================================
+        _specs = [pk for t in range(NUM_PROJECTIONS)
+                  for pk in generate_probe_keys(query_vector, t, T=multi_probe,
+                                                c=DEFAULT_PROBE_BITS)]
+        _pa = {"hops": 0, "rpcs": 0, "bytes": 0, "at_cap": 0,
+               "cands": [], "peersets": [], "xor_ranks": []}
+
+        def _one_probe(env, p_key, acc):
+            bootstrap_node = random.choice(network_nodes)
+            nodes, hops, rpcs = iterative_find_k_closest_nodes(
+                p_key, bootstrap_node, alpha=DEFAULT_ALPHA,
+                k=k_query, max_rounds=DEFAULT_R_MAX
+            )
+            for _ in range(hops):          # mỗi vòng định tuyến một RTT
+                yield env.timeout(_rtt())
+            acc["hops"] += hops; acc["rpcs"] += rpcs
+            acc["bytes"] += rpcs * 8 * 20
+            if hops >= DEFAULT_R_MAX:
+                acc["at_cap"] += 1
+            acc["peersets"].append({nd.node_id for nd in nodes})
+            if MEASURE_OVERLAP:
+                _tr = sorted(network_nodes, key=lambda nd: nd.node_id ^ p_key)
+                _pos = {nd.node_id: i for i, nd in enumerate(_tr)}
+                acc["xor_ranks"].extend(_pos[nd.node_id] for nd in nodes)
+            _new = [nd for nd in nodes if nd.node_id not in contacted]
+            for nd in _new:
+                contacted.add(nd.node_id)
+            if _new:
+                _a2 = {"rpcs": 0, "bytes": 0, "cands": []}
+                yield env.process(_adc_all(env, _new, query_vector, codebook, _a2))
+                acc["rpcs"] += _a2["rpcs"]; acc["bytes"] += _a2["bytes"]
+                acc["cands"].extend(_a2["cands"])
+
+        yield env.all_of([env.process(_one_probe(env, pk, _pa)) for pk in _specs])
+        total_hops += _pa["hops"]; total_rpcs += _pa["rpcs"]
+        disc_rounds += _pa["hops"]; disc_rpcs += _pa["rpcs"]
+        disc_bytes += _pa["bytes"]
+        lookups_total += len(_specs); lookups_at_cap += _pa["at_cap"]
+        all_candidates.extend(_pa["cands"])
+        _PROBE_DIAG.append(_pa)
 
     # --- Merge: giữ khoảng cách nhỏ nhất cho mỗi tag, dedup giữa các bảng ---
     unique_candidates = {}

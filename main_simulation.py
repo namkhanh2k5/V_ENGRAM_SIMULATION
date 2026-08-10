@@ -182,6 +182,12 @@ def run_simulation(env, args, cfg):
            "n_query": n_run,
            # --- MC10: chẩn đoán đặt/lấy payload ---
            "parallel_adc": netmod.PARALLEL_ADC,
+           # --- chẩn đoán cơ chế (yêu cầu đo thêm của thầy) ---
+           # jaccard_mean : độ trùng TRUNG BÌNH giữa peer set của các cặp probe.
+           #                THẤP = độ đa dạng CAO.
+           # xor_rank_mean: thứ hạng XOR trung bình của peer trả về. Thấp = gần
+           #                tập XOR-gần nhất toàn cục.
+           **_probe_diag_summary(),
            "stop_rule": __import__("src.routing", fromlist=["x"]).STOP_RULE,
            "frontier_scope": __import__("src.routing", fromlist=["x"]).FRONTIER_SCOPE,
            "overlap_mean": (float(np.mean(__import__("src.routing", fromlist=["x"])._OVERLAP_STATS))
@@ -239,6 +245,38 @@ def run_simulation(env, args, cfg):
         _json.dump(out, _f, indent=2, default=float)
     print(f"\n-> Lưu: {fn}")
 
+
+def _probe_diag_summary():
+    """Tóm tắt chẩn đoán peer set của các probe.
+
+    Ba đại lượng thầy yêu cầu đo:
+      - Jaccard giữa peer set của từng cặp probe  -> độ ĐA DẠNG
+      - số ứng viên duy nhất                      -> đã có sẵn ở nơi khác
+      - thứ hạng XOR trung bình của peer trả về   -> độ TRUNG THỰC
+    """
+    import itertools
+    from src import network as _nm
+    diag = getattr(_nm, "_PROBE_DIAG", [])
+    if not diag:
+        return {}
+    jac, ranks = [], []
+    for q in diag:
+        ps = [x for x in q.get("peersets", []) if x]
+        # lấy mẫu tối đa 200 cặp mỗi query cho khỏi tốn
+        pairs = list(itertools.combinations(range(len(ps)), 2))[:200]
+        for i, j in pairs:
+            u = len(ps[i] | ps[j])
+            if u:
+                jac.append(len(ps[i] & ps[j]) / u)
+        ranks.extend(q.get("xor_ranks", []))
+    out = {}
+    if jac:
+        out["jaccard_mean"] = float(np.mean(jac))
+        out["jaccard_max"] = float(np.max(jac))
+    if ranks:
+        out["xor_rank_mean"] = float(np.mean(ranks))
+        out["xor_rank_p90"] = float(np.percentile(ranks, 90))
+    return out
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
