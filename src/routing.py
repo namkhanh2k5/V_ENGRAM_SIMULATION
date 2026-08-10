@@ -41,6 +41,10 @@ DEFAULT_ALPHA = 3        # alpha — độ song song của lookup
 # đến từ điều kiện dừng hay từ phạm vi hỏi — hai thứ đòi hai cách mô tả khác
 # nhau trong bài.
 STOP_RULE      = _os.environ.get("STOP_RULE", "stable")
+# Ablation multi-probe: "margin" lật bit |projection| nhỏ nhất (mặc định),
+# "random" lật bit ngẫu nhiên — để kiểm heuristic margin có tác dụng thật không.
+PROBE_ORDER = _os.environ.get("PROBE_ORDER", "margin")
+# Chẩn đoán (đắt): đo trùng khớp với tập K peer XOR-gần nhất toàn cục.
 FRONTIER_SCOPE = _os.environ.get("FRONTIER_SCOPE", "all")
 
 # Chẩn đoán: đo tập trả về trùng bao nhiêu với tập K peer XOR-gần nhất toàn cục.
@@ -125,7 +129,11 @@ def generate_probe_keys(vector, table_idx, T=DEFAULT_MULTI_PROBE, c=DEFAULT_PROB
         return keys
 
     c = min(c, 160)
-    weak_first = np.argsort(np.abs(proj[:c]))   # bit yếu nhất trước
+    if PROBE_ORDER == "random":
+        _rs = np.random.RandomState(int(abs(proj[:c].sum() * 1e6)) % (2**31))
+        weak_first = _rs.permutation(c)        # ABLATION: lật bit ngẫu nhiên
+    else:
+        weak_first = np.argsort(np.abs(proj[:c]))   # bit yếu nhất trước
     for j in weak_first[: T - 1]:
         keys.append(base ^ (1 << (159 - int(j))))   # lật bit j (bit 0 = MSB)
     return keys
