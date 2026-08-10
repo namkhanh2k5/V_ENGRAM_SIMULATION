@@ -14,7 +14,39 @@ DEFAULT_LSH_SEED = 20235956
 DEFAULT_ALPHA = 3        # alpha — độ song song của lookup
 # Điều kiện dừng của Ripple Search: "exhaust" = Kademlia chuẩn (đúng),
 # "unchanged" = hành vi cũ, giữ để đo chênh lệch.
-STOP_RULE = _os.environ.get("STOP_RULE", "exhaust")
+# Mặc định "unchanged" — KHÔNG phải vì nó đúng theo Kademlia, mà vì đo được
+# nó tốt hơn cho tác vụ này ở MỌI mặt: recall cao hơn 5,1 điểm, RPC ít hơn 31%,
+# và phủ nhiều node phân biệt hơn. Quét R_max = 15/30/60 cho thấy trần không
+# phải nguyên nhân — cả hai điều kiện cho kết quả y hệt ở cả ba mức.
+#
+# Lý do: Kademlia chuẩn hội tụ về k node GẦN NHẤT, đúng cho tra khoá chính xác.
+# Truy vấn tương tự cần PHỦ VÙNG. Điều kiện "unchanged" tiếp tục thăm dò ra
+# ngoài top-k khi top-k đã hỏi hết, nên gom được tập ứng viên rộng hơn.
+# HAI TRỤC ĐỘC LẬP, trước đây bị trộn làm một.
+#
+# STOP_RULE — khi nào dừng:
+#   "stable"  : frontier K-peer không đổi qua hai vòng liên tiếp.
+#               Đây là frontier-stability termination. KHÔNG chứng minh vùng đã
+#               được liệt kê; nó chấp nhận frontier xấp xỉ thay vì tiêu thêm RPC
+#               để hội tụ về các peer XOR-gần hơn trên toàn cục.
+#   "exhaust" : mọi node trong top-K hiện tại đã được hỏi.
+#               Đây là exhaustive top-K frontier termination.
+#
+# FRONTIER_SCOPE — hỏi node nào:
+#   "all"  : node gần nhất chưa hỏi trong TOÀN BỘ tập ứng viên đã phát hiện.
+#            Khi top-K đã hỏi hết, tiếp tục ra ngoài frontier.
+#   "topk" : chỉ node nằm trong top-K hiện tại.
+#
+# Mặc định ("stable", "all") là hành vi đã đo. Tách hai trục để biết lợi thế
+# đến từ điều kiện dừng hay từ phạm vi hỏi — hai thứ đòi hai cách mô tả khác
+# nhau trong bài.
+STOP_RULE      = _os.environ.get("STOP_RULE", "stable")
+FRONTIER_SCOPE = _os.environ.get("FRONTIER_SCOPE", "all")
+
+# Chẩn đoán: đo tập trả về trùng bao nhiêu với tập K peer XOR-gần nhất toàn cục.
+MEASURE_OVERLAP = _os.environ.get("MEASURE_OVERLAP", "0") == "1"
+_ALL_NODES = []          # do main_simulation.py gán sau khi dựng mạng
+_OVERLAP_STATS = []
 import os as _os
 # Mục 21: quét R_max qua biến môi trường
 DEFAULT_R_MAX = int(_os.environ.get("R_MAX", "15"))   # trần số vòng mỗi lookup
@@ -117,19 +149,12 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
                                    k=20, max_rounds=DEFAULT_R_MAX):
     """Ripple Search cho MỘT prefix (paper Algorithm 1).
 
-    ĐIỀU KIỆN DỪNG — hai lựa chọn, đặt qua env STOP_RULE:
+    Đây là thủ tục KHÁM PHÁ LÂN CẬN theo lối best-first có ngân sách, chạy trên
+    trạng thái định tuyến Kademlia — KHÔNG phải một lookup Kademlia chính xác.
+    Mục tiêu là gom một tập peer hữu ích quanh điểm hẹn ngữ nghĩa dưới một ngân
+    sách định tuyến, không phải hội tụ về K peer XOR-gần nhất trên toàn cục.
 
-    "exhaust" (mặc định, ĐÚNG): dừng khi MỌI node trong top-k hiện tại đã được
-        query, tức B_t = B_{t-1} AND B_t ⊆ V. Đây là điều kiện Kademlia chuẩn.
-    "unchanged" (hành vi CŨ, giữ để đối chiếu): dừng khi top-k không đổi giữa
-        hai vòng liên tiếp.
-
-    VÌ SAO "unchanged" KHÔNG ĐỦ: mỗi vòng chỉ query alpha=3 node, còn điều kiện
-    dừng xét trên toàn top-k=20. Vết chạy:
-        vòng t-1: query n1,n2,n3 -> top-20 không đổi
-        vòng t  : query n4,n5,n6 -> best_ids == prev_best -> BREAK
-    Dừng khi còn 14 trong 20 node của top-k CHƯA từng được query, mà bất kỳ node
-    nào trong số đó cũng có thể biết một node gần target hơn.
+    HAI TRỤC ĐỘC LẬP: STOP_RULE và FRONTIER_SCOPE (xem chú thích ở đầu file).
 
     Cả hai đều bị chặn bởi R_max.
     KHÔNG dùng tiêu chí "XOR distance nhỏ nhất chững lại" — tiêu chí đó dừng
@@ -148,17 +173,11 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
     for _ in range(max_rounds):
         ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
 
-        if STOP_RULE == "unchanged":
-            # HÀNH VI CŨ: lấy node gần nhất chưa query trong TOÀN BỘ candidates.
-            to_query = [node for node in ordered if node not in queried][:alpha]
-        else:
-            # KADEMLIA CHUẨN: chỉ query node NẰM TRONG top-k hiện tại. Vòng lặp
-            # kết thúc tự nhiên khi top-k đã query hết, nên không cần so hai
-            # vòng nữa — điều kiện này bao hàm điều kiện đó.
-            to_query = [node for node in ordered[:k] if node not in queried][:alpha]
+        pool = ordered if FRONTIER_SCOPE == "all" else ordered[:k]
+        to_query = [node for node in pool if node not in queried][:alpha]
 
         if not to_query:
-            break
+            break          # với scope="topk" đây chính là exhaustive termination
 
         hops += 1
         for node in to_query:
@@ -166,11 +185,25 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
             rpcs += 1                      # mỗi FIND_NODE là một RPC
             candidates.update(node.get_neighbors())
 
-        if STOP_RULE == "unchanged":
+        if STOP_RULE == "stable":
             best_ids = tuple(node.node_id for node in ordered[:k])
             if best_ids == prev_best:
                 break
             prev_best = best_ids
 
     ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
-    return ordered[:k], hops, rpcs
+    result = ordered[:k]
+
+    # ĐO ĐỘ LỆCH SO VỚI TẬP XOR-GẦN NHẤT TOÀN CỤC.
+    #
+    # Đây là bằng chứng trực tiếp cho luận điểm rằng Ripple Search KHÔNG nhắm
+    # hội tụ về K peer gần nhất: nếu tập trả về lệch nhiều so với tập gần nhất
+    # toàn cục mà recall lại CAO hơn, thì rõ ràng hội tụ XOR không phải mục tiêu.
+    #
+    # Đắt (sắp xếp toàn mạng mỗi lookup) nên chỉ bật khi chẩn đoán.
+    if MEASURE_OVERLAP and _ALL_NODES:
+        true_k = sorted(_ALL_NODES, key=lambda nd: nd.node_id ^ key)[:k]
+        ov = len({nd.node_id for nd in result} & {nd.node_id for nd in true_k})
+        _OVERLAP_STATS.append(ov / max(k, 1))
+
+    return result, hops, rpcs
