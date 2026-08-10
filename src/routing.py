@@ -12,6 +12,9 @@ DEFAULT_LSH_SEED = 20235956
 
 # --- Tham số giao thức, khớp Table 2 trong paper ---
 DEFAULT_ALPHA = 3        # alpha — độ song song của lookup
+# Điều kiện dừng của Ripple Search: "exhaust" = Kademlia chuẩn (đúng),
+# "unchanged" = hành vi cũ, giữ để đo chênh lệch.
+STOP_RULE = _os.environ.get("STOP_RULE", "exhaust")
 import os as _os
 # Mục 21: quét R_max qua biến môi trường
 DEFAULT_R_MAX = int(_os.environ.get("R_MAX", "15"))   # trần số vòng mỗi lookup
@@ -114,8 +117,21 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
                                    k=20, max_rounds=DEFAULT_R_MAX):
     """Ripple Search cho MỘT prefix (paper Algorithm 1).
 
-    Điều kiện dừng: tập k node gần nhất KHÔNG ĐỔI giữa hai vòng liên tiếp
-    ("vùng đã được liệt kê", không phải "vừa chạm tới"), hoặc chạm R_max.
+    ĐIỀU KIỆN DỪNG — hai lựa chọn, đặt qua env STOP_RULE:
+
+    "exhaust" (mặc định, ĐÚNG): dừng khi MỌI node trong top-k hiện tại đã được
+        query, tức B_t = B_{t-1} AND B_t ⊆ V. Đây là điều kiện Kademlia chuẩn.
+    "unchanged" (hành vi CŨ, giữ để đối chiếu): dừng khi top-k không đổi giữa
+        hai vòng liên tiếp.
+
+    VÌ SAO "unchanged" KHÔNG ĐỦ: mỗi vòng chỉ query alpha=3 node, còn điều kiện
+    dừng xét trên toàn top-k=20. Vết chạy:
+        vòng t-1: query n1,n2,n3 -> top-20 không đổi
+        vòng t  : query n4,n5,n6 -> best_ids == prev_best -> BREAK
+    Dừng khi còn 14 trong 20 node của top-k CHƯA từng được query, mà bất kỳ node
+    nào trong số đó cũng có thể biết một node gần target hơn.
+
+    Cả hai đều bị chặn bởi R_max.
     KHÔNG dùng tiêu chí "XOR distance nhỏ nhất chững lại" — tiêu chí đó dừng
     ngay khi frontier vừa tới đích, trước khi kịp gom hàng xóm (mục 3.4).
 
@@ -131,7 +147,16 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
 
     for _ in range(max_rounds):
         ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
-        to_query = [node for node in ordered if node not in queried][:alpha]
+
+        if STOP_RULE == "unchanged":
+            # HÀNH VI CŨ: lấy node gần nhất chưa query trong TOÀN BỘ candidates.
+            to_query = [node for node in ordered if node not in queried][:alpha]
+        else:
+            # KADEMLIA CHUẨN: chỉ query node NẰM TRONG top-k hiện tại. Vòng lặp
+            # kết thúc tự nhiên khi top-k đã query hết, nên không cần so hai
+            # vòng nữa — điều kiện này bao hàm điều kiện đó.
+            to_query = [node for node in ordered[:k] if node not in queried][:alpha]
+
         if not to_query:
             break
 
@@ -141,10 +166,11 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
             rpcs += 1                      # mỗi FIND_NODE là một RPC
             candidates.update(node.get_neighbors())
 
-        best_ids = tuple(node.node_id for node in ordered[:k])
-        if best_ids == prev_best:
-            break
-        prev_best = best_ids
+        if STOP_RULE == "unchanged":
+            best_ids = tuple(node.node_id for node in ordered[:k])
+            if best_ids == prev_best:
+                break
+            prev_best = best_ids
 
     ordered = sorted(candidates, key=lambda node: node.node_id ^ key)
     return ordered[:k], hops, rpcs
