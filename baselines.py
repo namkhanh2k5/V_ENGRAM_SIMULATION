@@ -63,6 +63,9 @@ NUM_PROJECTIONS  = 5          # L
 POOL_PER_TABLE   = int(_os.environ.get("POOL_PER_TABLE", "100"))
 # Mục 18: bề rộng bucket để quét, và số ứng viên V-Engram gom được
 BUCKET_WIDTHS      = [int(x) for x in _os.environ.get("BUCKET_WIDTHS", "8,10,12,14,16").split(",")]
+# Số bucket dò mỗi bảng. 1 = chỉ bucket chính xác (hành vi cũ). Đặt bằng T của
+# V-Engram để phép so khớp ngân sách lookup: L*T tra cứu ở cả hai bên.
+BUCKET_PROBES      = int(_os.environ.get("BUCKET_PROBES", "1"))
 VENGRAM_CANDIDATES = int(_os.environ.get("VENGRAM_CANDIDATES", "4510"))  # ngân sách gom mỗi bảng.
                               # LƯU Ý: phải khớp UNIQUE candidates của V-Engram, không phải
                               # 100/bảng vs ~146 tổng như bản cũ. Đọc mean_candidates từ
@@ -278,15 +281,33 @@ def main():
     # query chỉ tới được object khi b bit đầu TRÙNG KHỚP ở một bảng nào đó, vì băm
     # nhãn bucket đã phá thứ tự khiến không thể "đi sang bucket kề". Đây chính là
     # tính KHẢ DUYỆT (navigability) mà V-Engram giữ được còn bucket-LSH thì mất.
-    log("[*] Baseline Bucket-LSH (tra bucket chính xác, quét b) ...")
+    _probe_note = ("tra bucket chính xác" if BUCKET_PROBES <= 1
+                   else f"multi-probe {BUCKET_PROBES} bucket/bảng")
+    log(f"[*] Baseline Bucket-LSH ({_probe_note}, quét b) ...")
+
+    # Margin của từng bit: |projection|. Bit có margin nhỏ nhất nằm sát siêu
+    # phẳng nên dễ lật nhất — ĐÚNG quy tắc V-Engram dùng (src/routing.py dòng 96,
+    # np.argsort(np.abs(proj[:c]))). Dùng chung quy tắc để phép so công bằng:
+    # baseline được đúng cơ chế multi-probe mà V-Engram được hưởng.
+    q_margin = [np.abs(Qv @ projs[t]) for t in range(NUM_PROJECTIONS)]  # (Q,160)
+
+    def _probe_labels(t, q, b, n_probe):
+        """Nhãn bucket gốc + (n_probe-1) nhãn lật một bit yếu nhất."""
+        base = list(q_bits[t][q][:b])
+        labs = [tuple(base)]
+        if n_probe > 1:
+            for i in np.argsort(q_margin[t][q][:b])[:n_probe - 1]:
+                f = base.copy()
+                f[int(i)] = not f[int(i)]
+                labs.append(tuple(f))
+        return labs
+
     bucket_rows = []
     for b in BUCKET_WIDTHS:
         # gom doc theo nhãn bucket b-bit, mỗi bảng một từ điển
         tables = []
         for t in range(NUM_PROJECTIONS):
             d = {}
-            keys = np.packbits(doc_bits[t][:, :b], axis=1).tobytes()
-            step = doc_bits[t][:, :b].shape[1]
             lab = [tuple(row) for row in doc_bits[t][:, :b]]
             for i, L_ in enumerate(lab):
                 d.setdefault(L_, []).append(i)
@@ -295,8 +316,8 @@ def main():
         for q in range(Q):
             cand = set()
             for t in range(NUM_PROJECTIONS):
-                lab = tuple(q_bits[t][q][:b])
-                cand.update(tables[t].get(lab, ()))
+                for lab in _probe_labels(t, q, b, BUCKET_PROBES):
+                    cand.update(tables[t].get(lab, ()))
             pools.append(len(cand))
             if not cand:
                 empty += 1
@@ -305,7 +326,7 @@ def main():
                 ret.append(rerank(Qv[q], cand, E, pq_codes, codebook))
         s_r, s_h, m = success_and_mrr(ret, gt_sets)
         bucket_rows.append((b, s_r, s_h, float(np.mean(pools)), 100.0 * empty / Q))
-        log(f"    b={b:>2}: Recall@5={s_r:5.1f}%  Hit@5={s_h:5.1f}%  "
+        log(f"    b={b:>2} T={BUCKET_PROBES}: Recall@5={s_r:5.1f}%  Hit@5={s_h:5.1f}%  "
             f"pool TB={np.mean(pools):7.0f}  query bucket rỗng={100.0*empty/Q:.1f}%")
     # lấy dòng có pool GẦN NHẤT với ngân sách ứng viên của V-Engram để lên bảng chính
     b_best = min(bucket_rows, key=lambda r: abs(r[3] - VENGRAM_CANDIDATES))
