@@ -55,6 +55,13 @@ grep -q "FRONTIER_SCOPE" src/routing.py || {
     echo "src/routing.py chưa tách hai trục — tải bản mới rồi chạy lại"; exit 1; }
 grep -q "STOP_RULE}-" main_simulation.py || {
     echo "main_simulation.py chưa mã hoá hai cờ vào tên file — tải bản mới"; exit 1; }
+# Kiểm venv TRƯỚC. Chạy ngoài venv thì numpy/simpy không có và cả 12 lần chạy
+# hỏng ngay lập tức mà lỗi bị nuốt vào file log riêng — mất công phát hiện.
+$PY -c "import numpy, simpy" 2>/dev/null || {
+    echo "THIẾU numpy/simpy — chưa vào venv?"
+    echo "  chạy:  source venv/bin/activate"
+    exit 1; }
+echo "✓ venv OK"
 echo "✓ code đủ điều kiện"
 
 wait_slot() { while [ "$(jobs -rp | wc -l)" -ge "$PARALLEL" ]; do wait -n; done; }
@@ -62,7 +69,9 @@ wait_slot() { while [ "$(jobs -rp | wc -l)" -ge "$PARALLEL" ]; do wait -n; done;
 run() {
     local sr=$1 fs=$2 seed=$3
     local f
-    f=$(ls result_full_code_N${N}_*_${sr}-${fs}_s${seed}_nq500.json 2>/dev/null | head -1)
+    # Tên file thật có dạng ..._padc_stable-all_nopay_semantic_scan300_s1_nq500.json
+    # nên giữa "$sr-$fs" và "_s$seed" còn nhiều đoạn khác — phải có * ở giữa.
+    f=$(ls result_full_code_N${N}_*_${sr}-${fs}_*_s${seed}_nq500.json 2>/dev/null | head -1)
     [ -n "$f" ] && { echo "  [skip] $sr/$fs s=$seed"; return; }
     SKIP_PAYLOAD=1 STOP_RULE=$sr FRONTIER_SCOPE=$fs MEASURE_OVERLAP=1 \
         timeout 14400 $PY main_simulation.py --dataset code --nodes $N \
