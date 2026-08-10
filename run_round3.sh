@@ -49,6 +49,8 @@ echo "✓ venv OK, simulator đã sửa, đủ chẩn đoán"
 
 wait_slot() { while [ "$(jobs -rp | wc -l)" -ge "$PARALLEL" ]; do wait -n; done; }
 
+SEEDS_A="20235956 1 2 3 4 5 6 7 8 9"
+
 run_mode() {
     local mode=$1 seed=$2 extra=$3
     local f="r3_A_${mode}_s${seed}.txt"
@@ -57,6 +59,7 @@ run_mode() {
         --dataset code --nodes $N --seed "$seed" --k-query 20 --multi-probe 8 \
         --meta-anchors 1 --nq 500 > "$f" 2>&1 || echo "  [LỖI] A $mode s=$seed"
 }
+echo "-- semantic --"
 for s in $SEEDS_A; do run_mode semantic "$s" "" & wait_slot; done; wait
 
 MATCH=$($PY - <<'EOF'
