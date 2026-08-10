@@ -69,6 +69,8 @@ def run_simulation(env, args, cfg):
           f"{' [RANDOM ROUTING]' if args.random_routing else ''}")
 
     network_nodes = yield env.process(bootstrap_network(env, args.nodes, K_SIZE))
+    from src import routing as _rt
+    _rt._ALL_NODES = network_nodes
 
     yield env.process(data_ingestion_process(
         env, network_nodes, args.num_files, SHARDS_PER_FILE,
@@ -180,6 +182,10 @@ def run_simulation(env, args, cfg):
            "n_query": n_run,
            # --- MC10: chẩn đoán đặt/lấy payload ---
            "parallel_adc": netmod.PARALLEL_ADC,
+           "stop_rule": __import__("src.routing", fromlist=["x"]).STOP_RULE,
+           "frontier_scope": __import__("src.routing", fromlist=["x"]).FRONTIER_SCOPE,
+           "overlap_mean": (float(np.mean(__import__("src.routing", fromlist=["x"])._OVERLAP_STATS))
+                            if __import__("src.routing", fromlist=["x"])._OVERLAP_STATS else None),
            "placement_mode": netmod.PLACEMENT_MODE,
            "placement_k": netmod.PLACEMENT_K,
            "fetch_top": netmod.FETCH_TOP,
@@ -216,6 +222,11 @@ def run_simulation(env, args, cfg):
                       f"_Rmax{_RMAX}"
                       f"{'_par' if netmod.PARALLEL_FETCH else '_ser'}"
                       f"{'_padc' if netmod.PARALLEL_ADC else '_sadc'}"
+                      # LỖI LẶP LẠI LẦN THỨ NĂM: mọi tham số được sweep PHẢI có
+                      # trong tên file. Thiếu STOP_RULE/FRONTIER_SCOPE thì bốn
+                      # cấu hình 2x2 ghi đè lên nhau và số đọc ra là của lần
+                      # chạy cuối, không phải của cấu hình đang xét.
+                      f"_{_rt.STOP_RULE}-{_rt.FRONTIER_SCOPE}"
                       f"{'_nopay' if netmod.SKIP_PAYLOAD else ''}"
                       f"_{netmod.ROUTING_MODE if netmod.ROUTING_MODE != 'auto' else ('random_slots' if args.random_routing else 'semantic')}"
                       f"_{netmod.PLACEMENT_MODE}{netmod.PLACEMENT_K}"
