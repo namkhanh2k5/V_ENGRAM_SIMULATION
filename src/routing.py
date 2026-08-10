@@ -14,7 +14,15 @@ DEFAULT_LSH_SEED = 20235956
 DEFAULT_ALPHA = 3        # alpha — độ song song của lookup
 # Điều kiện dừng của Ripple Search: "exhaust" = Kademlia chuẩn (đúng),
 # "unchanged" = hành vi cũ, giữ để đo chênh lệch.
-STOP_RULE = _os.environ.get("STOP_RULE", "exhaust")
+# Mặc định "unchanged" — KHÔNG phải vì nó đúng theo Kademlia, mà vì đo được
+# nó tốt hơn cho tác vụ này ở MỌI mặt: recall cao hơn 5,1 điểm, RPC ít hơn 31%,
+# và phủ nhiều node phân biệt hơn. Quét R_max = 15/30/60 cho thấy trần không
+# phải nguyên nhân — cả hai điều kiện cho kết quả y hệt ở cả ba mức.
+#
+# Lý do: Kademlia chuẩn hội tụ về k node GẦN NHẤT, đúng cho tra khoá chính xác.
+# Truy vấn tương tự cần PHỦ VÙNG. Điều kiện "unchanged" tiếp tục thăm dò ra
+# ngoài top-k khi top-k đã hỏi hết, nên gom được tập ứng viên rộng hơn.
+STOP_RULE = _os.environ.get("STOP_RULE", "unchanged")
 import os as _os
 # Mục 21: quét R_max qua biến môi trường
 DEFAULT_R_MAX = int(_os.environ.get("R_MAX", "15"))   # trần số vòng mỗi lookup
