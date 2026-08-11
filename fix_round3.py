@@ -92,33 +92,74 @@ else:
 # ---------------------------------------------------------------- B
 print()
 print('=' * 72)
-print('B. MỨC NHIỄM BẨN CỦA DÒNG stable/all')
+print('B. NGUỒN GỐC CÁC FILE stable/all')
 print('=' * 72)
-clean, dirty = [], []
+
+def _m(rows, k):
+    """Trung bình an toàn: bỏ qua file thiếu khoá.
+
+    random_slots và random_unique KHÔNG đi lookup nên không có peer set, do đó
+    không có jaccard_mean. Truy cập x['jaccard_mean'] thẳng sẽ gãy — đúng lỗi
+    vừa gặp."""
+    xs = [x[k] for x in rows if x.get(k) is not None]
+    return st.mean(xs) if xs else float('nan')
+
+
+# nhóm B ghi ra termabl_*.json (bản script mới); nhóm A ghi result_full_*.json
+grpB = []
+for f in glob.glob('termabl_*.json'):
+    try:
+        grpB.append(json.load(open(f)))
+    except Exception:
+        pass
+
+grpA = []
 for f in glob.glob('result_full_code_N10000_*_nq500.json'):
     try:
         d = json.load(open(f))
     except Exception:
         continue
-    if d.get('stop_rule') != 'stable' or d.get('frontier_scope') != 'all':
-        continue
-    (clean if d.get('xor_rank_mean') is not None else dirty).append(d)
+    if d.get('stop_rule') == 'stable' and d.get('frontier_scope') == 'all':
+        grpA.append(d)
 
-print(f'  có xor_rank (nhóm B, MEASURE_OVERLAP=1) : {len(clean)} file')
-print(f'  không có    (nhóm A, mặc định)          : {len(dirty)} file')
-if clean:
-    print(f"    nhóm B: recall {st.mean(x['recall_at_5'] for x in clean):.1f}%  "
-          f"Jaccard {st.mean(x['jaccard_mean'] for x in clean):.3f}  "
-          f"XOR rank {st.mean(x['xor_rank_mean'] for x in clean):.1f}")
-if dirty:
-    print(f"    nhóm A: recall {st.mean(x['recall_at_5'] for x in dirty):.1f}%  "
-          f"Jaccard {st.mean(x['jaccard_mean'] for x in dirty):.3f}")
+print(f'  termabl_*.json (nhóm B, chạy riêng)      : {len(grpB)} file')
+print(f'  result_full_*  (nhóm A, stable/all)      : {len(grpA)} file')
 print()
-if clean and dirty:
-    print('  Hai nhóm cùng cấu hình nên recall PHẢI gần nhau; chênh nhiều là dấu')
-    print('  hiệu còn khác biệt nào đó chưa nhận ra.')
+
+if grpB:
+    from collections import defaultdict
+    by = defaultdict(list)
+    for d in grpB:
+        by[(d.get('stop_rule'), d.get('frontier_scope'))].append(d)
+    print('  NHÓM B — dùng số này để tách hai trục:')
+    print(f"    {'cấu hình':16s} {'n':>2s} {'recall':>8s} {'Jaccard':>8s} "
+          f"{'XOR rank':>9s} {'RPC':>7s}")
+    print('    ' + '-' * 56)
+    for k in sorted(by):
+        v = by[k]
+        print(f"    {k[0]+'/'+k[1]:16s} {len(v):>2} {_m(v,'recall_at_5'):>7.1f}% "
+              f"{_m(v,'jaccard_mean'):>8.3f} {_m(v,'xor_rank_mean'):>9.1f} "
+              f"{_m(v,'disc_rpcs'):>7.0f}")
+    if ('stable', 'all') in by and len(by) == 4:
+        b = _m(by[('stable', 'all')], 'recall_at_5')
+        print()
+        print(f"    mốc stable/all           {b:>7.1f}%")
+        for k, lbl in [(('exhaust', 'all'), 'chỉ đổi ĐIỀU KIỆN DỪNG'),
+                       (('stable', 'topk'), 'chỉ đổi PHẠM VI HỎI'),
+                       (('exhaust', 'topk'), 'đổi cả hai')]:
+            if k in by:
+                print(f"    {lbl:24s} {_m(by[k],'recall_at_5') - b:>+6.1f} điểm")
+else:
+    print('  Chưa có termabl_*.json — khối B chưa chạy bằng script mới.')
+    print('  Các file result_full hiện có đều là nhóm A (chạy với STOP_RULE và')
+    print('  FRONTIER_SCOPE mặc định), nên KHÔNG dùng để tách hai trục được.')
     print()
-    print('  Để tách hai trục cho đúng, dùng con số nhóm B ở trên làm mốc.')
-elif not clean:
-    print('  KHÔNG file nào có xor_rank -> nhóm A đã ghi đè hết nhóm B.')
-    print('  Phải chạy lại khối B với --out riêng để không đụng tên.')
+    print('  Chạy lại khối B:')
+    print('    rm -f r3_B_*.txt')
+    print('    PARALLEL=4 bash run_round3.sh 2>&1 | tee round3b.log')
+    if grpA:
+        print()
+        print(f"  Tham khảo nhóm A (stable/all, {len(grpA)} file, gồm cả baseline):")
+        print(f"    recall  {_m(grpA,'recall_at_5'):>6.1f}%")
+        print(f"    Jaccard {_m(grpA,'jaccard_mean'):>6.3f}  "
+              f"(random_slots/random_unique không có, đã bỏ qua)")
