@@ -83,7 +83,7 @@ print('=' * 76)
 print('B. TERMINATION ABLATION + CHẨN ĐOÁN CƠ CHẾ')
 print('=' * 76)
 diag = defaultdict(list)
-for f in glob.glob('result_full_code_N10000_*_nq500.json'):
+for f in glob.glob('termabl_*.json'):
     try:
         d = json.load(open(f))
     except Exception:

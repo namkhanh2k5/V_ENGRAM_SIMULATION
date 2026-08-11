@@ -85,9 +85,13 @@ run_term() {
     local sr=$1 fs=$2 seed=$3
     local f="r3_B_${sr}-${fs}_s${seed}.txt"
     [ -s "$f" ] && grep -q "Recall@5" "$f" && { echo "  [skip] B $sr/$fs s=$seed"; return; }
+    # --out RIÊNG: nhóm A chạy với STOP_RULE/FRONTIER_SCOPE mặc định, đúng
+    # bằng stable/all, nên sinh CÙNG tên file JSON và hai nhóm ghi đè nhau.
+    # Đây là lần thứ bảy cùng lớp lỗi trong dự án.
     env SKIP_PAYLOAD=1 STOP_RULE=$sr FRONTIER_SCOPE=$fs MEASURE_OVERLAP=1 \
         timeout 14400 $PY main_simulation.py --dataset code --nodes $N \
         --seed "$seed" --k-query 20 --multi-probe 8 --meta-anchors 1 --nq 500 \
+        --out "termabl_${sr}-${fs}_s${seed}.json" \
         > "$f" 2>&1 || echo "  [LỖI] B $sr/$fs s=$seed"
 }
 for s in 20235956 1 2; do
