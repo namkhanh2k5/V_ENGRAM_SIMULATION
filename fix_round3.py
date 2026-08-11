@@ -140,6 +140,37 @@ if grpB:
         print(f"    {k[0]+'/'+k[1]:16s} {len(v):>2} {_m(v,'recall_at_5'):>7.1f}% "
               f"{_m(v,'jaccard_mean'):>8.3f} {_m(v,'xor_rank_mean'):>9.1f} "
               f"{_m(v,'disc_rpcs'):>7.0f}")
+    # So GHÉP CẶP theo seed cho hai dòng stable — chúng có ba chẩn đoán trùng
+    # khít nên chênh recall cần kiểm định chặt mới tin được.
+    import re as _re, math as _mh
+    def _by_seed(k):
+        d = {}
+        for f in glob.glob(f'termabl_{k[0]}-{k[1]}_s*.json'):
+            m = _re.search(r'_s(\d+)\.json$', f)
+            if m:
+                try:
+                    d[m.group(1)] = json.load(open(f)).get('recall_at_5')
+                except Exception:
+                    pass
+        return d
+    for ka, kb, lbl in [(('stable','all'), ('stable','topk'), 'PHẠM VI HỎI'),
+                        (('stable','all'), ('exhaust','all'), 'ĐIỀU KIỆN DỪNG')]:
+        A, B = _by_seed(ka), _by_seed(kb)
+        common = sorted(set(A) & set(B))
+        if len(common) < 3:
+            continue
+        d = [A[s] - B[s] for s in common if A[s] and B[s]]
+        if len(d) < 3:
+            continue
+        md = st.mean(d); sdd = st.stdev(d); se = sdd / _mh.sqrt(len(d))
+        t = md / se if se else float('nan')
+        tc = {2: 4.30, 3: 3.18, 4: 2.78, 5: 2.57, 6: 2.45}.get(len(d) - 1, 2.2)
+        print()
+        print(f"  GHÉP CẶP — {lbl}  ({len(d)} seed chung)")
+        print(f"    chênh trung bình {md:+.1f} điểm, SE {se:.2f}, t {t:.2f}, "
+              f"ngưỡng {tc}")
+        print(f"    {'ĐẠT ý nghĩa' if abs(t) > tc else 'CHƯA đạt — có thể là nhiễu'}")
+
     if ('stable', 'all') in by and len(by) == 4:
         b = _m(by[('stable', 'all')], 'recall_at_5')
         print()

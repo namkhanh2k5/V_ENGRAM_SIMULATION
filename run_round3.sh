@@ -94,7 +94,10 @@ run_term() {
         --out "termabl_${sr}-${fs}_s${seed}.json" \
         > "$f" 2>&1 || echo "  [LỖI] B $sr/$fs s=$seed"
 }
-for s in 20235956 1 2; do
+# 5 seed thay vì 3: chênh giữa stable/all và stable/topk ở 3 seed chưa đạt ý
+# nghĩa (t=1,36 so với ngưỡng 2,8), và ba chẩn đoán của hai dòng đó trùng khít
+# nên rất có thể chênh recall là nhiễu. Thêm seed để kết luận được.
+for s in 20235956 1 2 3 4; do
     for sr in stable exhaust; do
         for fs in all topk; do run_term "$sr" "$fs" "$s" & wait_slot; done
     done
