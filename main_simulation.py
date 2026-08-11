@@ -188,6 +188,10 @@ def run_simulation(env, args, cfg):
            # xor_rank_mean: thứ hạng XOR trung bình của peer trả về. Thấp = gần
            #                tập XOR-gần nhất toàn cục.
            **_probe_diag_summary(),
+           # reachable Recall@5: bao nhiêu phần trăm ground-truth top-5 nằm
+           # trong tập ứng viên gom được, TRƯỚC bước rerank PQ. Tách được mất
+           # mát do ĐỊNH TUYẾN khỏi mất mát do LƯỢNG TỬ HOÁ.
+           "reachable_recall5": _compute_reachable(args.dataset),
            "stop_rule": __import__("src.routing", fromlist=["x"]).STOP_RULE,
            "frontier_scope": __import__("src.routing", fromlist=["x"]).FRONTIER_SCOPE,
            "overlap_mean": (float(np.mean(__import__("src.routing", fromlist=["x"])._OVERLAP_STATS))
@@ -246,6 +250,42 @@ def run_simulation(env, args, cfg):
     print(f"\n-> Lưu: {fn}")
 
 
+def _compute_reachable(dataset):
+    """reachable Recall@5: bao nhiêu phần trăm ground-truth top-5 nằm trong tập
+    ứng viên đã gom, TRƯỚC bước rerank PQ.
+
+    Tách mất mát do ĐỊNH TUYẾN khỏi mất mát do LƯỢNG TỬ HOÁ — đại lượng thầy
+    yêu cầu đo. Tự nạp ground truth vì hàm chạy ngoài phạm vi của main.
+    """
+    from src import network as _nm
+    diag = getattr(_nm, "_PROBE_DIAG", [])
+    if not diag:
+        return None
+    try:
+        with open(f"./data/{dataset}_ground_truth.json") as fh:
+            gt = json.load(fh)
+    except Exception:
+        return None
+    out = []
+    for qi, q in enumerate(diag):
+        tags = q.get("reachable_tags")
+        if tags is None or qi >= len(gt):
+            continue
+        # Tag trong mô phỏng là chuỗi "doc_<index>", ground truth dùng số
+        # nguyên. Chuẩn hoá về số để so được.
+        def _idx(x):
+            if isinstance(x, str) and x.startswith("doc_"):
+                return int(x[4:])
+            try:
+                return int(x)
+            except (TypeError, ValueError):
+                return None
+        g5 = {int(r["index"]) for r in gt[qi]["top_5_results"][:5]}
+        tags = {i for x in tags if (i := _idx(x)) is not None}
+        if g5:
+            out.append(len(g5 & tags) / len(g5))
+    return float(np.mean(out)) * 100 if out else None
+
 def _probe_diag_summary():
     """Tóm tắt chẩn đoán peer set của các probe.
 
@@ -259,8 +299,10 @@ def _probe_diag_summary():
     diag = getattr(_nm, "_PROBE_DIAG", [])
     if not diag:
         return {}
-    jac, ranks = [], []
+    jac, ranks, ncand, reach = [], [], [], []
     for q in diag:
+        if q.get("n_unique_cand") is not None:
+            ncand.append(q["n_unique_cand"])
         ps = [x for x in q.get("peersets", []) if x]
         # lấy mẫu tối đa 200 cặp mỗi query cho khỏi tốn
         pairs = list(itertools.combinations(range(len(ps)), 2))[:200]
@@ -276,6 +318,8 @@ def _probe_diag_summary():
     if ranks:
         out["xor_rank_mean"] = float(np.mean(ranks))
         out["xor_rank_p90"] = float(np.percentile(ranks, 90))
+    if ncand:
+        out["n_unique_cand_mean"] = float(np.mean(ncand))
     return out
 
 if __name__ == "__main__":

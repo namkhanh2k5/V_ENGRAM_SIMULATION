@@ -219,6 +219,11 @@ def _fetch_one_shard(env, tag, s_id, network_nodes, acc: Dict[str, Any]):
     candidate_nodes, ph, pr = iterative_find_k_closest_nodes(
         p_key, bootstrap_node, alpha=DEFAULT_ALPHA, k=PLACEMENT_K
     )
+    # Lookup của payload cũng TIÊU thời gian, y như lookup của discovery. Bản
+    # trước chỉ sửa cho discovery nên bảng chi phí nửa vời: đường tới hạn tính
+    # đủ phần tìm peer nhưng bỏ qua phần tìm shard.
+    for _ in range(ph):
+        yield env.timeout(_rtt())
     acc["rounds"] += ph
     acc["rpcs"] += pr
     acc["bytes"] += pr * 8 * 20
@@ -427,6 +432,15 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         disc_bytes += _pa["bytes"]
         lookups_total += len(_specs); lookups_at_cap += _pa["at_cap"]
         all_candidates.extend(_pa["cands"])
+        # Số ứng viên DUY NHẤT gom được, và tập tag reachable — hai đại lượng
+        # thầy yêu cầu đo. Trước đây không xuất nên analyze in ra nan.
+        # all_candidates chứa TUPLE (tag, score) chứ không phải tag trần —
+        # phải bóc phần tử đầu, nếu không set() sẽ chứa tuple và mọi phép so
+        # với ground-truth index đều trượt.
+        _tags = {(c[0] if isinstance(c, (tuple, list)) else c)
+                 for c in all_candidates}
+        _pa["n_unique_cand"] = len(_tags)
+        _pa["reachable_tags"] = _tags
         _PROBE_DIAG.append(_pa)
 
     # --- Merge: giữ khoảng cách nhỏ nhất cho mỗi tag, dedup giữa các bảng ---
