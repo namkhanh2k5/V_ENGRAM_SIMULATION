@@ -58,6 +58,10 @@ SKIP_PAYLOAD = _os.environ.get("SKIP_PAYLOAD", "0") == "1"
 #   random_unique : oracle, bốc đúng MATCH_UNIQUE_NODES node
 #   keyed_lookup  : L*T khoá ngẫu nhiên + lookup Kademlia thật (THỰC THI ĐƯỢC)
 ROUTING_MODE = _os.environ.get("ROUTING_MODE", "auto")
+# Cấu trúc bảng định tuyến: "ring" = small-world ring hiện dùng, "kbucket" =
+# k-bucket Kademlia phân tầng theo tiền tố XOR.
+ROUTING_TABLE = _os.environ.get("ROUTING_TABLE", "ring")
+K_BUCKET = int(_os.environ.get("K_BUCKET", "20"))
 # Chẩn đoán mỗi truy vấn: peer set của từng probe và thứ hạng XOR, để tính
 # Jaccard giữa các probe và độ đa dạng ứng viên.
 _PROBE_DIAG = []
@@ -102,6 +106,29 @@ def bootstrap_network(env, num_nodes, k_size_far=50, k_size_near=50):
 
     # Sort once to build a ring-style adjacency list
     network_nodes.sort(key=lambda n: n.node_id)
+
+    if ROUTING_TABLE == "kbucket":
+        # Mỗi peer học một mẫu peer khác rồi nạp vào k-bucket. Mẫu phải đủ lớn
+        # để các bucket XA được lấp; bucket GẦN thưa tự nhiên vì ít peer ở đó.
+        print(f"[*] Dựng k-bucket Kademlia (k={K_BUCKET}) ...")
+        sample_size = min(num_nodes, 400)
+        for node in network_nodes:
+            for peer in random.sample(network_nodes, sample_size):
+                node.kb_add(peer, K_BUCKET)
+            # Bảo đảm peer biết các peer XOR-gần nhất: đây là điều bootstrap
+            # thật đạt được bằng cách tự tra chính node_id của mình.
+            for peer in sorted(network_nodes,
+                               key=lambda p: p.node_id ^ node.node_id)[:K_BUCKET]:
+                node.kb_add(peer, K_BUCKET)
+            node.routing_table = set(p for b in node.kbuckets.values() for p in b)
+        _sz = [len(n.routing_table) for n in network_nodes]
+        print(f"    contact/peer: TB {sum(_sz)/len(_sz):.0f} "
+              f"(min {min(_sz)}, max {max(_sz)})")
+        yield env.timeout(0)
+        print(f"✓ Mạng lưới sẵn sàng ({time.time() - start_time:.2f}s)")
+        # PHẢI return network_nodes: hàm này là generator được env.process bọc,
+        # và main_simulation nhận giá trị trả về. `return` trơn cho None.
+        return network_nodes
 
     print("[*] Đan cấu trúc Small-World (Ring-Adjacency: 50 xa + 50 gần)...")
     for i, node in enumerate(network_nodes):
