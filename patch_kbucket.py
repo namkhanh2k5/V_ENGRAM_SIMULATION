@@ -121,7 +121,10 @@ K_BUCKET = int(_os.environ.get("K_BUCKET", "20"))''')
               f"(min {min(_sz)}, max {max(_sz)})")
         yield env.timeout(0)
         print(f"✓ Mạng lưới sẵn sàng ({time.time() - start_time:.2f}s)")
-        return
+        # PHẢI trả network_nodes: hàm này là generator do env.process bọc, và
+        # main_simulation nhận giá trị trả về. `return` trơn cho None, và lỗi
+        # chỉ lộ ra ở data_ingestion_process nên rất khó truy.
+        return network_nodes
 
     print("[*] Đan cấu trúc Small-World (Ring-Adjacency: 50 xa + 50 gần)...")
     for i, node in enumerate(network_nodes):'''

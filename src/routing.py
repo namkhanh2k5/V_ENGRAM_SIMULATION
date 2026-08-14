@@ -191,7 +191,12 @@ def iterative_find_k_closest_nodes(key, bootstrap_node, alpha=DEFAULT_ALPHA,
         for node in to_query:
             queried.add(node)
             rpcs += 1                      # mỗi FIND_NODE là một RPC
-            candidates.update(node.get_neighbors())
+            # Kademlia trả về k contact GẦN NHẤT với khoá, không phải toàn
+            # bộ bảng. Nhánh ring giữ hành vi cũ để đối chiếu.
+            if hasattr(node, "kb_closest") and node.kbuckets:
+                candidates.update(node.kb_closest(key, k))
+            else:
+                candidates.update(node.get_neighbors())
 
         if STOP_RULE == "stable":
             best_ids = tuple(node.node_id for node in ordered[:k])
