@@ -62,6 +62,12 @@ ROUTING_MODE = _os.environ.get("ROUTING_MODE", "auto")
 # k-bucket Kademlia phân tầng theo tiền tố XOR.
 ROUTING_TABLE = _os.environ.get("ROUTING_TABLE", "ring")
 K_BUCKET = int(_os.environ.get("K_BUCKET", "20"))
+# Cách dựng bảng định tuyến: "join" = gia nhập tuần tự bằng lookup thật (mặc
+# định), "oracle" = cấp sẵn XOR-nearest toàn cục (hành vi cũ, để đối chiếu).
+BOOTSTRAP = _os.environ.get("BOOTSTRAP", "join")
+# Mọi probe của cùng một query dùng chung một origin peer (mặc định), thay vì
+# mỗi probe lấy một bootstrap peer mới.
+SHARED_ORIGIN = _os.environ.get("SHARED_ORIGIN", "1") == "1"
 # Chẩn đoán mỗi truy vấn: peer set của từng probe và thứ hạng XOR, để tính
 # Jaccard giữa các probe và độ đa dạng ứng viên.
 _PROBE_DIAG = []
@@ -110,16 +116,55 @@ def bootstrap_network(env, num_nodes, k_size_far=50, k_size_near=50):
     if ROUTING_TABLE == "kbucket":
         # Mỗi peer học một mẫu peer khác rồi nạp vào k-bucket. Mẫu phải đủ lớn
         # để các bucket XA được lấp; bucket GẦN thưa tự nhiên vì ít peer ở đó.
-        print(f"[*] Dựng k-bucket Kademlia (k={K_BUCKET}) ...")
-        sample_size = min(num_nodes, 400)
+        # ==================================================================
+        # BOOTSTRAP: hai chế độ, đặt qua env BOOTSTRAP.
+        #
+        # "oracle" (hành vi cũ, GIỮ ĐỂ ĐỐI CHIẾU): mỗi peer được cấp sẵn
+        #     K_BUCKET peer XOR-gần nhất TOÀN CỤC. Đó là global membership
+        #     oracle, và nó làm lookup hội tụ hoàn hảo — XOR rank trung bình ra
+        #     đúng 9,5, tức mean của [0..19], nghĩa là walk tìm ĐÚNG global
+        #     top-20 không sai một peer. Con số đó là artifact của bootstrap
+        #     chứ không phải tính chất của Ripple Search.
+        #
+        # "join" (mặc định, ĐÚNG): peer gia nhập TUẦN TỰ. Peer thứ i chọn một
+        #     peer đã có làm bootstrap, tra chính node_id của mình bằng lookup
+        #     THẬT trên trạng thái định tuyến hiện có, rồi nạp kết quả vào
+        #     k-bucket của mình; các peer nó gặp cũng học về nó. Không peer nào
+        #     thấy danh sách toàn cục.
+        # ==================================================================
+        print(f"[*] Dựng k-bucket Kademlia (k={K_BUCKET}, bootstrap={BOOTSTRAP}) ...")
+        if BOOTSTRAP == "oracle":
+            sample_size = min(num_nodes, 400)
+            for node in network_nodes:
+                for peer in random.sample(network_nodes, sample_size):
+                    node.kb_add(peer, K_BUCKET)
+                for peer in sorted(network_nodes,
+                                   key=lambda p: p.node_id ^ node.node_id)[:K_BUCKET]:
+                    node.kb_add(peer, K_BUCKET)
+        else:
+            joined = [network_nodes[0]]
+            for node in network_nodes[1:]:
+                boot = random.choice(joined)
+                node.kb_add(boot, K_BUCKET)
+                boot.kb_add(node, K_BUCKET)
+                # tra chính mình bằng lookup thật trên mạng đã có
+                found, _h, _r = iterative_find_k_closest_nodes(
+                    node.node_id, boot, alpha=DEFAULT_ALPHA,
+                    k=K_BUCKET, max_rounds=DEFAULT_R_MAX)
+                for peer in found:
+                    node.kb_add(peer, K_BUCKET)
+                    peer.kb_add(node, K_BUCKET)   # học hai chiều
+                joined.append(node)
+            # một vòng refresh: mỗi peer tra lại chính mình sau khi mạng đủ
+            for node in network_nodes:
+                boot = random.choice(network_nodes)
+                found, _h, _r = iterative_find_k_closest_nodes(
+                    node.node_id, boot, alpha=DEFAULT_ALPHA,
+                    k=K_BUCKET, max_rounds=DEFAULT_R_MAX)
+                for peer in found:
+                    node.kb_add(peer, K_BUCKET)
+
         for node in network_nodes:
-            for peer in random.sample(network_nodes, sample_size):
-                node.kb_add(peer, K_BUCKET)
-            # Bảo đảm peer biết các peer XOR-gần nhất: đây là điều bootstrap
-            # thật đạt được bằng cách tự tra chính node_id của mình.
-            for peer in sorted(network_nodes,
-                               key=lambda p: p.node_id ^ node.node_id)[:K_BUCKET]:
-                node.kb_add(peer, K_BUCKET)
             node.routing_table = set(p for b in node.kbuckets.values() for p in b)
         _sz = [len(n.routing_table) for n in network_nodes]
         print(f"    contact/peer: TB {sum(_sz)/len(_sz):.0f} "
@@ -387,9 +432,10 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         # Kademlia lặp như semantic. Không cần global membership view, và trả
         # ĐÚNG chi phí routing — đây là baseline mà mục 4.12 phải suy ra chi phí,
         # giờ đo trực tiếp.
+        _borigin = random.choice(network_nodes)
         for _ in range(NUM_PROJECTIONS * multi_probe):
             r_key = random.getrandbits(160)
-            bootstrap_node = random.choice(network_nodes)
+            bootstrap_node = _borigin if SHARED_ORIGIN else random.choice(network_nodes)
             nodes, hops, rpcs = iterative_find_k_closest_nodes(
                 r_key, bootstrap_node, alpha=DEFAULT_ALPHA,
                 k=k_query, max_rounds=DEFAULT_R_MAX
@@ -427,8 +473,13 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         _pa = {"hops": 0, "rpcs": 0, "bytes": 0, "at_cap": 0,
                "cands": [], "peersets": [], "xor_ranks": []}
 
+        # MỘT origin peer cho CẢ query, không phải mỗi probe một origin.
+        # Bản trước lấy random.choice trong _one_probe, tức 40 lần khởi động
+        # độc lập chứ không phải một client phát 40 probe — mục 2.2 của thầy.
+        _origin = random.choice(network_nodes)
+
         def _one_probe(env, p_key, acc):
-            bootstrap_node = random.choice(network_nodes)
+            bootstrap_node = _origin if SHARED_ORIGIN else random.choice(network_nodes)
             nodes, hops, rpcs = iterative_find_k_closest_nodes(
                 p_key, bootstrap_node, alpha=DEFAULT_ALPHA,
                 k=k_query, max_rounds=DEFAULT_R_MAX
@@ -436,6 +487,7 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
             for _ in range(hops):          # mỗi vòng định tuyến một RTT
                 yield env.timeout(_rtt())
             acc["hops"] += hops; acc["rpcs"] += rpcs
+            acc["rpcs_routing"] = acc.get("rpcs_routing", 0) + rpcs
             acc["bytes"] += rpcs * 8 * 20
             if hops >= DEFAULT_R_MAX:
                 acc["at_cap"] += 1
@@ -451,6 +503,8 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
                 _a2 = {"rpcs": 0, "bytes": 0, "cands": []}
                 yield env.process(_adc_all(env, _new, query_vector, codebook, _a2))
                 acc["rpcs"] += _a2["rpcs"]; acc["bytes"] += _a2["bytes"]
+                # candidate-evaluation RPC: một request mỗi peer MỚI chạm.
+                acc["rpcs_eval"] = acc.get("rpcs_eval", 0) + _a2["rpcs"]
                 acc["cands"].extend(_a2["cands"])
 
         yield env.all_of([env.process(_one_probe(env, pk, _pa)) for pk in _specs])
