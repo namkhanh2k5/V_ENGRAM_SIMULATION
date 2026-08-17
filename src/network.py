@@ -62,6 +62,9 @@ ROUTING_MODE = _os.environ.get("ROUTING_MODE", "auto")
 # k-bucket Kademlia phân tầng theo tiền tố XOR.
 ROUTING_TABLE = _os.environ.get("ROUTING_TABLE", "ring")
 K_BUCKET = int(_os.environ.get("K_BUCKET", "20"))
+# Cách dựng bảng định tuyến: "join" = gia nhập tuần tự bằng lookup thật (mặc
+# định), "oracle" = cấp sẵn XOR-nearest toàn cục (hành vi cũ, để đối chiếu).
+BOOTSTRAP = _os.environ.get("BOOTSTRAP", "join")
 # Chẩn đoán mỗi truy vấn: peer set của từng probe và thứ hạng XOR, để tính
 # Jaccard giữa các probe và độ đa dạng ứng viên.
 _PROBE_DIAG = []
@@ -110,16 +113,55 @@ def bootstrap_network(env, num_nodes, k_size_far=50, k_size_near=50):
     if ROUTING_TABLE == "kbucket":
         # Mỗi peer học một mẫu peer khác rồi nạp vào k-bucket. Mẫu phải đủ lớn
         # để các bucket XA được lấp; bucket GẦN thưa tự nhiên vì ít peer ở đó.
-        print(f"[*] Dựng k-bucket Kademlia (k={K_BUCKET}) ...")
-        sample_size = min(num_nodes, 400)
+        # ==================================================================
+        # BOOTSTRAP: hai chế độ, đặt qua env BOOTSTRAP.
+        #
+        # "oracle" (hành vi cũ, GIỮ ĐỂ ĐỐI CHIẾU): mỗi peer được cấp sẵn
+        #     K_BUCKET peer XOR-gần nhất TOÀN CỤC. Đó là global membership
+        #     oracle, và nó làm lookup hội tụ hoàn hảo — XOR rank trung bình ra
+        #     đúng 9,5, tức mean của [0..19], nghĩa là walk tìm ĐÚNG global
+        #     top-20 không sai một peer. Con số đó là artifact của bootstrap
+        #     chứ không phải tính chất của Ripple Search.
+        #
+        # "join" (mặc định, ĐÚNG): peer gia nhập TUẦN TỰ. Peer thứ i chọn một
+        #     peer đã có làm bootstrap, tra chính node_id của mình bằng lookup
+        #     THẬT trên trạng thái định tuyến hiện có, rồi nạp kết quả vào
+        #     k-bucket của mình; các peer nó gặp cũng học về nó. Không peer nào
+        #     thấy danh sách toàn cục.
+        # ==================================================================
+        print(f"[*] Dựng k-bucket Kademlia (k={K_BUCKET}, bootstrap={BOOTSTRAP}) ...")
+        if BOOTSTRAP == "oracle":
+            sample_size = min(num_nodes, 400)
+            for node in network_nodes:
+                for peer in random.sample(network_nodes, sample_size):
+                    node.kb_add(peer, K_BUCKET)
+                for peer in sorted(network_nodes,
+                                   key=lambda p: p.node_id ^ node.node_id)[:K_BUCKET]:
+                    node.kb_add(peer, K_BUCKET)
+        else:
+            joined = [network_nodes[0]]
+            for node in network_nodes[1:]:
+                boot = random.choice(joined)
+                node.kb_add(boot, K_BUCKET)
+                boot.kb_add(node, K_BUCKET)
+                # tra chính mình bằng lookup thật trên mạng đã có
+                found, _h, _r = iterative_find_k_closest_nodes(
+                    node.node_id, boot, alpha=DEFAULT_ALPHA,
+                    k=K_BUCKET, max_rounds=DEFAULT_R_MAX)
+                for peer in found:
+                    node.kb_add(peer, K_BUCKET)
+                    peer.kb_add(node, K_BUCKET)   # học hai chiều
+                joined.append(node)
+            # một vòng refresh: mỗi peer tra lại chính mình sau khi mạng đủ
+            for node in network_nodes:
+                boot = random.choice(network_nodes)
+                found, _h, _r = iterative_find_k_closest_nodes(
+                    node.node_id, boot, alpha=DEFAULT_ALPHA,
+                    k=K_BUCKET, max_rounds=DEFAULT_R_MAX)
+                for peer in found:
+                    node.kb_add(peer, K_BUCKET)
+
         for node in network_nodes:
-            for peer in random.sample(network_nodes, sample_size):
-                node.kb_add(peer, K_BUCKET)
-            # Bảo đảm peer biết các peer XOR-gần nhất: đây là điều bootstrap
-            # thật đạt được bằng cách tự tra chính node_id của mình.
-            for peer in sorted(network_nodes,
-                               key=lambda p: p.node_id ^ node.node_id)[:K_BUCKET]:
-                node.kb_add(peer, K_BUCKET)
             node.routing_table = set(p for b in node.kbuckets.values() for p in b)
         _sz = [len(n.routing_table) for n in network_nodes]
         print(f"    contact/peer: TB {sum(_sz)/len(_sz):.0f} "
