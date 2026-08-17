@@ -44,6 +44,8 @@ STOP_RULE      = _os.environ.get("STOP_RULE", "stable")
 # Ablation multi-probe: "margin" lật bit |projection| nhỏ nhất (mặc định),
 # "random" lật bit ngẫu nhiên — để kiểm heuristic margin có tác dụng thật không.
 PROBE_ORDER = _os.environ.get("PROBE_ORDER", "margin")
+# L2-normalize từng cột ma trận chiếu để margin so sánh được giữa các bit.
+NORMALIZE_ROWS = _os.environ.get("NORMALIZE_ROWS", "1") == "1"
 # Chẩn đoán (đắt): đo trùng khớp với tập K peer XOR-gần nhất toàn cục.
 FRONTIER_SCOPE = _os.environ.get("FRONTIER_SCOPE", "all")
 
@@ -68,7 +70,16 @@ def generate_lsh_projections(seed, vector_dim=VECTOR_DIM, num_projections=None):
     projections = []
     for _ in range(num_projections):
         # Achlioptas Distribution: P(1)=1/6, P(-1)=1/6, P(0)=2/3
-        matrix = rng.choice([0, 1, -1], size=(vector_dim, 160), p=[2/3, 1/6, 1/6])
+        matrix = rng.choice([0, 1, -1], size=(vector_dim, 160),
+                            p=[2/3, 1/6, 1/6]).astype(np.float32)
+        if NORMALIZE_ROWS:
+            # L2-normalize TỪNG CỘT (mỗi cột là một hyperplane, một bit sketch).
+            # Không normalize thì |projection| của hai bit có số nonzero khác
+            # nhau không so được, mà margin-ranked probing xếp hạng đúng theo
+            # đại lượng đó. Đây là lỗi ảnh hưởng trực tiếp mục 2.1 của thầy.
+            nrm = np.linalg.norm(matrix, axis=0, keepdims=True)
+            nrm[nrm == 0] = 1.0
+            matrix = matrix / nrm
         projections.append(matrix)
     return projections
 

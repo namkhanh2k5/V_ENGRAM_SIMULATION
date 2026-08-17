@@ -65,6 +65,9 @@ K_BUCKET = int(_os.environ.get("K_BUCKET", "20"))
 # Cách dựng bảng định tuyến: "join" = gia nhập tuần tự bằng lookup thật (mặc
 # định), "oracle" = cấp sẵn XOR-nearest toàn cục (hành vi cũ, để đối chiếu).
 BOOTSTRAP = _os.environ.get("BOOTSTRAP", "join")
+# Mọi probe của cùng một query dùng chung một origin peer (mặc định), thay vì
+# mỗi probe lấy một bootstrap peer mới.
+SHARED_ORIGIN = _os.environ.get("SHARED_ORIGIN", "1") == "1"
 # Chẩn đoán mỗi truy vấn: peer set của từng probe và thứ hạng XOR, để tính
 # Jaccard giữa các probe và độ đa dạng ứng viên.
 _PROBE_DIAG = []
@@ -429,9 +432,10 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         # Kademlia lặp như semantic. Không cần global membership view, và trả
         # ĐÚNG chi phí routing — đây là baseline mà mục 4.12 phải suy ra chi phí,
         # giờ đo trực tiếp.
+        _borigin = random.choice(network_nodes)
         for _ in range(NUM_PROJECTIONS * multi_probe):
             r_key = random.getrandbits(160)
-            bootstrap_node = random.choice(network_nodes)
+            bootstrap_node = _borigin if SHARED_ORIGIN else random.choice(network_nodes)
             nodes, hops, rpcs = iterative_find_k_closest_nodes(
                 r_key, bootstrap_node, alpha=DEFAULT_ALPHA,
                 k=k_query, max_rounds=DEFAULT_R_MAX
@@ -469,8 +473,13 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
         _pa = {"hops": 0, "rpcs": 0, "bytes": 0, "at_cap": 0,
                "cands": [], "peersets": [], "xor_ranks": []}
 
+        # MỘT origin peer cho CẢ query, không phải mỗi probe một origin.
+        # Bản trước lấy random.choice trong _one_probe, tức 40 lần khởi động
+        # độc lập chứ không phải một client phát 40 probe — mục 2.2 của thầy.
+        _origin = random.choice(network_nodes)
+
         def _one_probe(env, p_key, acc):
-            bootstrap_node = random.choice(network_nodes)
+            bootstrap_node = _origin if SHARED_ORIGIN else random.choice(network_nodes)
             nodes, hops, rpcs = iterative_find_k_closest_nodes(
                 p_key, bootstrap_node, alpha=DEFAULT_ALPHA,
                 k=k_query, max_rounds=DEFAULT_R_MAX
@@ -478,6 +487,7 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
             for _ in range(hops):          # mỗi vòng định tuyến một RTT
                 yield env.timeout(_rtt())
             acc["hops"] += hops; acc["rpcs"] += rpcs
+            acc["rpcs_routing"] = acc.get("rpcs_routing", 0) + rpcs
             acc["bytes"] += rpcs * 8 * 20
             if hops >= DEFAULT_R_MAX:
                 acc["at_cap"] += 1
@@ -493,6 +503,8 @@ def query_pipeline_process(env, network_nodes, query_vector, codebook, target_k=
                 _a2 = {"rpcs": 0, "bytes": 0, "cands": []}
                 yield env.process(_adc_all(env, _new, query_vector, codebook, _a2))
                 acc["rpcs"] += _a2["rpcs"]; acc["bytes"] += _a2["bytes"]
+                # candidate-evaluation RPC: một request mỗi peer MỚI chạm.
+                acc["rpcs_eval"] = acc.get("rpcs_eval", 0) + _a2["rpcs"]
                 acc["cands"].extend(_a2["cands"])
 
         yield env.all_of([env.process(_one_probe(env, pk, _pa)) for pk in _specs])

@@ -81,9 +81,45 @@ def paired(A, B):
     mm, ss = st.mean(d), st.stdev(d)
     se = ss / math.sqrt(len(d))
     tc = {1:12.71,2:4.30,3:3.18,4:2.78,5:2.57,6:2.45,7:2.36,8:2.31,9:2.26}.get(len(d)-1, 2.0)
-    return {'n': len(d), 'mean': mm, 'sd': ss, 'se': se,
-            't': mm/se if se else float('nan'), 'tc': tc,
-            'wins': sum(1 for x in d if x > 0),
+    t = mm/se if se else float('nan')
+    # p-value hai phía cho phân bố t, tính bằng hàm beta không cần scipy.
+    # Thầy yêu cầu exact p-value ở mục 6.
+    nu = len(d) - 1
+    try:
+        x = nu / (nu + t*t)
+        # I_x(nu/2, 1/2) qua liên phân số Lentz
+        def betacf(a, b, x, it=200):
+            qab, qap, qam = a+b, a+1.0, a-1.0
+            c, d_, h = 1.0, 1.0 - qab*x/qap, 1.0
+            d_ = 1e-30 if abs(d_) < 1e-30 else d_
+            d_, h = 1.0/d_, 1.0/d_
+            for m_ in range(1, it):
+                m2 = 2*m_
+                aa = m_*(b-m_)*x/((qam+m2)*(a+m2))
+                d_ = 1.0 + aa*d_; c = 1.0 + aa/c
+                d_ = 1e-30 if abs(d_) < 1e-30 else d_
+                c = 1e-30 if abs(c) < 1e-30 else c
+                d_ = 1.0/d_; h *= d_*c
+                aa = -(a+m_)*(qab+m_)*x/((a+m2)*(qap+m2))
+                d_ = 1.0 + aa*d_; c = 1.0 + aa/c
+                d_ = 1e-30 if abs(d_) < 1e-30 else d_
+                c = 1e-30 if abs(c) < 1e-30 else c
+                d_ = 1.0/d_
+                if abs(d_*c - 1.0) < 3e-9:
+                    h *= d_*c; break
+                h *= d_*c
+            return h
+        a, b = nu/2.0, 0.5
+        lbeta = (math.lgamma(a) + math.lgamma(b) - math.lgamma(a+b))
+        if x < (a+1)/(a+b+2):
+            ib = math.exp(a*math.log(x) + b*math.log(1-x) - lbeta) * betacf(a, b, x) / a
+        else:
+            ib = 1 - math.exp(b*math.log(1-x) + a*math.log(x) - lbeta) * betacf(b, a, 1-x) / b
+        pval = max(min(ib, 1.0), 0.0)
+    except Exception:
+        pval = float('nan')
+    return {'n': len(d), 'mean': mm, 'sd': ss, 'se': se, 't': t, 'tc': tc,
+            'p': pval, 'wins': sum(1 for x in d if x > 0),
             'ci': (mm - tc*se, mm + tc*se)}
 
 
@@ -123,7 +159,8 @@ for f in glob.glob('jn_termabl_*.json'):
         diag[(sr, fs)].append(d)
 if diag:
     print(f"{'dừng':9s} {'phạm vi':8s} {'n':>3s} {'Recall@5':>9s} {'oracle':>7s} "
-          f"{'Reach':>7s} {'RPC':>7s} {'XOR rank':>9s}")
+          f"{'Reach':>7s} {'RPC':>7s} {'XOR rank':>9s} {'rt RPC':>8s} "
+          f"{'ev RPC':>7s} {'Jaccard':>8s}")
     print('-' * 68)
     for sr in ('stable', 'exhaust'):
         for fs in ('all', 'topk'):
@@ -134,7 +171,9 @@ if diag:
                                  if any(x.get(k) is not None for x in _v) else float('nan'))
             print(f"{sr:9s} {fs:8s} {len(v):>3} {a('recall_at_5'):>8.1f}% "
                   f"{ORACLE[(sr,fs)]:>6.1f}% {a('reachable_recall5'):>6.1f}% "
-                  f"{a('disc_rpcs'):>7.0f} {a('xor_rank_mean'):>9.2f}")
+                  f"{a('disc_rpcs'):>7.0f} {a('xor_rank_mean'):>9.2f} "
+                  f"{a('rpc_routing_mean'):>8.0f} {a('rpc_eval_mean'):>7.0f} "
+                  f"{a('jaccard_mean'):>8.4f}")
     print()
     print('  XOR rank với oracle là 9,50 ở CẢ BỐN cấu hình — đúng mean của [0..19],')
     print('  tức lookup tìm đúng global top-20. Nếu join cho số KHÁC 9,50 thì con')
@@ -147,7 +186,7 @@ if diag:
         if p:
             v = 'ĐẠT' if abs(p['t']) > p['tc'] else 'chưa đạt'
             print(f"  {lbl:16s} {p['mean']:>+6.2f} điểm  CI95 [{p['ci'][0]:+.2f}, "
-                  f"{p['ci'][1]:+.2f}]  t {p['t']:>6.2f}  {v}")
+                  f"{p['ci'][1]:+.2f}]  t {p['t']:>6.2f}  p {p['p']:.2g}  {v}")
 
 print()
 print('=' * 74)
@@ -165,7 +204,7 @@ pc = paired(M, R)
 if pc:
     print()
     print(f"  ghép cặp: {pc['mean']:+.2f} điểm, CI95 [{pc['ci'][0]:+.2f}, {pc['ci'][1]:+.2f}]")
-    print(f"  t = {pc['t']:.2f} (ngưỡng {pc['tc']}, df={pc['n']-1}), "
+    print(f"  t = {pc['t']:.2f}, p = {pc['p']:.3g} (df={pc['n']-1}), "
           f"thắng {pc['wins']}/{pc['n']}")
     print(f"  => {'ĐẠT ý nghĩa' if abs(pc['t']) > pc['tc'] else 'CHƯA đạt'}")
 

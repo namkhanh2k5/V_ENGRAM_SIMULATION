@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# CHẠY LẠI VỚI BOOTSTRAP THẬT (mục 2 và 3 trong danh sách của thầy)
+# CHẠY LẠI SAU BỐN BẢN VÁ (mục 1, 2, 3, 6 trong danh sách của thầy)
 #
 #   tmux new -s join
 #   source venv/bin/activate
@@ -49,6 +49,8 @@ PARALLEL=${PARALLEL:-4}
 N=10000
 export ROUTING_TABLE=kbucket
 export BOOTSTRAP=join
+export SHARED_ORIGIN=1      # mọi probe của một query dùng chung origin (mục 2.2)
+export NORMALIZE_ROWS=1     # L2-normalize cột ma trận chiếu (mục 2.1)
 
 $PY -c "import numpy, simpy" 2>/dev/null || {
     echo "THIẾU numpy/simpy — chạy: source venv/bin/activate"; exit 1; }
@@ -56,6 +58,12 @@ grep -q 'BOOTSTRAP' src/network.py || {
     echo "src/network.py chưa có cờ BOOTSTRAP — git pull rồi chạy lại"; exit 1; }
 grep -q 'joined = \[network_nodes\[0\]\]' src/network.py || {
     echo "src/network.py chưa có nhánh join tuần tự — git pull"; exit 1; }
+grep -q 'SHARED_ORIGIN' src/network.py || {
+    echo "src/network.py chưa có SHARED_ORIGIN — git pull"; exit 1; }
+grep -q 'NORMALIZE_ROWS' src/routing.py || {
+    echo "src/routing.py chưa có NORMALIZE_ROWS — git pull"; exit 1; }
+grep -q 'rpcs_routing' src/network.py || {
+    echo "src/network.py chưa tách routing/eval RPC — git pull"; exit 1; }
 echo "✓ venv OK, ROUTING_TABLE=$ROUTING_TABLE BOOTSTRAP=$BOOTSTRAP"
 
 wait_slot() { while [ "$(jobs -rp | wc -l)" -ge "$PARALLEL" ]; do wait -n; done; }

@@ -299,17 +299,24 @@ def _probe_diag_summary():
     diag = getattr(_nm, "_PROBE_DIAG", [])
     if not diag:
         return {}
-    jac, ranks, ncand, reach = [], [], [], []
+    jac, ranks, ncand = [], [], []
     for q in diag:
         if q.get("n_unique_cand") is not None:
             ncand.append(q["n_unique_cand"])
         ps = [x for x in q.get("peersets", []) if x]
-        # lấy mẫu tối đa 200 cặp mỗi query cho khỏi tốn
-        pairs = list(itertools.combinations(range(len(ps)), 2))[:200]
-        for i, j in pairs:
+        # JACCARD: trung bình trên MỌI cặp probe của một query, rồi trung bình
+        # qua các query. Bản trước lấy 200 cặp ĐẦU của
+        # itertools.combinations, sinh theo thứ tự từ điển, nên probe 0 vào 39
+        # cặp còn probe 39 chỉ vào 5 cặp — thiên lệch nặng và không tái tạo
+        # được. Đây là mục 1 của thầy. Với 40 probe chỉ có 780 cặp nên tính
+        # hết không tốn kém.
+        qjac = []
+        for i, j in itertools.combinations(range(len(ps)), 2):
             u = len(ps[i] | ps[j])
             if u:
-                jac.append(len(ps[i] & ps[j]) / u)
+                qjac.append(len(ps[i] & ps[j]) / u)
+        if qjac:
+            jac.append(sum(qjac) / len(qjac))     # một giá trị cho mỗi query
         ranks.extend(q.get("xor_ranks", []))
     out = {}
     if jac:
@@ -320,6 +327,15 @@ def _probe_diag_summary():
         out["xor_rank_p90"] = float(np.percentile(ranks, 90))
     if ncand:
         out["n_unique_cand_mean"] = float(np.mean(ncand))
+    # TÁCH RPC theo loại — mục 1 và 6 của thầy: routing RPC (FIND_NODE) và
+    # candidate-evaluation RPC (một request mỗi peer mới chạm) phải báo cáo
+    # riêng, không gộp thành một cột.
+    rt = [q.get("rpcs_routing") for q in diag if q.get("rpcs_routing") is not None]
+    ce = [q.get("rpcs_eval") for q in diag if q.get("rpcs_eval") is not None]
+    if rt:
+        out["rpc_routing_mean"] = float(np.mean(rt))
+    if ce:
+        out["rpc_eval_mean"] = float(np.mean(ce))
     return out
 
 if __name__ == "__main__":
