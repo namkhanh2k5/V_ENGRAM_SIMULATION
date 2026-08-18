@@ -3,12 +3,12 @@
 import glob, json, math, re, statistics as st
 from collections import defaultdict
 
-# số cũ đo với BOOTSTRAP=oracle
-ORACLE = {'semantic': 76.1, 'keyed_lookup': 32.7, 'random_slots': 34.4,
-          'random_unique': 22.3,
-          ('stable','all'): 76.1, ('stable','topk'): 75.7,
-          ('exhaust','all'): 76.1, ('exhaust','topk'): 75.7,
-          'margin': 76.1, 'random': 67.5}
+# số cũ đo với PQ m=256 (main_simulation.py hardcode bản không suffix)
+ORACLE = {'semantic': 71.8, 'keyed_lookup': 33.7, 'random_slots': 33.6,
+          'random_unique': 22.1,
+          ('stable','all'): 71.8, ('stable','topk'): 67.0,
+          ('exhaust','all'): 75.1, ('exhaust','topk'): 64.4,
+          'margin': 71.8, 'random': 63.8}
 
 
 def read(f):
@@ -126,12 +126,12 @@ def paired(A, B):
 print('=' * 74)
 print('A. HEADLINE VỚI BOOTSTRAP JOIN')
 print('=' * 74)
-print(f"{'chế độ':16s} {'n':>2s} {'Recall@5':>13s} {'oracle':>7s} {'Δ':>6s} "
+print(f"{'chế độ':16s} {'n':>2s} {'Recall@5':>13s} {'m256':>7s} {'Δ':>6s} "
       f"{'RPC':>7s} {'contact':>8s}")
 print('-' * 66)
 new = {}
 for mo in ('semantic', 'keyed_lookup', 'random_slots', 'random_unique'):
-    v = agg(f'jn_A_{mo}_s*.txt')
+    v = agg(f'q5_A_{mo}_s*.txt')
     if not v:
         print(f'{mo:16s} {"(chưa chạy)":>16s}'); continue
     r = m(v, 'recall'); new[mo] = r
@@ -143,14 +143,14 @@ if 'semantic' in new:
     for mo in ('keyed_lookup', 'random_slots', 'random_unique'):
         if new.get(mo):
             print(f'  tỉ lệ vs {mo:16s} {new["semantic"]/new[mo]:>6.2f}x  '
-                  f'(oracle {ORACLE["semantic"]/ORACLE[mo]:.2f}x)')
+                  f'(m256 {ORACLE["semantic"]/ORACLE[mo]:.2f}x)')
 
 print()
 print('=' * 74)
 print('B. TERMINATION ABLATION VỚI BOOTSTRAP JOIN')
 print('=' * 74)
 diag = defaultdict(list)
-for f in glob.glob('jn_termabl_*.json'):
+for f in glob.glob('q5_termabl_*.json'):
     try:
         d = json.load(open(f))
     except Exception:
@@ -158,7 +158,7 @@ for f in glob.glob('jn_termabl_*.json'):
     if (sr := d.get('stop_rule')) and (fs := d.get('frontier_scope')):
         diag[(sr, fs)].append(d)
 if diag:
-    print(f"{'dừng':9s} {'phạm vi':8s} {'n':>3s} {'Recall@5':>9s} {'oracle':>7s} "
+    print(f"{'dừng':9s} {'phạm vi':8s} {'n':>3s} {'Recall@5':>9s} {'m256':>7s} "
           f"{'Reach':>7s} {'RPC':>7s} {'XOR rank':>9s} {'rt RPC':>8s} "
           f"{'ev RPC':>7s} {'Jaccard':>8s}")
     print('-' * 68)
@@ -181,8 +181,8 @@ if diag:
     print()
     for ka, kb, lbl in [(('exhaust','all'), ('stable','all'), 'ĐIỀU KIỆN DỪNG'),
                         (('stable','topk'), ('stable','all'), 'PHẠM VI HỎI')]:
-        p = paired(json_by_seed(f'jn_termabl_{ka[0]}-{ka[1]}_s*.json'),
-                   json_by_seed(f'jn_termabl_{kb[0]}-{kb[1]}_s*.json'))
+        p = paired(json_by_seed(f'q5_termabl_{ka[0]}-{ka[1]}_s*.json'),
+                   json_by_seed(f'q5_termabl_{kb[0]}-{kb[1]}_s*.json'))
         if p:
             v = 'ĐẠT' if abs(p['t']) > p['tc'] else 'chưa đạt'
             print(f"  {lbl:16s} {p['mean']:>+6.2f} điểm  CI95 [{p['ci'][0]:+.2f}, "
@@ -192,14 +192,14 @@ print()
 print('=' * 74)
 print('C. MARGIN ABLATION VỚI BOOTSTRAP JOIN')
 print('=' * 74)
-M = txt_by_seed('jn_C_margin_s*.txt')
-R = txt_by_seed('jn_C_random_s*.txt')
+M = txt_by_seed('q5_C_margin_s*.txt')
+R = txt_by_seed('q5_C_random_s*.txt')
 for lbl, D, o in [('margin', M, 76.1), ('random', R, 67.5)]:
     if D:
         vals = list(D.values())
         s_ = st.stdev(vals) if len(vals) > 1 else 0.0
         print(f'  {lbl:8s} n={len(D):<3} Recall@5 {st.mean(vals):>5.1f}±{s_:<4.1f}  '
-              f'(oracle {o:.1f})')
+              f'(m256 {o:.1f})')
 pc = paired(M, R)
 if pc:
     print()
@@ -212,7 +212,7 @@ print()
 print('=' * 74)
 print('D. BẢNG CHI PHÍ')
 print('=' * 74)
-v = [x for f in glob.glob('jn_D_cost_s*.txt') if (x := read(f)) and x['rpc']]
+v = [x for f in glob.glob('q5_D_cost_s*.txt') if (x := read(f)) and x['rpc']]
 if v:
     print(f'  n={len(v)} seed')
     for k, lbl, u in [('rounds','vòng/query',''), ('rpc','RPC/query',''),
