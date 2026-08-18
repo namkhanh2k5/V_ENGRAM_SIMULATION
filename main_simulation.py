@@ -17,6 +17,7 @@ Sửa so với bản cũ:
 import argparse
 import json
 
+import os as _os
 import numpy as np
 import simpy
 
@@ -30,23 +31,29 @@ from src.evaluation import stage5_metrics_collection, export_comparison_report, 
 import src.network as netmod
 from src.routing import initialize_lsh_projections
 
+# Biến thể PQ. main_simulation.py trước đây HARDCODE bản không suffix, tức
+# m=256, trong khi main_simulation_v2.py chạy m=512 và bài mô tả m=512. Hai nửa
+# bài vì thế dùng hai quantizer khác nhau. Mặc định giờ là m512 cho khớp bài.
+PQ_VARIANT = _os.environ.get("PQ_VARIANT", "m512")
+_PQSFX = f"_{PQ_VARIANT}" if PQ_VARIANT and PQ_VARIANT != "m256" else ""
+
 DATASETS = {
     "code":    {"emb": "./data/code_corpus_embeddings.npy",
                 "q":   "./data/code_query_embeddings.npy",
-                "pq":  "./data/code_pq_codes.npy",
-                "cb":  "./data/code_pq_codebook.npy",
+                "pq":  f"./data/code_pq_codes{_PQSFX}.npy",
+                "cb":  f"./data/code_pq_codebook{_PQSFX}.npy",
                 "gt":  "./data/code_ground_truth.json",
                 "n":   20000},
     "scifact": {"emb": "./data/scifact_corpus_embeddings.npy",
                 "q":   "./data/scifact_query_embeddings.npy",
-                "pq":  "./data/scifact_pq_codes.npy",
-                "cb":  "./data/scifact_pq_codebook.npy",
+                "pq":  f"./data/scifact_pq_codes{_PQSFX}.npy",
+                "cb":  f"./data/scifact_pq_codebook{_PQSFX}.npy",
                 "gt":  "./data/scifact_ground_truth.json",
                 "n":   5183},
     "squad":   {"emb": "./data/squad_corpus_embeddings.npy",
                 "q":   "./data/squad_query_embeddings.npy",
-                "pq":  "./data/squad_pq_codes.npy",
-                "cb":  "./data/squad_pq_codebook.npy",
+                "pq":  f"./data/squad_pq_codes{_PQSFX}.npy",
+                "cb":  f"./data/squad_pq_codebook{_PQSFX}.npy",
                 "gt":  "./data/squad_ground_truth.json",
                 "n":   18891},
 }

@@ -51,6 +51,9 @@ export ROUTING_TABLE=kbucket
 export BOOTSTRAP=join
 export SHARED_ORIGIN=1      # mọi probe của một query dùng chung origin (mục 2.2)
 export NORMALIZE_ROWS=1     # L2-normalize cột ma trận chiếu (mục 2.1)
+export PQ_VARIANT=m512      # KHỚP BÀI. Trước đây main_simulation.py hardcode
+                            # bản không suffix (m=256) trong khi các sweep chạy
+                            # m=512 — hai nửa bài dùng hai quantizer khác nhau.
 
 $PY -c "import numpy, simpy" 2>/dev/null || {
     echo "THIẾU numpy/simpy — chạy: source venv/bin/activate"; exit 1; }
@@ -64,6 +67,10 @@ grep -q 'NORMALIZE_ROWS' src/routing.py || {
     echo "src/routing.py chưa có NORMALIZE_ROWS — git pull"; exit 1; }
 grep -q 'rpcs_routing' src/network.py || {
     echo "src/network.py chưa tách routing/eval RPC — git pull"; exit 1; }
+grep -q 'PQ_VARIANT' main_simulation.py || {
+    echo "main_simulation.py chưa có cờ PQ_VARIANT — git pull"; exit 1; }
+[ -f "data/code_pq_codebook_m512.npy" ] || {
+    echo "thiếu data/code_pq_codebook_m512.npy"; exit 1; }
 echo "✓ venv OK, ROUTING_TABLE=$ROUTING_TABLE BOOTSTRAP=$BOOTSTRAP"
 
 wait_slot() { while [ "$(jobs -rp | wc -l)" -ge "$PARALLEL" ]; do wait -n; done; }
@@ -74,7 +81,7 @@ echo ""
 echo "########## A. HEADLINE ##########"
 run_a() {
     local mode=$1 seed=$2 extra=$3
-    local f="jn_A_${mode}_s${seed}.txt"
+    local f="q5_A_${mode}_s${seed}.txt"
     [ -s "$f" ] && grep -q "Recall@5" "$f" && { echo "  [skip] A $mode s=$seed"; return; }
     env SKIP_PAYLOAD=1 ROUTING_MODE="$mode" $extra timeout 21600 $PY main_simulation.py \
         --dataset code --nodes $N --seed "$seed" --k-query 20 --multi-probe 8 \
@@ -86,7 +93,7 @@ for s in $SEEDS; do run_a semantic "$s" "" & wait_slot; done; wait
 MATCH=$($PY - <<'EOF'
 import glob, re, statistics as st
 v = []
-for f in glob.glob('jn_A_semantic_s*.txt'):
+for f in glob.glob('q5_A_semantic_s*.txt'):
     m = re.search(r'Unique nodes contacted\s+([\d,]+)', open(f, errors='ignore').read())
     if m:
         v.append(float(m.group(1).replace(',', '')))
@@ -105,12 +112,12 @@ echo ""
 echo "########## B. TERMINATION ABLATION ##########"
 run_b() {
     local sr=$1 fs=$2 seed=$3
-    local f="jn_B_${sr}-${fs}_s${seed}.txt"
+    local f="q5_B_${sr}-${fs}_s${seed}.txt"
     [ -s "$f" ] && grep -q "Recall@5" "$f" && { echo "  [skip] B $sr/$fs s=$seed"; return; }
     env SKIP_PAYLOAD=1 STOP_RULE=$sr FRONTIER_SCOPE=$fs MEASURE_OVERLAP=1 \
         timeout 21600 $PY main_simulation.py --dataset code --nodes $N \
         --seed "$seed" --k-query 20 --multi-probe 8 --meta-anchors 1 --nq 500 \
-        --out "jn_termabl_${sr}-${fs}_s${seed}.json" \
+        --out "q5_termabl_${sr}-${fs}_s${seed}.json" \
         > "$f" 2>&1 || echo "  [LỖI] B $sr/$fs s=$seed"
 }
 for s in $SEEDS; do
@@ -125,7 +132,7 @@ echo ""
 echo "########## C. MARGIN ABLATION ##########"
 run_c() {
     local po=$1 seed=$2
-    local f="jn_C_${po}_s${seed}.txt"
+    local f="q5_C_${po}_s${seed}.txt"
     [ -s "$f" ] && grep -q "Recall@5" "$f" && { echo "  [skip] C $po s=$seed"; return; }
     env SKIP_PAYLOAD=1 PROBE_ORDER=$po timeout 21600 $PY main_simulation.py \
         --dataset code --nodes $N --seed "$seed" --k-query 20 --multi-probe 8 \
@@ -140,7 +147,7 @@ wait
 echo ""
 echo "########## D. BẢNG CHI PHÍ ##########"
 for s in 20235956 1 2; do
-    f="jn_D_cost_s${s}.txt"
+    f="q5_D_cost_s${s}.txt"
     [ -s "$f" ] && grep -q "BẢNG CHI PHÍ" "$f" && { echo "  [skip] D s=$s"; continue; }
     echo "  cost s=$s ..."
     PLACEMENT_MODE=deterministic PLACEMENT_K=20 FETCH_TOP=1 PARALLEL_ADC=1 \
