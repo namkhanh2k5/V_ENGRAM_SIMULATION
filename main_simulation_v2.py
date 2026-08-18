@@ -31,6 +31,8 @@ LƯU Ý VỀ ĐỘ TRUNG THỰC (quan trọng khi đọc số):
 """
 import argparse, json, random, time
 import numpy as np
+
+_PT_STATS = {}
 from typing import Optional
 
 from src.routing import initialize_lsh_projections, generate_multi_semantic_keys
@@ -309,6 +311,8 @@ def main():
     node_rpc = np.zeros(args.nodes, dtype=np.int64)   # RPC load per node
     reach_hit = ret_hit = fin_hit = 0
     table_hits = []              # mục 2: [neighbor][table] -> bool
+    global _PT_STATS
+    _PT_STATS = {}
     reach_r5 = ret_r5 = 0.0          # Recall@5 tầng 1, tầng 2
     rec5_sum = rec10_sum = 0.0
     uniq_list, touched_list = [], []
@@ -563,6 +567,17 @@ def main():
         p_bar = float(p_each.mean())
         obs_or = float((H.max(axis=1) > 0).mean())
         pred_or = 1.0 - (1.0 - p_bar) ** H.shape[1]
+        # Xuất ra JSON để gộp qua nhiều seed. Bản trước chỉ in ra màn hình nên
+        # chẩn đoán độc lập chỉ dựa trên hai lần rút ma trận.
+        # res đã dựng ở trên nên phải update TRỰC TIẾP vào nó, không qua biến
+        # trung gian — đó là lý do bản trước xuất ra JSON rỗng.
+        res.update({
+            'p_each': [float(x) for x in p_each],
+            'p_bar': p_bar,
+            'or_observed': obs_or,
+            'or_if_independent': pred_or,
+            'or_shortfall': float(pred_or - obs_or),
+        })
         print()
         print("  === MỤC 2: CÁC BẢNG CÓ ĐỘC LẬP KHÔNG? ===")
         print("  Reachable recall CỦA TỪNG BẢNG riêng lẻ:")
