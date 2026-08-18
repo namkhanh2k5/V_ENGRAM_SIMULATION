@@ -13,7 +13,8 @@ Release `v1.0-cc`, commit `57cbf35`.
 ## Layout
 
 ```
-prepare/     corpus and embedding construction (Colab; see prepare/README.md)
+prepare/     corpus and embedding construction (two Colab notebooks plus
+             a standalone PQ rebuild script; see prepare/README.md)
 src/         routing, network and node models
 data/        corpora, embeddings, ground truth, PQ codebooks (not in git)
 run_*.sh     experiment drivers, one per group of results

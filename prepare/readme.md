@@ -1,23 +1,40 @@
 # `prepare/` — corpus and embedding construction
 
-These scripts build every input the simulator reads from `data/`. They were run
-once, in Google Colab on a T4 GPU, and are included verbatim rather than
-repackaged, because the data in the paper came from exactly this code.
+These scripts build every input the simulator reads from `data/`.
 
-Both files contain Colab-only calls (`!pip`, `google.colab.drive`) and will not
-run unmodified elsewhere. To reproduce outside Colab, delete the mount and
-install cells and set `OUT_DIR` to a local path; nothing else depends on Colab.
+The two notebooks were run in Google Colab on a T4 GPU and are kept as
+notebooks, unedited, because the data in the paper came from exactly this code
+and `!pip` / `google.colab.drive` cells are not valid Python outside Jupyter. To
+run them elsewhere, delete the mount and install cells and set `OUT_DIR` to a
+local path; nothing else depends on Colab.
+
+`03_build_pq.py` is a plain script that runs anywhere, no GPU required.
 
 ## What runs in what order
 
-| script | produces | approximate time |
+| step | produces | time |
 |---|---|---|
-| `01_build_corpora.py` | `code` (20k) and `scifact` (5.2k) corpora, embeddings, ground truth, PQ codebooks at `m=256` and `m=512` | 40 min |
-| `02_extend_weakscaling.py` | `code50k` and `code100k`, each with its own ground truth and PQ codebook | 90 min |
+| `01_build_corpora.ipynb` | `code` (20k) and `scifact` (5.2k): embeddings, ground truth, PQ codebooks at `m=256` and `m=512` | 40 min, GPU |
+| `02_extend_weakscaling.ipynb` | `code50k` and `code100k`, each with its own ground truth and codebook | 90 min, GPU |
+| `03_build_pq.py` | rebuilds a PQ codebook from embeddings already on disk | 5 min, CPU |
 
 `02` requires the output of `01`: it appends new functions to the existing
 20,000 and asserts byte-for-byte that the first 20,000 embeddings are unchanged,
 so the smaller corpus stays a strict prefix of the larger one.
+
+`03` is separate because quantizer training is the step most likely to be rerun
+— it reads embeddings that already exist, takes minutes on a CPU, and needs no
+Colab. It also compares against whatever codebook is already in `data/` and
+reports both reconstruction errors, so a rebuild can be checked rather than
+assumed equivalent:
+
+```bash
+python3 prepare/03_build_pq.py --data-dir data --corpus code
+python3 prepare/03_build_pq.py --data-dir data --corpus code --m 256   # the older variant
+```
+
+Code assignments need not match a previous build bit for bit, since k-means is
+only locally optimal; comparable reconstruction MSE is the check that matters.
 
 ## Fixed settings
 
@@ -76,6 +93,6 @@ scripts, or request the archive from the corresponding author.
 
 ## The SQuAD block
 
-`01_build_corpora.py` ends with a block that builds a SQuAD corpus. It is not
+`01_build_corpora.ipynb` ends with a cell that builds a SQuAD corpus. It is not
 used anywhere in the paper and is kept only because removing it would change
 the file from what was actually run.
