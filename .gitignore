@@ -50,3 +50,23 @@ termabl_*.json
 indep_*.json
 repl_*.json
 fail_*.json
+
+# experiment outputs
+*.log
+baseline_*.txt
+failure_*.txt
+churn_*.txt
+jn_*.txt
+q5_*.txt
+kbf_*.txt
+sr_*.txt
+r3_*.txt
+diag_*.txt
+mplsh_*.txt
+lsh10_*.txt
+axes_*.txt
+result_*.json
+termabl_*.json
+indep_*.json
+repl_*.json
+fail_*.json
