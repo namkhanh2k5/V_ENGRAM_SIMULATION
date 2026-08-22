@@ -1,14 +1,14 @@
 # V-Engram
 
-Simulation code for *V-Engram: semantic rendezvous routing over Kademlia for
-decentralized approximate nearest-neighbour search*.
+Simulation code for *V-Engram: Semantic Candidate Discovery over Kademlia for
+Decentralized Vector Retrieval*.
 
 The system maps a 1024-dimensional embedding to `L` sign-random-projection
 sketches, treats each sketch as a Kademlia rendezvous target, and retrieves
 candidates by walking the overlay toward those targets. This repository
 reproduces every table and figure in the paper.
 
-Release `v1.0-cc`, commit `57cbf35`.
+Release `v1.0-cc`, commit `f9f2663`.
 
 ## Layout
 
@@ -44,8 +44,13 @@ ls data/code_corpus_embeddings.npy data/code_ground_truth.json   # sanity check
 
 ## Reproducing the paper
 
-Each driver skips work that is already on disk, so an interrupted run can be
-restarted with the same command. All accept `PARALLEL=n` to bound concurrency.
+Use the drivers. The bare defaults of `main_simulation.py` do not reproduce any
+published result: they are development settings, `T=3` with 100 queries and a
+ring routing table, chosen to make a smoke test finish quickly. Every published
+figure comes from a driver that sets the flags explicitly.
+
+Each driver skips work already on disk, so an interrupted run can be restarted
+with the same command. All accept `PARALLEL=n` to bound concurrency.
 
 | result | command | wall time |
 |---|---|---|
@@ -68,6 +73,20 @@ python3 analyze_churn.py         # churn and repair
 Every analysis script reports means with standard deviations and the seed count,
 and paired comparisons carry a 95% confidence interval and an exact p-value.
 
+### Running one configuration by hand
+
+To reproduce the headline configuration for a single seed, every flag has to be
+given; the defaults will not do it.
+
+```bash
+SKIP_PAYLOAD=1 ROUTING_TABLE=kbucket BOOTSTRAP=join \
+  PQ_VARIANT=m512 SHARED_ORIGIN=1 NORMALIZE_ROWS=1 \
+  python3 main_simulation.py --dataset code --nodes 10000 --seed 20235956 \
+  --k-query 20 --multi-probe 8 --meta-anchors 1 --nq 500
+```
+
+This is what `run_join_bootstrap.sh` issues for each of the ten seeds.
+
 ## Seeds
 
 Ten seeds are used throughout: `20235956, 1, 2, 3, 4, 5, 6, 7, 8, 9`. The first
@@ -77,22 +96,26 @@ the query set, or the PQ codebook, all of which are fixed across seeds.
 
 ## Configuration flags
 
-Behaviour that the paper compares is selected by environment variable rather
-than by editing code, so both sides of a comparison run from one binary.
+Behaviour is selected by environment variable rather than by editing code, so
+alternatives can be run from one binary. Several defaults are development
+settings rather than paper settings; the table says which is which.
 
-| variable | values | meaning |
-|---|---|---|
-| `ROUTING_TABLE` | `kbucket`, `ring` | `kbucket` is the Kademlia table the paper describes. `ring` is an earlier small-world construction kept for the comparison in Section 4. |
-| `BOOTSTRAP` | `join`, `oracle` | `join` has peers enter sequentially and learn contacts through real lookups. `oracle` hands each peer its globally nearest neighbours; it makes lookups converge perfectly and is kept only to show that the resulting diagnostics are artefacts. |
-| `STOP_RULE` | `stable`, `exhaust` | Frontier-stability termination versus exhaustive top-K frontier termination. |
-| `FRONTIER_SCOPE` | `all`, `topk` | Whether the next peers to query come from the whole discovered candidate set or only the current frontier. |
-| `PROBE_ORDER` | `margin`, `random` | Margin-ranked bit selection versus a random permutation of the same eligible positions. |
-| `SHARED_ORIGIN` | `1`, `0` | Whether all `L·T` probes of a query share one origin peer. `1` is correct; `0` reproduces an earlier bug. |
-| `NORMALIZE_ROWS` | `1`, `0` | Whether projection columns are L2-normalized before margins are compared. `1` is correct. |
-| `MEASURE_OVERLAP` | `1`, `0` | Records XOR rank and inter-probe overlap. Expensive: it sorts the whole overlay per lookup. |
+| variable | values | default | paper | meaning |
+|---|---|---|---|---|
+| `ROUTING_TABLE` | `kbucket`, `ring` | `ring` | `kbucket` | `kbucket` is the Kademlia table the paper describes. `ring` is an earlier small-world construction, kept so the choice can be re-tested; the paper reports no results from it. |
+| `BOOTSTRAP` | `join`, `oracle` | `join` | `join` | `join` has peers enter sequentially and learn contacts through real lookups. `oracle` hands each peer its globally nearest neighbours, which makes lookups converge perfectly; it is kept only to show that the resulting diagnostics are artefacts. |
+| `PQ_VARIANT` | `m512`, `m256` | `m512` | `m512` | Product quantizer. `m256` is an earlier, lossier variant. |
+| `STOP_RULE` | `stable`, `exhaust` | `stable` | both | Frontier-stability versus exhaustive top-K frontier termination. The paper compares them. |
+| `FRONTIER_SCOPE` | `all`, `topk` | `all` | both | Whether the next peers to query come from the whole discovered candidate set or only the current frontier. The paper compares them. |
+| `PROBE_ORDER` | `margin`, `random` | `margin` | both | Margin-ranked bit selection versus a random permutation of the same eligible positions. The paper compares them. |
+| `SHARED_ORIGIN` | `1`, `0` | `1` | `1` | Whether all `L·T` probes of a query share one origin peer. `0` reproduces an earlier bug. |
+| `NORMALIZE_ROWS` | `1`, `0` | `1` | `1` | Whether projection columns are L2-normalized before margins are compared. `0` reproduces an earlier bug. |
+| `MEASURE_OVERLAP` | `1`, `0` | `0` | `1` for the termination table | Records XOR rank and inter-probe overlap. Expensive: it sorts the whole overlay per lookup. |
+| `SKIP_PAYLOAD` | `1`, `0` | `0` | `1` except for the cost table | Skips payload retrieval, which the recall experiments do not need. |
 
-Defaults are the values the paper uses, so a bare `python3 main_simulation.py`
-reproduces the headline configuration.
+Command-line defaults are development settings too: `--multi-probe 3` and
+`--nq 100` against the paper's 8 and 500, and `--meta-anchors` unset against the
+paper's 1.
 
 ## Known limitations of the model
 
